@@ -31,6 +31,7 @@ export function nieuwProject() {
     kinderen: [],
     plannen: [nieuwPlan()],
     afbeeldingen: {},
+    materiaal: { marge: 10 },
   };
 }
 
@@ -249,6 +250,7 @@ export function leesProject(tekst) {
     info: { ...basis.info, ...data.info },
     aansluiting: { ...basis.aansluiting, ...data.aansluiting },
     hoofd: { ...basis.hoofd, ...data.hoofd },
+    materiaal: { ...basis.materiaal, ...data.materiaal },
     afbeeldingen: data.afbeeldingen || {},
     versie: VERSIE,
   };

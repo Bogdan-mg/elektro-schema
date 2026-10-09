@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="nl-BE">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; worker-src 'self' blob:">
+  <title>Elektro Schema</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="stijl.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header class="balk">
+    <div class="merk"><span class="bliksem">⚡</span> Elektro Schema</div>
+    <button id="projectnaam" class="projectnaam" title="Projectgegevens">Nieuw project</button>
+    <span id="opgeslagen" class="opgeslagen"></span>
+    <nav class="tabs" aria-label="Onderdelen">
+      <button data-tab="eendraad" class="aan">Ééndraadschema</button>
+      <button data-tab="situatie">Situatieschema</button>
+      <button data-tab="materiaal">Materiaallijst</button>
+      <button data-tab="controle">Controle <span id="controle-teller" class="teller"></span></button>
+    </nav>
+    <div class="acties">
+      <button data-actie="ongedaan" title="Ongedaan maken (Ctrl+Z)">↶</button>
+      <button data-actie="opnieuw" title="Opnieuw (Ctrl+Y)">↷</button>
+      <span class="scheiding"></span>
+      <button data-actie="nieuw" title="Nieuw project (Ctrl+N)">Nieuw</button>
+      <button data-actie="openen" title="Openen (Ctrl+O)">Openen</button>
+      <button data-actie="opslaan" class="hoofd" title="Opslaan (Ctrl+S)">Opslaan</button>
+      <button data-actie="afdrukken" title="Afdrukken of PDF (Ctrl+P)">Afdrukken / PDF</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="tab-eendraad" class="tab drie">
+      <aside class="paneel">
+        <div class="paneel-kop">
+          <h3>Bord</h3>
+          <div class="knoppenrij klein">
+            <button id="knop-diff" title="Differentieel toevoegen">+ Differentieel</button>
+            <button id="knop-kring" title="Kring toevoegen">+ Kring</button>
+          </div>
+        </div>
+        <div id="boom" class="lijst boom"></div>
+      </aside>
+      <div class="vlak">
+        <svg id="eendraad-svg" class="tekening"><g class="inhoud"></g></svg>
+        <div class="zoomknoppen">
+          <button id="eendraad-zoom-uit" title="Uitzoomen">−</button>
+          <button id="eendraad-passend" title="Alles in beeld">⤢</button>
+          <button id="eendraad-zoom-in" title="Inzoomen">+</button>
+        </div>
+      </div>
+      <aside id="eigenschappen" class="paneel eigenschappen"></aside>
+    </section>
+
+    <section id="tab-situatie" class="tab twee" hidden>
+      <aside class="paneel">
+        <div class="paneel-kop"><h3>Plannen</h3><button id="plan-nieuw" class="klein">+ Plan</button></div>
+        <div id="plannen" class="lijst plannen"></div>
+        <div class="paneel-kop"><h3>Onderdelen</h3><small id="plaats-teller"></small></div>
+        <p class="hint">Klik een onderdeel en daarna op het plan. Het volgende onderdeel staat meteen klaar.</p>
+        <div id="te-plaatsen" class="lijst"></div>
+      </aside>
+      <div class="vlak-wrap">
+        <div class="werkbalk">
+          <div class="groep">
+            <button data-gereedschap="kies" class="aan" title="Selecteren en verslepen">Selecteren</button>
+            <button data-gereedschap="muur" title="Muren tekenen">Muur</button>
+            <button data-gereedschap="tekst" title="Tekst plaatsen">Tekst</button>
+          </div>
+          <div class="groep">
+            <button id="plan-laden" title="Een plan van de architect als achtergrond (afbeelding of PDF)">Plan laden…</button>
+            <button id="plan-weg" title="Achtergrond weghalen">Plan weg</button>
+            <input type="file" id="plan-bestand" accept="image/*,.pdf,application/pdf" hidden>
+          </div>
+          <div class="groep">
+            <button id="plan-draai" title="Draaien (R)">Draaien</button>
+            <button id="plan-verwijder" title="Van het plan halen (Delete)">Van plan halen</button>
+          </div>
+          <label class="schuif">Symbolen <input type="range" id="plan-symbool" min="0.5" max="8" step="0.1"></label>
+          <label class="schuif">Plan <input type="range" id="plan-zicht" min="0.1" max="1" step="0.05"></label>
+        </div>
+        <div class="vlak">
+          <svg id="situatie-svg" class="tekening">
+            <defs>
+              <pattern id="raster" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M20 0H0V20" fill="none" stroke="#e3e6eb" stroke-width="1"/>
+              </pattern>
+            </defs>
+            <g class="inhoud"><g class="achtergrond-laag"></g><g class="plan-laag"></g><g class="voorbeeld-laag"></g></g>
+          </svg>
+          <div class="zoomknoppen">
+            <button id="situatie-zoom-uit" title="Uitzoomen">−</button>
+            <button id="situatie-passend" title="Alles in beeld">⤢</button>
+            <button id="situatie-zoom-in" title="Inzoomen">+</button>
+          </div>
+          <div id="plan-status" class="status"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-materiaal" class="tab pagina" hidden>
+      <div class="pagina-inhoud">
+        <div class="pagina-kop">
+          <h2>Materiaallijst</h2>
+          <label class="inline">Marge op kabel <input type="number" id="marge" min="0" max="100" step="1"> %</label>
+          <button data-actie="csv">Naar Excel (CSV)</button>
+        </div>
+        <p id="modules" class="hint"></p>
+        <div id="materiaal-tabel"></div>
+        <p class="hint">Vul prijzen in om een totaal te krijgen; ze worden onthouden voor volgende projecten.</p>
+      </div>
+    </section>
+
+    <section id="tab-controle" class="tab pagina" hidden>
+      <div class="pagina-inhoud">
+        <div class="pagina-kop"><h2>Controle</h2></div>
+        <p class="hint">Een controle op de belangrijkste AREI-regels voor woningen. Dit helpt bij het tekenen maar vervangt de keuring niet. Klik een melding om naar het onderdeel te gaan.</p>
+        <div id="controle-lijst"></div>
+      </div>
+    </section>
+  </main>
+
+  <input type="file" id="open-bestand" accept=".eschema,.json" hidden>
+  <div id="afdruk"></div>
+</body>
+</html>

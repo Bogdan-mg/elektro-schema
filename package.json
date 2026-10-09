@@ -8,10 +8,11 @@
   "type": "module",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
-    "dev": "node dev.js",
+    "kopieer": "node kopieer.js",
+    "start": "node kopieer.js && electron .",
+    "dev": "node kopieer.js && node dev.js",
     "test": "node --test test/*.test.js",
-    "dist": "electron-builder --win nsis --x64"
+    "dist": "node kopieer.js && electron-builder --win nsis --x64"
   },
   "dependencies": {
     "pdfjs-dist": "6.4.299"
@@ -23,12 +24,25 @@
   "build": {
     "appId": "be.elektro-schema.app",
     "productName": "Elektro Schema",
-    "files": ["main.js", "preload.cjs", "app/**", "build/icon.png", "package.json"],
+    "files": [
+      "main.js",
+      "preload.cjs",
+      "app/**",
+      "build/icon.png",
+      "package.json"
+    ],
     "fileAssociations": [
-      { "ext": "eschema", "name": "Elektro Schema-project", "description": "Elektro Schema-project", "role": "Editor" }
+      {
+        "ext": "eschema",
+        "name": "Elektro Schema-project",
+        "description": "Elektro Schema-project",
+        "role": "Editor"
+      }
     ],
     "win": {
-      "target": ["nsis"],
+      "target": [
+        "nsis"
+      ],
       "icon": "build/icon.png"
     },
     "nsis": {
