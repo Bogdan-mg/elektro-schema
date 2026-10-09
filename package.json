@@ -1,0 +1,46 @@
+{
+  "name": "elektro-schema",
+  "productName": "Elektro Schema",
+  "version": "1.0.0",
+  "description": "Ééndraadschema's, situatieschema's en materiaallijsten tekenen, volledig offline",
+  "author": "Bogdan",
+  "private": true,
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "node dev.js",
+    "test": "node --test test/*.test.js",
+    "dist": "electron-builder --win nsis --x64"
+  },
+  "dependencies": {
+    "pdfjs-dist": "6.4.299"
+  },
+  "devDependencies": {
+    "electron": "44.7.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "be.elektro-schema.app",
+    "productName": "Elektro Schema",
+    "files": ["main.js", "preload.cjs", "app/**", "build/icon.png", "package.json"],
+    "fileAssociations": [
+      { "ext": "eschema", "name": "Elektro Schema-project", "description": "Elektro Schema-project", "role": "Editor" }
+    ],
+    "win": {
+      "target": ["nsis"],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Elektro Schema",
+      "artifactName": "Elektro-Schema-Setup-${version}.exe",
+      "deleteAppDataOnUninstall": false
+    },
+    "publish": null
+  }
+}
