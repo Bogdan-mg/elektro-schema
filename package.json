@@ -14,12 +14,10 @@
     "test": "node --test test/*.test.js",
     "dist": "node kopieer.js && electron-builder --win nsis --x64"
   },
-  "dependencies": {
-    "pdfjs-dist": "6.4.299"
-  },
   "devDependencies": {
     "electron": "44.7.0",
-    "electron-builder": "26.15.3"
+    "electron-builder": "26.15.3",
+    "pdfjs-dist": "6.4.299"
   },
   "build": {
     "appId": "be.elektro-schema.app",
