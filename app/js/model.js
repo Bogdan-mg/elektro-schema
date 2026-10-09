@@ -300,10 +300,10 @@ export function voorbeeldProject() {
   p.kinderen.push(
     dertig,
     nieuweKring({ naam: 'Keuken', kabel: { type: 'XVB', aders: 3, sectie: 2.5, lengte: 18 }, items: [
-      s({ aantal: 2 }), s({ aantal: 2 }), s(), t('koelkast'), t('dampkap'),
+      s({ aantal: 2 }), s({ aantal: 2 }), s(), t('koelkast'), t('dampkap'), t('microgolf'),
     ] }),
     nieuweKring({ naam: 'Kookplaat', automaat: { stroom: 32, curve: 'C', polen: 2 }, kabel: { type: 'XVB', aders: 3, sectie: 6, lengte: 8 }, items: [t('kookplaat')] }),
-    nieuweKring({ naam: 'Oven', kabel: { type: 'XVB', aders: 3, sectie: 2.5, lengte: 8 }, items: [t('oven'), t('microgolf')] }),
+    nieuweKring({ naam: 'Oven', kabel: { type: 'XVB', aders: 3, sectie: 2.5, lengte: 8 }, items: [t('oven')] }),
     nieuweKring({ naam: 'Verlichting gelijkvloers', automaat: { stroom: 16, curve: 'C', polen: 2 }, kabel: { type: 'XVB', aders: 3, sectie: 1.5, lengte: 32 }, items: [
       sch('wissel'), sch('wissel'), l('plafond', { tekst: 'hal' }), sch('serie'), l('plafond', { tekst: 'living' }), l('spot', { aantal: 4, tekst: 'living' }),
       sch('enkelpolig'), l('plafond', { tekst: 'keuken' }), l('buiten', { tekst: 'voordeur' }),

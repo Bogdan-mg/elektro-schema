@@ -298,7 +298,16 @@ async function start() {
     if (staat.gewijzigd) bewaarHerstel();
   });
 
-  if (desktop) desktop.opMenu((actie, extra) => acties[actie]?.(extra));
+  if (desktop) {
+    desktop.opMenu((actie, extra) => {
+      // Terwijl een venster open is: ongedaan maken geldt voor het tekstveld, andere menu-acties wachten.
+      if (document.querySelector('dialog[open]')) {
+        if (actie === 'ongedaan' || actie === 'opnieuw') document.execCommand(actie === 'ongedaan' ? 'undo' : 'redo');
+        return;
+      }
+      acties[actie]?.(extra);
+    });
+  }
 
   naarTab('eendraad');
   zetTitel();

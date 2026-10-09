@@ -273,7 +273,7 @@ function tekenEigenschappen() {
       formulier([
         { label: 'Gevoeligheid', pad: 'hoofd.gevoeligheid', type: 'select', opties: opties(DIFF_GEVOELIGHEDEN, ' mA'), getal: true },
         { label: 'Stroom', pad: 'hoofd.stroom', type: 'select', opties: opties(DIFF_STROMEN, ' A'), getal: true },
-        { label: 'Polen', pad: 'hoofd.polen', type: 'select', opties: opties([2, 4], 'P'), getal: true },
+        { label: 'Polen', pad: 'hoofd.polen', type: 'select', opties: opties([2, 3, 4], 'P'), getal: true },
         { label: 'Type', pad: 'hoofd.type', type: 'select', opties: DIFF_TYPES.map((t) => [t, `type ${t}`]) },
       ], (pr) => pr, 'hoofd'),
       kop('Toevoegen op het hoofdbord'),
@@ -303,7 +303,7 @@ function tekenEigenschappen() {
       formulier([
         { label: 'Gevoeligheid', pad: 'gevoeligheid', type: 'select', opties: opties(DIFF_GEVOELIGHEDEN, ' mA'), getal: true },
         { label: 'Stroom', pad: 'stroom', type: 'select', opties: opties(DIFF_STROMEN, ' A'), getal: true },
-        { label: 'Polen', pad: 'polen', type: 'select', opties: opties([2, 4], 'P'), getal: true },
+        { label: 'Polen', pad: 'polen', type: 'select', opties: opties([2, 3, 4], 'P'), getal: true },
         { label: 'Type', pad: 'type', type: 'select', opties: DIFF_TYPES.map((t) => [t, `type ${t}`]) },
       ], doel, id),
       kop('Toevoegen onder deze differentieel'),
