@@ -29,24 +29,27 @@ function punt(cx, cy, hoek, afstand) {
  */
 function contactdoos({ aantal = 1, aarding = true, kinderveilig = true, waterdicht = false }) {
   const n = Math.max(1, Math.min(9, Number(aantal) || 1));
-  const sx = 9;
-  const r = n === 3 ? 5 : 6;
-  const tussen = n === 3 ? 10 : 11;
-  const toppen = n <= 3 ? Array.from({ length: n }, (_, i) => 8 + i * tussen) : [8];
+  const r = 5;
+  const sx = 4 * r; // aanvoerleiding: twee keer de breedte van de boog, zoals op de AREI-plaat
+  // Enkel: steel van twee stralen. Meervoudig: de bogen op 1,33 straal van elkaar op een doorlopende steel.
+  const toppen = n === 1 ? [1.8 * r] : n <= 3 ? Array.from({ length: n }, (_, i) => 1.75 * r + i * 1.33 * r) : [2 * r];
   let s = lijn(0, 0, sx, 0) + lijn(sx, 0, sx, toppen.at(-1));
   for (const t of toppen) {
-    s += pad(`M${sx - r} ${t + r} A${r} ${r} 0 0 1 ${sx + r} ${t + r}`);
-    if (aarding) s += lijn(sx - r - 2, t, sx + r + 2, t);
-    if (kinderveilig) s += lijn(sx - r - 3, t + r, sx - r, t + r) + lijn(sx + r, t + r, sx + r + 3, t + r);
+    s += pad(`M${sx - r} ${r1(t + r)} A${r} ${r} 0 0 1 ${sx + r} ${r1(t + r)}`);
+    if (aarding) s += lijn(sx - r - 0.8, t, sx + r + 0.8, t);
+    if (kinderveilig) s += lijn(sx - r - 2.5, t + r, sx - r, t + r) + lijn(sx + r, t + r, sx + r + 2.5, t + r);
   }
   let b = sx + r + 3;
   if (n > 3) {
-    s += lijn(sx + r - 3, toppen[0] + r - 0.5, sx + r + 1.5, toppen[0] + 1.5) + tekst(sx + r + 2, toppen[0] - 0.5, String(n), 'b');
+    // Meervoudige contactdoos in het kort: één boog met het aantal en een schuin streepje.
+    const t = toppen[0];
+    s += lijn(sx + r - 2.2, t + r - 0.2, sx + r + 1.2, t + r - 3.2) + lijn(sx + r - 2.2, t + r - 3.2, sx + r + 1.2, t + r - 0.2)
+      + tekst(sx + r + 2, t - 1, String(n), 'b');
     b += 6;
   }
   if (waterdicht) {
-    s += tekst(sx + r + 3, toppen[0] + 3, 'h', 'b');
-    b = Math.max(b, sx + r + 9);
+    s += tekst(sx + 2.5, toppen[0] - 1.5, 'h', 'b');
+    b = Math.max(b, sx + 9);
   }
   return { svg: s, b, boven: -1, onder: toppen.at(-1) + r + 1 };
 }
@@ -60,32 +63,35 @@ function contactdoos({ aantal = 1, aarding = true, kinderveilig = true, waterdic
 function schakelaar(item) {
   // Hendels die naar links wijzen hebben meer leiding nodig, zodat ze de kringlijn niet raken.
   const cx = { wissel: 14, kruis: 14, serie: 11, rolluik: 11 }[item.variant] || 8;
-  const r = 3.5;
-  const lang = 17;
+  const rx = 3.8; // het lichaam is een licht ovaal
+  const ry = 3.4;
+  const lang = 3.6 + 10.5; // vanaf het midden: rand + hendel
   let s = '';
   const hendel = (hoek, streepjes, kant) => {
-    const [x1, y1] = punt(cx, 0, hoek, r);
+    const [x1, y1] = punt(cx, 0, hoek, 3.5);
     const [x2, y2] = punt(cx, 0, hoek, lang);
     let t = lijn(x1, y1, x2, y2);
     const boven = Math.sin((hoek * Math.PI) / 180) > 0;
     for (let i = 0; i < streepjes; i++) {
-      const [px, py] = punt(cx, 0, hoek, lang - i * 3.2);
-      t += lijn(px, py, px + kant * 5, py + (boven ? 1.8 : -1.8));
+      const [px, py] = punt(cx, 0, hoek, lang - i * 2.6);
+      // Het streepje wijst naar buiten en een beetje van het uiteinde weg (22°), zoals op de AREI-plaat.
+      t += lijn(px, py, px + kant * 4.9, py + (boven ? 2 : -2));
     }
     return t;
   };
-  const rond = () => lijn(0, 0, cx - r, 0) + cirkel(cx, 0, r);
-  let b = cx + 14;
+  const rond = () => lijn(0, 0, cx - rx, 0) + `<ellipse class="l" cx="${cx}" cy="0" rx="${rx}" ry="${ry}"/>`;
+  let b = cx + 12;
   switch (item.variant) {
-    case 'tweepolig': s += rond() + hendel(60, 2, 1); break;
-    case 'wissel': s += rond() + hendel(60, 1, 1) + hendel(240, 1, -1); break;
-    case 'kruis': s += rond() + hendel(60, 1, 1) + hendel(120, 1, -1) + hendel(240, 1, -1) + hendel(300, 1, 1); break;
-    case 'serie': s += rond() + hendel(72, 1, 1) + hendel(108, 1, -1); break;
+    case 'tweepolig': s += rond() + hendel(67, 2, 1); break;
+    case 'wissel': s += rond() + hendel(68, 1, 1) + hendel(248, 1, -1); break;
+    case 'kruis': s += rond() + hendel(68, 1, 1) + hendel(112, 1, -1) + hendel(248, 1, -1) + hendel(292, 1, 1); break;
+    case 'serie': s += rond() + hendel(70, 1, 1) + hendel(110, 1, -1); break;
     case 'dimmer': {
-      s += rond() + hendel(60, 0, 1);
-      const [ex, ey] = punt(cx, 0, 60, lang - 2);
-      s += pad(`M${r1(ex - 3)} ${r1(ey + 1.5)} L${r1(ex + 7)} ${r1(ey - 3.5)} L${r1(ex + 7)} ${r1(ey + 5)} Z`);
-      b = 24;
+      // Dimmer: de hendel door een driehoekje met de punt naar links.
+      s += rond() + hendel(69, 0, 1);
+      const [mx, my] = punt(cx, 0, 69, 3.6 + 6.5);
+      s += pad(`M${r1(mx - 4.8)} ${r1(my + 0.2)} L${r1(mx + 6.6)} ${r1(my - 2.9)} L${r1(mx + 6.6)} ${r1(my + 2.9)} Z`);
+      b = cx + 17;
       break;
     }
     case 'drukknop': s += lijn(0, 0, 3, 0) + cirkel(10, 0, 7) + cirkel(10, 0, 2.6); b = 18; break;
@@ -94,11 +100,11 @@ function schakelaar(item) {
       b = 22;
       break;
     case 'rolluik':
-      // Geen apart AREI-symbool: een omschakelaar met vergrendeling, aangeduid met pijltjes.
-      s += rond() + hendel(72, 1, 1) + hendel(108, 1, -1) + pad(`M${cx + 12} 2 l3 4 h-6 Z M${cx + 12} 12 l3 -4 h-6 Z`, 'v');
+      // Geen apart AREI-symbool: een omschakelaar, met pijltjes voor op en neer.
+      s += rond() + hendel(70, 1, 1) + hendel(110, 1, -1) + pad(`M${cx + 12} 2 l3 4 h-6 Z M${cx + 12} 12 l3 -4 h-6 Z`, 'v');
       b = cx + 16;
       break;
-    default: s += rond() + hendel(60, 1, 1);
+    default: s += rond() + hendel(67, 1, 1);
   }
   if (item.aantal > 1) s += tekst(b + 1, 11, `×${item.aantal}`, 'm');
   if (item.waterdicht) s += tekst(cx + 5, 12, 'h', 'b');
@@ -107,24 +113,25 @@ function schakelaar(item) {
 
 // ---------- G. Verlichting ----------
 
+/** Fluorescentieverlichting: een dikke lijn met dikke eindstreepjes. */
+const tl = (x) => lijn(x, -4, x, 4, 'l half') + lijn(x, 0, x + 24, 0, 'l half') + lijn(x + 24, -4, x + 24, 4, 'l half');
+
 function lichtpunt(item) {
   let s = '';
   let b = 20;
   switch (item.variant) {
-    case 'wand': s += lijn(0, 0, 12, 0) + kruis(12, 0, 6) + lijn(21, -9, 21, 9); b = 21; break;
+    case 'wand': s += lijn(0, 0, 12, 0) + kruis(12, 0, 6) + lijn(22.5, -12.5, 22.5, 12.5); b = 23; break;
     case 'spot': {
       // Projector: lichtpunt in een cirkel met een boog erachter.
-      const [ax, ay] = punt(15, 0, 125, 9);
-      const [bx, by] = punt(15, 0, 235, 9);
-      s += lijn(0, 0, 6, 0) + cirkel(15, 0, 6) + kruis(15, 0, 4.2) + pad(`M${r1(ax)} ${r1(ay)} A9 9 0 0 0 ${r1(bx)} ${r1(by)}`);
+      s += lijn(0, 0, 5.4, 0) + cirkel(15, 0, 6) + kruis(15, 0, 4.2) + pad('M15 -9.6 A9.6 9.6 0 0 0 15 9.6');
       b = 21;
       break;
     }
-    case 'ledstrip': s += lijn(0, 0, 3, 0) + lijn(3, -5, 3, 5) + lijn(3, 0, 27, 0) + lijn(27, -5, 27, 5) + tekst(15, -7, 'LED', 'm', 'middle'); b = 27; break;
-    case 'tl': s += lijn(0, 0, 3, 0) + lijn(3, -5, 3, 5) + lijn(3, 0, 27, 0) + lijn(27, -5, 27, 5); b = 27; break;
-    case 'buiten': s += lijn(0, 0, 14, 0) + kruis(14, 0, 6) + tekst(21, -3, 'h', 'b'); b = 27; break;
-    case 'nood': s += lijn(0, 0, 4, 0) + rechthoek(4, -9, 18, 18) + kruis(13, 0, 6) + stip(13, 0, 2); b = 22; break;
-    default: s += lijn(0, 0, 14, 0) + kruis(14, 0, 6);
+    case 'ledstrip': s += lijn(0, 0, 3, 0) + tl(3) + tekst(15, -6.5, 'LED', 'm', 'middle'); b = 27; break;
+    case 'tl': s += lijn(0, 0, 3, 0) + tl(3); b = 27; break;
+    case 'buiten': s += lijn(0, 0, 20, 0) + kruis(20, 0, 6) + tekst(27, -3, 'h', 'b'); b = 33; break;
+    case 'nood': s += lijn(0, 0, 4, 0) + rechthoek(4, -9, 18, 18, 'l dik') + kruis(13, 0, 6) + stip(13, 0, 1.8); b = 22; break;
+    default: s += lijn(0, 0, 20, 0) + kruis(20, 0, 6); b = 26;
   }
   if (item.aantal > 1) s += tekst(b + 1, -6, `×${item.aantal}`, 'm');
   return { svg: s, b: b + (item.aantal > 1 ? 8 : 0) };
@@ -132,12 +139,17 @@ function lichtpunt(item) {
 
 // ---------- G. Gebruikstoestellen ----------
 
+/** Sneeuwvlok: zes armen met een V aan elk uiteinde. */
 function sneeuwvlok(cx, cy, r) {
-  return [90, 30, 150].map((h) => {
-    const [x1, y1] = punt(cx, cy, h, r);
-    const [x2, y2] = punt(cx, cy, h + 180, r);
-    return lijn(x1, y1, x2, y2);
-  }).join('');
+  let s = '';
+  for (const h of [90, 30, 150, 270, 210, 330]) {
+    const [x2, y2] = punt(cx, cy, h, r);
+    const [vx, vy] = punt(cx, cy, h, r * 0.62);
+    const [ax, ay] = punt(vx, vy, h + 40, r * 0.42);
+    const [bx, by] = punt(vx, vy, h - 40, r * 0.42);
+    s += lijn(cx, cy, x2, y2, 'l half') + lijn(vx, vy, ax, ay) + lijn(vx, vy, bx, by);
+  }
+  return s;
 }
 
 /** Het symbool van een toestel, met de leiding van links als metLeiding. */
@@ -147,15 +159,15 @@ function toestelSymbool(variant, x0, metLeiding) {
   let b = x + 18;
   const doos = () => rechthoek(x, -9, 18, 18);
   switch (variant) {
-    case 'kookplaat': s += doos() + stip(x + 5, -4) + stip(x + 13, -4) + stip(x + 13, 4); break;
+    case 'kookplaat': s += doos() + stip(x + 4.7, -4.5, 2.3) + stip(x + 13.3, -4.5, 2.3) + stip(x + 13.3, 4.3, 2.3); break;
     case 'microgolf':
-      s += doos() + pad(`M${x + 4} -2.5 q2.5 -3 5 0 t5 0`) + pad(`M${x + 4} 3 q2.5 -3 5 0 t5 0`);
+      s += doos() + [-4.5, 0, 4.5].map((dy) => pad(`M${x + 5} ${dy + 1} q2 -3 4 0 t4 0`)).join('');
       break;
-    case 'oven': s += doos() + lijn(x, -5, x + 18, -5) + stip(x + 9, 2.5, 1.9); break;
-    case 'wasmachine': s += doos() + cirkel(x + 9, 0, 5.5) + stip(x + 9, 0, 1.8); break;
-    case 'droogkast': s += doos() + cirkel(x + 6.5, -4.5, 2.3) + cirkel(x + 11.5, -4.5, 2.3) + stip(x + 9, 3.5, 1.8); break;
-    case 'vaatwasser': s += doos() + lijn(x, -9, x + 18, 9) + lijn(x, 9, x + 18, -9) + cirkel(x + 9, 0, 3.2, 'l w'); break;
-    case 'koelkast': s += doos() + sneeuwvlok(x + 9, 0, 6); break;
+    case 'oven': s += doos() + lijn(x, -6.3, x + 18, -6.3) + stip(x + 9, 2.7, 2.3); break;
+    case 'wasmachine': s += doos() + `<ellipse class="l" cx="${x + 9}" cy="0" rx="6.4" ry="7"/>` + stip(x + 9, 0, 2.3); break;
+    case 'droogkast': s += doos() + cirkel(x + 6.8, -3.8, 2.2) + cirkel(x + 11.2, -3.8, 2.2) + stip(x + 9, 3.8, 2.2); break;
+    case 'vaatwasser': s += doos() + lijn(x, -9, x + 18, 9) + lijn(x, 9, x + 18, -9) + cirkel(x + 9, 0, 3.5, 'l w'); break;
+    case 'koelkast': s += doos() + sneeuwvlok(x + 9, 0, 6.5); break;
     case 'diepvries':
       s += rechthoek(x, -8, 30, 16) + sneeuwvlok(x + 6, 0, 4) + sneeuwvlok(x + 15, 0, 4) + sneeuwvlok(x + 24, 0, 4);
       b = x + 30;
@@ -164,7 +176,7 @@ function toestelSymbool(variant, x0, metLeiding) {
     case 'ventilatie': s += doos() + cirkel(x + 5.5, 0, 3) + cirkel(x + 12.5, 0, 3); break;
     case 'boiler': {
       s += cirkel(x + 9, 0, 9);
-      for (const dx of [-6, -3, 0, 3, 6]) {
+      for (const dx of [-6.75, -4.5, -2.25, 0, 2.25, 4.5, 6.75]) {
         const h = Math.sqrt(81 - dx * dx);
         s += lijn(x + 9 + dx, -h, x + 9 + dx, h);
       }
@@ -182,7 +194,8 @@ function toestelSymbool(variant, x0, metLeiding) {
       b = x + 17;
       break;
     case 'omvormer':
-      s += doos() + lijn(x, 9, x + 18, -9) + lijn(x + 2.5, -6, x + 8, -6) + lijn(x + 2.5, -4, x + 8, -4)
+      // Omvormer DC -> AC: gelijkstroom (volle en stippellijn) linksboven, wisselstroom rechtsonder.
+      s += doos() + lijn(x, 9, x + 18, -9) + lijn(x + 2.5, -6, x + 8, -6) + lijn(x + 2.5, -4, x + 8, -4, 'l stippel')
         + pad(`M${x + 10} 5 q1.5 -2.5 3 0 t3 0`);
       break;
     case 'rolluikmotor':

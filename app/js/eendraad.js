@@ -137,7 +137,9 @@ export function tekenEendraad(project, { selectie = null } = {}) {
 /** De stijl van de tekening, ook voor afdrukken. */
 export const SCHEMA_STIJL = `
 .l{fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
-.l.dik{stroke-width:3}
+.l.dik{stroke-width:2.6}
+.l.half{stroke-width:2}
+.l.stippel{stroke-dasharray:1.6 1.2;stroke-linecap:butt}
 .l.bus{stroke-width:2.6}
 .l.blok{stroke-width:3.4;stroke-linecap:butt}
 .l.w{fill:#fff}

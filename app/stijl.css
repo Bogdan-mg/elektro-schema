@@ -145,7 +145,9 @@ main { flex: 1; min-height: 0; display: flex; }
 .icoon .v, svg .v { fill: currentColor; stroke: none; }
 .icoon .b { font: 600 10px "Segoe UI", Arial, sans-serif; fill: currentColor; }
 .icoon .m { font: 600 7px "Segoe UI", Arial, sans-serif; fill: currentColor; }
-.icoon .l.dik { stroke-width: 3; }
+.icoon .l.dik { stroke-width: 2.6; }
+svg .l.half { stroke-width: 2; }
+svg .l.stippel { stroke-dasharray: 1.6 1.2; stroke-linecap: butt; }
 svg .l.blok { stroke-width: 3.4; stroke-linecap: butt; }
 svg .l.w { fill: #fff; }
 
