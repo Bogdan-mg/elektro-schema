@@ -3,7 +3,7 @@ import { nieuwPlan, nieuwId, nieuwElement, nieuwItem, nieuweKring, voegKnoopToe,
 import { itemNaam, PALET } from './catalogus.js';
 import {
   tekenPlan, onderdelen, PLAN_STIJL, segmentSvg, afstand, lengteTekst, ketenLengte, muurKeten, ELEMENTEN,
-  kleefAanMuur, kleeftAanMuur, draaiStap, plaatsingSvg, symboolBreedte, handvatten, omhulsel, verschuifElement, draaiPunt, deelVan, rechthoekVan,
+  kleefAanMuur, kleeftAanMuur, draaiStap, draaiRondSteel, plaatsingSvg, symboolBreedte, handvatten, omhulsel, verschuifElement, draaiPunt, deelVan, rechthoekVan,
 } from './plan.js';
 import { SCHEMA_STIJL } from './eendraad.js';
 import { icoon, esc } from './symbolen.js';
@@ -346,7 +346,13 @@ export function draaiGekozen(klein = false) {
     for (const k of keuze) {
       if (k.soort === 'item') {
         const pl = plan.plaatsingen[k.id];
-        if (pl) pl.rot = ((pl.rot || 0) + (klein ? 15 : 90)) % 360;
+        if (!pl) continue;
+        const delen = onderdelen(p);
+        const item = deelVan(delen, k.id, pl)?.item;
+        const stap = draaiStap(item, klein);
+        // Een contactdoos draait rond het punt waar ze de muur raakt, zodat ze aan dezelfde kant van de muur blijft.
+        if (kleeftAanMuur(item)) Object.assign(pl, draaiRondSteel(pl, { item, code: '' }, plan.symbool || 1, stap));
+        else pl.rot = ((pl.rot || 0) + stap) % 360;
       } else if (k.soort === 'el') {
         const m = plan.muren.find((x, i) => (x.id ?? i) === k.id);
         if (m?.soort === 'deur') m.spiegel = !m.spiegel;

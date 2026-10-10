@@ -419,6 +419,22 @@ export const symboolBreedte = (deel) => (deel.item === 'bord' ? bordSymbool() : 
 export const KLEEFT_AAN_MUUR = new Set(['stopcontact', 'communicatie', 'aansluitpunt', 'geluidsbron']);
 export const kleeftAanMuur = (item) => Boolean(item && item !== 'bord' && KLEEFT_AAN_MUUR.has(item.soort));
 
+/** Het punt waar een muurkleefsymbool de muur raakt: het uiteinde van zijn steeltje. */
+export function steelPunt(pl, deel, s) {
+  const b = symboolBreedte(deel);
+  const r = ((pl.rot || 0) * Math.PI) / 180;
+  return { x: pl.x - Math.cos(r) * (b / 2) * s, y: pl.y - Math.sin(r) * (b / 2) * s };
+}
+
+/** Een symbool draaien rond het punt waar het de muur raakt, zodat het aan dezelfde kant van de muur blijft. */
+export function draaiRondSteel(pl, deel, s, graden) {
+  const b = symboolBreedte(deel);
+  const steel = steelPunt(pl, deel, s);
+  const rot = (((pl.rot || 0) + graden) % 360 + 360) % 360;
+  const r = (rot * Math.PI) / 180;
+  return { rot, x: Math.round((steel.x + Math.cos(r) * (b / 2) * s) * 10) / 10, y: Math.round((steel.y + Math.sin(r) * (b / 2) * s) * 10) / 10 };
+}
+
 /** De stap van een draaiing met de rechtermuisknop: 90°, met Alt 22,5° en bij een bewegingsdetector 45°. */
 export const draaiStap = (item, alt = false) => (alt ? 22.5 : item?.soort === 'bewegingsdetector' || item?.soort === 'bewegingsdetectorActief' ? 45 : 90);
 

@@ -4,7 +4,7 @@ import {
   nieuwId, nieuwItem, nieuweKring, nieuwDifferentieel, codes, zoek, kastNamen, kringVanItem, wijsToeEen, maakLos, maakKringLeeg,
 } from './model.js';
 import { itemNaam, TOESTELLEN, AUTOMAAT_STROMEN, CURVES, SECTIES, komma } from './catalogus.js';
-import { tekenPlan, onderdelen, kleefAanMuur, kleeftAanMuur, draaiStap, symboolBreedte, plaatsingSvg } from './plan.js';
+import { tekenPlan, onderdelen, kleefAanMuur, kleeftAanMuur, draaiStap, draaiRondSteel, symboolBreedte, plaatsingSvg } from './plan.js';
 import { icoon, esc } from './symbolen.js';
 import { staat, wijzig, opWijziging } from './staat.js';
 import { Vlak } from './vlak.js';
@@ -111,7 +111,11 @@ function tekenPlanLaag() {
 function bepaalPlaats(punt, item, alt = false, rot = 0) {
   const plan = huidigPlan();
   const kleef = !alt && plan.kleefMuur !== false && kleeftAanMuur(item) ? kleefAanMuur(plan, punt, symboolBreedte({ item, code: '' })) : null;
-  if (kleef) return { x: kleef.x, y: kleef.y, rot: kleef.rot };
+  if (kleef) {
+    // Het steeltje blijft op het punt van de muur; de draaiing die je koos komt erbovenop.
+    const w = draaiRondSteel({ x: kleef.x, y: kleef.y, rot: kleef.rot }, { item, code: '' }, plan.symbool || 1, rot);
+    return { x: w.x, y: w.y, rot: w.rot };
+  }
   const raster = !alt && plan.kleefGrid !== false ? 10 : 0;
   const v = (n) => (raster ? Math.round(n / raster) * raster : afger(n));
   return { x: v(punt.x), y: v(punt.y), rot };
@@ -139,7 +143,11 @@ function draaiGekozen(alt = false) {
   wijzig((p) => {
     for (const pl of p.plannen) {
       const x = pl.plaatsingen[gekozenId];
-      if (x) x.rot = (((x.rot || 0) + draaiStap(x.los ? x.item : kringVanItem(p, gekozenId)?.items.find((i) => i.id === gekozenId), alt)) % 360);
+      if (!x) continue;
+      const item = x.los ? x.item : kringVanItem(p, gekozenId)?.items.find((i) => i.id === gekozenId);
+      const stap = draaiStap(item, alt);
+      if (kleeftAanMuur(item)) Object.assign(x, draaiRondSteel(x, { item, code: '' }, pl.symbool || 1, stap));
+      else x.rot = (((x.rot || 0) + stap) % 360);
     }
   });
 }
