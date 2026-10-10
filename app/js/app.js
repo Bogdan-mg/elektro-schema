@@ -3,6 +3,7 @@ import { nieuwProject, voorbeeldProject, leesProject, teBewaren, EXTENSIE } from
 import { staat, herteken, laad, wijzig, ongedaan, opnieuw, opWijziging, opGewijzigd, zetGewijzigd } from './staat.js';
 import * as editor from './editor.js';
 import * as situatie from './situatie.js';
+import { startDocument } from './document.js';
 import { startLijsten, csvTekst } from './lijsten.js';
 import { bouwAfdruk, ruimAfdrukOp } from './afdruk.js';
 import { vraag, bevestig, melding } from './dialoog.js';
@@ -88,10 +89,9 @@ async function nieuw() {
   if (!await magVerder()) return;
   await wisHerstel();
   const p = nieuwProject();
-  p.info.controle = leesInstellingen().controle || '';
+  p.document.controle.naam = leesInstellingen().controle || '';
   openProject(p, null);
-  naarTab('eendraad');
-  projectgegevens();
+  naarTab('document');
 }
 
 async function openTekst(tekst, pad) {
@@ -297,7 +297,8 @@ const acties = {
   openen,
   opslaan: () => opslaan(false),
   opslaanAls: () => opslaan(true),
-  project: projectgegevens,
+  project: () => naarTab('document'),
+  afsluiten: async () => { if (!await magVerder()) return; if (desktop) desktop.sluit(); else window.close(); },
   afdrukken,
   csv,
   xlsx,
@@ -392,13 +393,14 @@ function startBackups() {
 // ---------- Opstarten ----------
 
 async function start() {
+  startDocument();
   editor.startEditor();
   situatie.startSituatie();
   startLijsten({ naarTab });
 
   for (const b of document.querySelectorAll('[data-tab]')) b.addEventListener('click', () => naarTab(b.dataset.tab));
   for (const b of document.querySelectorAll('[data-actie]')) b.addEventListener('click', () => acties[b.dataset.actie]());
-  $('#projectnaam').addEventListener('click', projectgegevens);
+  $('#projectnaam').addEventListener('click', () => naarTab('document'));
   $('#open-bestand').addEventListener('change', async (e) => {
     const bestand = e.target.files?.[0];
     e.target.value = '';

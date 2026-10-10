@@ -6,6 +6,7 @@ import { materiaalTabel } from './lijsten.js';
 import { alleKnopen, codes } from './model.js';
 import { controleer } from './regels.js';
 import { staat } from './staat.js';
+import { adresTekst } from './model.js';
 import { NETTEN } from './catalogus.js';
 import { leesInstellingen, ikTekst } from './instellingen.js';
 
@@ -27,17 +28,23 @@ function titelhoek(blad, nr, totaal, opties) {
       ${cel('Project', info.titel, 'breed')}
       <div class="cel soort"><span>${esc(naam)}</span><b>${esc(blad.subtitel || bladTekst)}</b></div></div>`;
   }
-  const installateur = info.installateurEigen === false
-    ? info.uitvoerder || info.installateur
-    : ikTekst(inst) || info.installateur;
+  const doc = staat.project.document;
+  const inst2 = doc.installateur;
+  const eigen = [inst2.naam, adresTekst(inst2), inst2.tel || inst2.gsm, inst2.btw && `BTW ${inst2.btw}`].filter(Boolean).join(', ');
+  const installateur = eigen || ikTekst(inst) || info.installateur;
+  const klant = [doc.klant.naam, adresTekst(doc.klant)].filter(Boolean).join(', ') || info.klant;
+  const plaats = (doc.plaats.gelijk === false ? adresTekst(doc.plaats) : adresTekst(doc.klant)) || info.werfAdres?.trim() || info.adres;
+  const controle = [doc.controle.naam, adresTekst(doc.controle)].filter(Boolean).join(', ') || info.controle?.trim().split(/\r?\n/)[0];
+  const logo = inst2.logo || inst.logo;
+  const logoModus = inst2.logo ? inst2.logoModus : inst.logo ? 'naast' : 'geen';
   const stroom = NETTEN[staat.project.aansluiting.net]?.kort || '';
   const delen = [];
-  if (inst.logo) delen.push({ w: '24mm', html: `<div class="cel logo"><img src="${esc(inst.logo)}" alt=""></div>` });
+  if (logo && logoModus !== 'geen') delen.push({ w: logoModus === 'enkel' ? '40mm' : '24mm', html: `<div class="cel logo"><img src="${esc(logo)}" alt=""></div>` });
   delen.push({ w: '2fr', html: cel('Project', info.titel, 'breed') });
-  delen.push({ w: '1.3fr', html: cel('Klant', info.klant) });
-  delen.push({ w: '2fr', html: cel('Plaats van de elektrische installatie', info.werfAdres?.trim() || info.adres, 'breed') });
-  delen.push({ w: '1.6fr', html: cel('Installateur', installateur) });
-  if (info.controle?.trim()) delen.push({ w: '1.5fr', html: cel('Controleorganisme', info.controle.trim().split(/\r?\n/)[0]) });
+  delen.push({ w: '1.3fr', html: cel('Klant', klant) });
+  delen.push({ w: '2fr', html: cel('Plaats van de elektrische installatie', plaats, 'breed') });
+  if (logoModus !== 'enkel') delen.push({ w: '1.6fr', html: cel('Installateur', installateur) });
+  if (controle) delen.push({ w: '1.5fr', html: cel('Controleorganisme', controle) });
   if (opties.toonDatum !== false) delen.push({ w: '0.9fr', html: cel('Datum', info.datum ? info.datum.split('-').reverse().join('/') : '') });
   if (opties.toonStroom !== false && stroom) delen.push({ w: '1fr', html: cel('Stroom', stroom) });
   if (opties.tekst?.trim()) delen.push({ w: '1.4fr', html: cel('Opmerking', opties.tekst.trim()) });

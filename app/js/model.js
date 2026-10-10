@@ -38,6 +38,21 @@ export function nieuwPlan(naam = 'Gelijkvloers') {
 /** Een element van het grondplan (muur, deur, raam, trap, vlak, …) met een eigen id. */
 export const nieuwElement = (soort, waarden = {}) => ({ id: nieuwId(), soort, ...waarden });
 
+const leegAdres = () => ({ naam: '', btw: '', straat: '', nummer: '', bus: '', postcode: '', gemeente: '', land: 'België', tel: '', gsm: '', email: '' });
+
+/** De gegevens van het tabblad Document: klant, plaats van de installatie, installateur en controleorganisme. */
+export function nieuwDocument() {
+  return {
+    klant: leegAdres(),
+    plaats: { ean: '', gelijk: true, straat: '', nummer: '', bus: '', postcode: '', gemeente: '', land: 'België' },
+    installateur: { ...leegAdres(), logo: '', logoModus: 'geen' },
+    controle: leegAdres(),
+  };
+}
+
+/** Een adres op één regel: "Kerkstraat 1 bus 2, 2000 Antwerpen". */
+export const adresTekst = (a) => [[a.straat, a.nummer].filter(Boolean).join(' ') + (a.bus ? ` bus ${a.bus}` : ''), [a.postcode, a.gemeente].filter(Boolean).join(' ')].map((x) => x.trim()).filter(Boolean).join(', ');
+
 export function nieuwProject() {
   return {
     versie: VERSIE,
@@ -46,6 +61,7 @@ export function nieuwProject() {
       werfAdres: '', installateurEigen: true, uitvoerder: '', controle: '',
     },
     opties: { losseSymbolen: true },
+    document: nieuwDocument(),
     aansluiting: { net: '1F230', hoofdzekering: 40, aardingsweerstand: 0, kabelNet: '', kabelBord: '' },
     hoofd: { beveiliging: 'differentieel', gevoeligheid: 300, type: 'A', stroom: 40, polen: 2, curve: 'C', onderbreking: 0, teller: true },
     kinderen: [],
@@ -387,6 +403,26 @@ export function koppelLos(project, itemId, kringId) {
   return false;
 }
 
+/** Het document van een geopend project; oudere projecten nemen hun gegevens uit de losse velden over. */
+function leesDocument(data) {
+  const basis = nieuwDocument();
+  const d = data.document || {};
+  const doc = {
+    klant: { ...basis.klant, ...d.klant },
+    plaats: { ...basis.plaats, ...d.plaats },
+    installateur: { ...basis.installateur, ...d.installateur },
+    controle: { ...basis.controle, ...d.controle },
+  };
+  if (!data.document && data.info) {
+    doc.klant.naam = data.info.klant || '';
+    doc.klant.straat = data.info.adres || '';
+    if (data.info.werfAdres) { doc.plaats.gelijk = false; doc.plaats.straat = data.info.werfAdres; }
+    doc.installateur.naam = data.info.uitvoerder || data.info.installateur || '';
+    doc.controle.naam = data.info.controle || '';
+  }
+  return doc;
+}
+
 /** Een geopend bestand nakijken en aanvullen, zodat oudere of onvolledige bestanden ook werken. */
 export function leesProject(tekst) {
   let data;
@@ -408,6 +444,7 @@ export function leesProject(tekst) {
     hoofd: { ...basis.hoofd, ...data.hoofd },
     materiaal: { ...basis.materiaal, ...data.materiaal },
     opties: { ...basis.opties, ...data.opties },
+    document: leesDocument(data),
     afbeeldingen: data.afbeeldingen || {},
     versie: VERSIE,
   };

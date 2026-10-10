@@ -15,6 +15,7 @@
     <button id="projectnaam" class="projectnaam" title="Projectgegevens">Nieuw project</button>
     <span id="opgeslagen" class="opgeslagen"></span>
     <nav class="tabs" aria-label="Onderdelen">
+      <button data-tab="document">Document</button>
       <button data-tab="eendraad" class="aan">Ééndraadschema</button>
       <button data-tab="situatie">Situatieschema</button>
       <button data-tab="materiaal">Materiaallijst</button>
@@ -32,6 +33,8 @@
   </header>
 
   <main>
+    <section id="tab-document" class="tab pagina" hidden></section>
+
     <section id="tab-eendraad" class="tab drie">
       <aside class="paneel">
         <div class="paneel-kop">
