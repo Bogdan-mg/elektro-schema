@@ -80,6 +80,10 @@
             <button data-gereedschap="meet" title="Een afstand meten en laten staan">Meetlijn</button>
             <button data-gereedschap="tekst" title="Tekst plaatsen">Tekst</button>
             <button data-gereedschap="afbeelding" title="Een afbeelding op het plan zetten (of sleep een bestand op het plan)">Afbeelding</button>
+            <button data-gereedschap="verbind" title="Verbind een schakelaar met de lamp(en) die hij bedient: klik de schakelaar en daarna de lampen">Verbinden</button>
+            <button data-gereedschap="kring" title="Kies een kring (zekering) en klik de symbolen die erop staan">Kring-modus</button>
+            <select id="plan-kring-kies" title="De kring voor de kring-modus"></select>
+            <button id="plan-toewijs" title="De gekozen symbolen aan een kring (zekering) toewijzen">Aan kring toewijzen…</button>
             <button data-gereedschap="los" id="plan-los" title="Symbolen plaatsen die nog niet op het ééndraadschema staan (Ctrl+L)" hidden>Losse symbolen</button>
           </div>
         </div>
@@ -109,6 +113,7 @@
           <span id="plan-schaal-info" class="schaal-info"></span>
         </div>
         <div class="werkbalk">
+          <label class="schuif vink-rij" title="Muren en lijnen komen in rechte hoeken (0° en 90°). Alt tekent vrij."><input type="checkbox" id="plan-recht"> Rechte hoeken</label>
           <label class="schuif vink-rij"><input type="checkbox" id="plan-grid"> Toon grid</label>
           <label class="schuif vink-rij" title="Alles komt op de kruispunten van het raster"><input type="checkbox" id="plan-kleefgrid"> Kleef aan grid</label>
           <label class="schuif vink-rij" title="Muren springen naar andere muren en symbolen kleven tegen de muur. Alt zet het even uit."><input type="checkbox" id="plan-kleef"> Kleef aan muren</label>

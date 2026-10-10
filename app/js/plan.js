@@ -421,7 +421,7 @@ export function kleefAanMuur(plan, punt, breedte) {
   const s = plan.symbool || 1;
   const dikte = Math.max(4, 6 * s);
   const afstandTotMidden = dikte / 2 + (breedte * s) / 2; // van de muurlijn tot het midden van het symbool
-  const bereik = afstandTotMidden + 18 * s;
+  const bereik = afstandTotMidden + 30 * s;
   let beste = null;
   plan.muren.forEach((m, i) => {
     if ((m.soort || 'muur') !== 'muur') return;
@@ -538,7 +538,7 @@ export function plaatsingSvg(deel, pl, s, gekozen = false, id = '', { plan = nul
     uit += `<text class="${lb.klasse}" x="${r1(k.x - pl.x)}" y="${r1(k.y - pl.y)}" text-anchor="${k.anker}" style="font-size:${r1(8.6 * s)}px">${esc(lb.t)}</text>`;
     eigen.push(k);
   }
-  return `<g class="geplaatst${gekozen ? ' gekozen' : ''}" data-plaats="${esc(id)}" transform="translate(${pl.x} ${pl.y})"${kleur}>`
+  return `<g class="geplaatst${pl.los ? ' los' : ''}${gekozen ? ' gekozen' : ''}" data-plaats="${esc(id)}" transform="translate(${pl.x} ${pl.y})"${kleur}>`
     + `<title>${esc(titel)}</title>`
     + `<g transform="rotate(${pl.rot || 0}) scale(${s})">`
     + `<rect class="plaats-doel" x="${-b / 2 - 5}" y="${boven - 4}" width="${b + 10}" height="${onder - boven + 8}" rx="4"/>`
@@ -597,6 +597,16 @@ export function tekenPlan(project, plan, { selectie = [], raster = false, delen 
   }
 
   uit.push(...maten);
+
+  // Schakelaars met de lampen die ze bedienen.
+  const nu = new Set(Object.keys(plan.plaatsingen));
+  for (const v of plan.verbindingen || []) {
+    if (!nu.has(v.van) || !nu.has(v.naar)) continue;
+    const a = plan.plaatsingen[v.van];
+    const b = plan.plaatsingen[v.naar];
+    const g = gekozen('verb', v.id);
+    uit.push(`<line class="verbinding${g ? ' gekozen' : ''}" data-verb="${esc(v.id)}" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"/>`);
+  }
 
   const geplaatst = Object.entries(plan.plaatsingen).map(([id, pl]) => [id, pl, deelVan(delen, id, pl)]).filter(([, , d]) => d);
   for (const [id, pl, deel] of geplaatst) {
@@ -665,6 +675,9 @@ export const PLAN_STIJL = `
 .geplaatst .plaats-doel{fill:rgba(255,255,255,.75);stroke:none}
 .geplaatst.gekozen .plaats-doel{fill:rgba(37,99,235,.16);stroke:#2563eb;stroke-width:1}
 .geplaatst.gekozen{color:#1d4ed8}
+.geplaatst.los{color:var(--kleur,#64748b)}
+.verbinding{stroke:#2563eb;stroke-width:1.6;stroke-dasharray:6 4;opacity:.8;cursor:pointer}
+.verbinding.gekozen{stroke:#f59e0b;stroke-width:2.4}
 .plan-code{paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
 .plan-code.adres{font-style:italic}
 `;

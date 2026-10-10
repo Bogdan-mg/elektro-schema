@@ -166,6 +166,23 @@ test('oudere projecten krijgen de nieuwe plan-opties', () => {
   const p = leesProject(JSON.stringify(oud));
   assert.equal(p.plannen[0].beletteren, true);
   assert.equal(p.plannen[0].toonGrid, true);
-  assert.equal(p.opties.losseSymbolen, false);
+  assert.equal(p.opties.losseSymbolen, true);
   assert.ok(p.plannen[0].muren.every((m) => m.id));
+});
+
+test('losse symbolen toewijzen: een schakelaar komt met zijn lampen op één rij', async () => {
+  const { wijsToe } = await import('../app/js/model.js');
+  const p = nieuwProject();
+  const k = nieuweKring();
+  p.kinderen.push(k);
+  const sch = nieuwItem('schakelaar');
+  const l1 = nieuwItem('lichtpunt');
+  const l2 = nieuwItem('lichtpunt');
+  const sc = nieuwItem('stopcontact');
+  const plan = p.plannen[0];
+  for (const it of [l1, sc, sch, l2]) plan.plaatsingen[it.id] = { x: 0, y: 0, rot: 0, los: true, item: it };
+  plan.verbindingen.push({ id: 'v1', van: sch.id, naar: l1.id }, { id: 'v2', van: sch.id, naar: l2.id });
+  assert.equal(wijsToe(p, [l1.id, sc.id, sch.id, l2.id], k.id), 4);
+  assert.deepEqual(k.items.map((i) => i.soort), ['schakelaar', 'lichtpunt', 'lichtpunt', 'stopcontact']);
+  assert.equal(losseSymbolen(p).length, 0);
 });

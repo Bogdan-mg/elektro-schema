@@ -311,6 +311,7 @@ body.afdrukken #afdruk { display: block; }
 .vlak-wrap .werkbalk .groep { flex-wrap: wrap; }
 .vlak-wrap .vlak { flex: 1; min-height: 0; }
 .werkbalk button[hidden] { display: none; }
+#plan-kring-kies { width: 190px; }
 dialog.dialoog.breed { width: min(900px, 94vw); }
 .paginarijen { display: grid; gap: 6px; margin: 8px 0; }
 .paginarij { display: grid; grid-template-columns: 22px 1.2fr 1.5fr 1fr auto auto auto auto; gap: 6px; align-items: center; }

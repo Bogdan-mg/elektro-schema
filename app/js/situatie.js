@@ -1,5 +1,5 @@
 // Het tabblad Situatieschema: plannen per verdieping, het grondplan tekenen, en de onderdelen op hun plaats zetten.
-import { nieuwPlan, nieuwId, nieuwElement, nieuwItem, alleKringen, codes } from './model.js';
+import { nieuwPlan, nieuwId, nieuwElement, nieuwItem, nieuweKring, voegKnoopToe, alleKringen, codes, wijsToe } from './model.js';
 import { itemNaam, PALET } from './catalogus.js';
 import {
   tekenPlan, onderdelen, PLAN_STIJL, segmentSvg, afstand, lengteTekst, ketenLengte, muurKeten, ELEMENTEN,
@@ -25,6 +25,7 @@ let lopendeSom = 0; // samengetelde lengte van de muren die je in één keer aan
 let nieuweAfb = null; // { afb, verhouding } voor het gereedschap "afbeelding"
 let achtergrondSleutel = null;
 let klembord = null;
+let verbindVan = null; // de schakelaar waarvan je lampen aan het verbinden bent
 let plakTeller = 0;
 
 /** Hoeveel klikken elk gereedschap nodig heeft. */
@@ -177,6 +178,8 @@ function tekenVlak() {
   $('#plan-maten').checked = plan.alleMaten === true;
   $('#plan-kleef').checked = plan.kleefMuur !== false;
   $('#plan-kleefgrid').checked = plan.kleefGrid === true;
+  $('#plan-recht').checked = plan.rechteHoeken !== false;
+  vulKringKeuze();
   $('#plan-grid').checked = plan.toonGrid !== false;
   $('#plan-beletter').checked = plan.beletteren !== false;
   $('#plan-nummer').checked = plan.nummeren !== false;
@@ -218,8 +221,12 @@ function tekenStatus() {
     t = `Klik op het plan om ${d?.item === 'bord' ? 'het verdeelbord' : `${d?.code} ${itemNaam(d.item)}`} te plaatsen: het kleeft aan een muur in de buurt (Alt = vrij) · rechtsklik draait · Esc om te stoppen`;
   } else if (gereedschap === 'los') {
     t = 'Losse symbolen: kies links een symbool en klik op het plan · rechtsklik draait · Esc om te stoppen';
+  } else if (gereedschap === 'verbind') {
+    t = verbindVan ? 'Klik nu de lampen die deze schakelaar bedient (nogmaals klikken haalt de verbinding weg) · Esc stopt' : 'Verbinden: klik eerst een schakelaar (of drukknop) en daarna de lampen die hij bedient';
+  } else if (gereedschap === 'kring') {
+    t = 'Kring-modus: kies een kring (zekering) in de lijst en klik de symbolen die erop staan: stopcontacten, lampen, schakelaars · Esc stopt';
   } else if (STATUS[gereedschap]) {
-    t = `${STATUS[gereedschap]} · Ctrl = recht, Alt = vrij · Esc stopt`;
+    t = `${STATUS[gereedschap]} · Alt = vrij (anders recht) · Esc stopt`;
   } else if (gereedschap === 'schaal') {
     t = 'Schaal instellen: klik twee punten op het plan waarvan je de afstand kent (bv. de breedte van een deur of een muur) · Esc om te stoppen';
   } else if (gereedschap === 'tekst') {
@@ -251,6 +258,7 @@ function gekozenLengte() {
 
 function zetGereedschap(g) {
   gereedschap = g;
+  verbindVan = null;
   plaatsen = null;
   punten = [];
   tekenSpiegel = false;
@@ -321,6 +329,7 @@ export function verwijderGekozen() {
     for (const k of keuze) {
       if (k.soort === 'item') delete plan.plaatsingen[k.id];
       if (k.soort === 'tekst') plan.teksten = plan.teksten.filter((t) => t.id !== k.id);
+      if (k.soort === 'verb') plan.verbindingen = (plan.verbindingen || []).filter((v) => v.id !== k.id);
       if (k.soort === 'el') plan.muren = plan.muren.filter((m, i) => (m.id ?? i) !== k.id || m.slot);
     }
   }, { paneel: false });
@@ -348,7 +357,11 @@ export function draaiGekozen(klein = false) {
 }
 
 export function annuleer() {
-  if (punten.length) {
+  if (verbindVan) {
+    verbindVan = null;
+    $('#situatie-svg .voorbeeld-laag').innerHTML = '';
+    tekenStatus();
+  } else if (punten.length) {
     punten = [];
     lopendeSom = 0;
     $('#situatie-svg .voorbeeld-laag').innerHTML = '';
@@ -372,7 +385,9 @@ function vastPunt(punt, { van = null, ctrl = false, alt = false } = {}) {
     x = Math.round(x / GRID) * GRID;
     y = Math.round(y / GRID) * GRID;
   }
-  if (van && ctrl) {
+  // Rechte hoeken: standaard recht (0° en 90°) tenzij Alt; zonder die instelling houdt Ctrl de lijn recht.
+  const recht = van && (plan.rechteHoeken !== false ? !alt : ctrl);
+  if (recht) {
     if (Math.abs(x - van.x) > Math.abs(y - van.y)) y = van.y; else x = van.x;
   }
   if (plan.kleefMuur !== false && !alt && !(plan.kleefGrid)) {
@@ -387,8 +402,10 @@ function vastPunt(punt, { van = null, ctrl = false, alt = false } = {}) {
         if (Math.abs(h.y - y) < marge) gelijkY = h.y;
       }
     }
-    if (gelijkX != null && !(van && ctrl)) x = gelijkX;
-    if (gelijkY != null && !(van && ctrl)) y = gelijkY;
+    if (gelijkX != null && !recht) x = gelijkX;
+    if (gelijkY != null && !recht) y = gelijkY;
+    if (gelijkX != null && recht && van && y === van.y) x = gelijkX;
+    if (gelijkY != null && recht && van && x === van.x) y = gelijkY;
   }
   return { x: Math.round(x), y: Math.round(y) };
 }
@@ -691,6 +708,67 @@ function pijl(dx, dy, e) {
       for (const s of o.symbolen) { s.pl.x += dx * stap; s.pl.y += dy * stap; }
     }
   }, { sleutel: 'pijl', paneel: false });
+}
+
+// ---------- Kringen en verbindingen ----------
+
+function vulKringKeuze() {
+  const sel = $('#plan-kring-kies');
+  const code = codes(staat.project);
+  const huidig = sel.value;
+  sel.innerHTML = alleKringen(staat.project).map(({ knoop }) => `<option value="${esc(knoop.id)}">${esc(code.get(knoop.id))} ${esc(knoop.naam || 'Kring')}</option>`).join('') || '<option value="">Nog geen kringen</option>';
+  if (huidig && [...sel.options].some((o) => o.value === huidig)) sel.value = huidig;
+}
+
+/** Een kring (zekering) kiezen, of een nieuwe maken. Geeft het id van de kring of null. */
+async function kiesKring() {
+  const code = codes(staat.project);
+  const kringen = alleKringen(staat.project).map(({ knoop }) => [knoop.id, `${code.get(knoop.id)} ${knoop.naam || 'Kring'}`]);
+  const { knop, waarden } = await vraag({
+    titel: 'Aan welke kring (zekering)?',
+    tekst: 'De gekozen symbolen komen in het ééndraadschema in deze kring. Een schakelaar komt met zijn verbonden lampen op één rij.',
+    velden: [
+      { naam: 'kring', label: 'Kring', type: 'select', waarde: kringen[0]?.[0] || 'nieuw', opties: [...kringen, ['nieuw', '+ Nieuwe kring']] },
+      { naam: 'naam', label: 'Naam van een nieuwe kring', waarde: '' },
+    ],
+  });
+  if (knop !== 'ok') return null;
+  if (waarden.kring !== 'nieuw') return waarden.kring;
+  const nieuw = nieuweKring({ naam: waarden.naam.trim() });
+  wijzig((p) => voegKnoopToe(p, null, nieuw), { paneel: false });
+  return nieuw.id;
+}
+
+/** De losse symbolen die gekozen zijn aan een kring toewijzen. */
+async function toewijzen(kringId = null) {
+  const plan = huidigPlan();
+  const ids = staat.planKeuze.filter((k) => k.soort === 'item' && plan.plaatsingen[k.id]?.los).map((k) => k.id);
+  if (!ids.length) { melding('Kies eerst losse symbolen op het plan (sleep een kader om er meerdere te kiezen).'); return; }
+  const kring = kringId || await kiesKring();
+  if (!kring) return;
+  const n = wijzig((p) => wijsToe(p, ids, kring), { paneel: true });
+  melding(`${n} symbool${n === 1 ? '' : 'en'} aan de kring toegewezen.`);
+}
+
+/** Een verbinding tussen een schakelaar en een lamp aanmaken of weghalen. */
+function verbind(id) {
+  const plan = huidigPlan();
+  const x = plan.plaatsingen[id];
+  const soort = (i) => { const pl = plan.plaatsingen[i]; return pl?.los ? pl.item?.soort : onderdelen(staat.project).get(i)?.item?.soort; };
+  if (!x) return;
+  if (!verbindVan || ['schakelaar', 'drukknop'].includes(soort(id))) {
+    if (!['schakelaar', 'drukknop'].includes(soort(id))) { melding('Klik eerst een schakelaar of drukknop.'); return; }
+    verbindVan = id;
+    $('#plan-status').textContent = 'Klik nu de lampen die deze schakelaar bedient · Esc stopt';
+    return;
+  }
+  wijzig((p) => {
+    const pl = huidigPlan(p);
+    pl.verbindingen = pl.verbindingen || [];
+    const bestaand = pl.verbindingen.findIndex((v) => v.van === verbindVan && v.naar === id);
+    if (bestaand >= 0) pl.verbindingen.splice(bestaand, 1);
+    else pl.verbindingen.push({ id: nieuwId(), van: verbindVan, naar: id });
+  }, { paneel: false });
 }
 
 // ---------- Zoeken ----------
@@ -1097,6 +1175,8 @@ export function startSituatie() {
     if (plaats) return { soort: 'item', id: plaats.dataset.plaats };
     const tekstEl = e.target.closest('[data-tekst]');
     if (tekstEl) return { soort: 'tekst', id: tekstEl.dataset.tekst };
+    const verb = e.target.closest('[data-verb]');
+    if (verb) return { soort: 'verb', id: verb.dataset.verb };
     const el = e.target.closest('[data-muur]');
     if (el) return { soort: 'el', id: el.dataset.muur };
     return null;
@@ -1271,6 +1351,18 @@ export function startSituatie() {
       if (losKeuze != null) plaatsLos(punt, e.altKey);
       return;
     }
+    if (gereedschap === 'verbind' || gereedschap === 'kring') {
+      const d = doelVan(e);
+      if (d?.soort !== 'item') return;
+      if (gereedschap === 'verbind') { verbind(d.id); return; }
+      const kring = $('#plan-kring-kies').value;
+      if (!kring) { melding('Maak eerst een kring (zekering) of kies er een.'); return; }
+      const pl = huidigPlan().plaatsingen[d.id];
+      if (!pl?.los) { melding('Dit symbool hoort al bij een kring.'); return; }
+      zetKeuze([d]);
+      await toewijzen(kring);
+      return;
+    }
     if (TEKEN[gereedschap]) {
       if (gereedschap === 'afbeelding' && !nieuweAfb) return;
       tekenKlik(punt, e);
@@ -1332,6 +1424,12 @@ export function startSituatie() {
       if (!deel) return;
       const plek = vastePlaats(vlak.naarTekening(e.clientX, e.clientY), deel, e.altKey, plaatsRot);
       laag.innerHTML = `<g opacity=".55" pointer-events="none">${plaatsingSvg(deel, plek, huidigPlan().symbool || 1)}</g>`;
+      return;
+    }
+    if (gereedschap === 'verbind' && verbindVan) {
+      const a = huidigPlan().plaatsingen[verbindVan];
+      const q = vlak.naarTekening(e.clientX, e.clientY);
+      if (a) laag.innerHTML = `<line class="verbinding" pointer-events="none" x1="${a.x}" y1="${a.y}" x2="${q.x}" y2="${q.y}"/>`;
       return;
     }
     if (gereedschap === 'schaal' && punten.length) {
@@ -1435,6 +1533,7 @@ export function startSituatie() {
   $('#plan-aanpas').addEventListener('click', () => tekeningAanpassen());
   $('#plan-draai').addEventListener('click', () => draaiGekozen());
   $('#plan-verwijder').addEventListener('click', verwijderGekozen);
+  $('#plan-toewijs').addEventListener('click', () => toewijzen());
   $('#plan-kopieer').addEventListener('click', kopieer);
   $('#plan-plak').addEventListener('click', plak);
   $('#plan-spiegel-h').addEventListener('click', () => spiegel(true));
@@ -1468,6 +1567,7 @@ export function startSituatie() {
   vink('#plan-kleef', 'kleefMuur');
   vink('#plan-kleefgrid', 'kleefGrid');
   vink('#plan-grid', 'toonGrid');
+  vink('#plan-recht', 'rechteHoeken');
   vink('#plan-beletter', 'beletteren');
   vink('#plan-nummer', 'nummeren');
   $('#plan-transparant').addEventListener('change', (e) => window.dispatchEvent(new CustomEvent('actie', { detail: e.target.checked ? 'transparantAan' : 'transparantUit' })));
@@ -1492,7 +1592,7 @@ export function startSituatie() {
     if (plaatsen && plaatsen !== 'bord' && !onderdelen(p).has(plaatsen)) plaatsen = null;
     // Gekozen dingen die niet meer bestaan, uit de keuze halen.
     const plan = huidigPlan();
-    staat.planKeuze = staat.planKeuze.filter((k) => (k.soort === 'item' ? plan.plaatsingen[k.id] : k.soort === 'tekst' ? plan.teksten.some((t) => t.id === k.id) : plan.muren.some((m, i) => String(m.id ?? i) === String(k.id))));
+    staat.planKeuze = staat.planKeuze.filter((k) => (k.soort === 'item' ? plan.plaatsingen[k.id] : k.soort === 'tekst' ? plan.teksten.some((t) => t.id === k.id) : k.soort === 'verb' ? (plan.verbindingen || []).some((v) => v.id === k.id) : plan.muren.some((m, i) => String(m.id ?? i) === String(k.id))));
     tekenPlannen();
     tekenLijst();
     tekenVlak();

@@ -18,7 +18,9 @@ export function nieuwPlan(naam = 'Gelijkvloers') {
     symbool: 1.5, // grootte van de symbolen op dit plan
     schaal: 100, // tekeneenheden per meter; null = nog niet ingesteld
     kleefMuur: true, // symbolen tegen de dichtstbijzijnde muur zetten en muren aan elkaar laten kleven
-    kleefGrid: false, // alles op de kruispunten van het raster zetten
+    rechteHoeken: true, // lijnen en muren in rechte hoeken (0° en 90°); Alt tekent vrij
+    verbindingen: [], // { id, van, naar }: een schakelaar met de lamp(en) die hij bedient
+    kleefGrid: true, // alles op de kruispunten van het raster zetten
     toonGrid: true,
     alleMaten: false, // alle lengtes tonen; anders enkel tijdens het tekenen of van het gekozen lijnstuk
     beletteren: true, // de kringletter bij de symbolen
@@ -43,7 +45,7 @@ export function nieuwProject() {
       titel: 'Nieuw project', klant: '', adres: '', installateur: '', datum: vandaag(), opmerking: '',
       werfAdres: '', installateurEigen: true, uitvoerder: '', controle: '',
     },
-    opties: { losseSymbolen: false },
+    opties: { losseSymbolen: true },
     aansluiting: { net: '1F230', hoofdzekering: 40, aardingsweerstand: 0, kabelNet: '', kabelBord: '' },
     hoofd: { beveiliging: 'differentieel', gevoeligheid: 300, type: 'A', stroom: 40, polen: 2, curve: 'C', onderbreking: 0, teller: true },
     kinderen: [],
@@ -333,6 +335,40 @@ export function losseSymbolen(project) {
   return project.plannen.flatMap((pl) => Object.entries(pl.plaatsingen)
     .filter(([, x]) => x.los)
     .map(([id, x]) => ({ planId: pl.id, planNaam: pl.naam, id, item: x.item })));
+}
+
+/**
+ * Losse symbolen aan een kring toewijzen. Een schakelaar komt met zijn verbonden lampen als rij na elkaar in de kring,
+ * zodat ze in het ééndraadschema op één rij staan. Geeft het aantal toegewezen onderdelen terug.
+ */
+export function wijsToe(project, ids, kringId) {
+  const kring = zoek(project, kringId)?.ding;
+  if (kring?.soort !== 'kring') return 0;
+  const gevonden = [];
+  for (const id of ids) {
+    for (const pl of project.plannen) {
+      const x = pl.plaatsingen[id];
+      if (x?.los) gevonden.push({ id, pl, x });
+    }
+  }
+  const verbonden = (id) => project.plannen.flatMap((pl) => pl.verbindingen || []).filter((v) => v.van === id).map((v) => v.naar);
+  const set = new Set(gevonden.map((g) => g.id));
+  const volgorde = [];
+  const voeg = (id) => { if (set.has(id) && !volgorde.includes(id)) volgorde.push(id); };
+  for (const g of gevonden) {
+    if (g.x.item.soort === 'schakelaar' || g.x.item.soort === 'drukknop') {
+      voeg(g.id);
+      verbonden(g.id).forEach(voeg);
+    }
+  }
+  gevonden.forEach((g) => voeg(g.id));
+  for (const id of volgorde) {
+    const g = gevonden.find((x) => x.id === id);
+    kring.items.push(g.x.item);
+    delete g.x.los;
+    delete g.x.item;
+  }
+  return volgorde.length;
 }
 
 /** Een los symbool aan een kring koppelen: het wordt een gewoon onderdeel van die kring, op dezelfde plaats op het plan. */
