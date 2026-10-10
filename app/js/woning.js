@@ -4,7 +4,7 @@ import {
   nieuwId, nieuwItem, nieuweKring, nieuwDifferentieel, codes, zoek, kastNamen, kringVanItem, wijsToeEen, maakLos, maakKringLeeg,
 } from './model.js';
 import { itemNaam, TOESTELLEN, AUTOMAAT_STROMEN, CURVES, SECTIES, komma } from './catalogus.js';
-import { tekenPlan, onderdelen, kleefAanMuur, symboolBreedte } from './plan.js';
+import { tekenPlan, onderdelen, kleefAanMuur, symboolBreedte, plaatsingSvg } from './plan.js';
 import { icoon, esc } from './symbolen.js';
 import { staat, wijzig, opWijziging } from './staat.js';
 import { Vlak } from './vlak.js';
@@ -98,6 +98,8 @@ function tekenPlanLaag() {
   $('#woning-svg .plan-laag').innerHTML = tekenPlan(p, planOpties(), { selectie: keuze, raster: false, stijl: 'woning', delen: onderdelen(p) });
   $('#woning-svg .plan-laag .plan-vlak')?.setAttribute('fill', 'transparent');
   // Verbindingen tonen we alleen bij het verbinden en bij de kringen.
+  $('#woning-svg').classList.toggle('gewapend', Boolean(gewapend));
+  if (!gewapend) $('#woning-svg .voorbeeld-laag').innerHTML = '';
   $('#woning-svg').classList.toggle('zonder-verbindingen', stap === 'componenten' || stap === 'verdeelbord');
 }
 
@@ -163,7 +165,7 @@ const symboolOp = (e) => e.target.closest?.('[data-plaats]');
 
 function koppelPlan() {
   const svg = $('#woning-svg');
-  vlak = new Vlak(svg, { leegSlepen: () => true });
+  vlak = new Vlak(svg, { leegSlepen: () => !gewapend });
 
   svg.addEventListener('pointerdown', (e) => {
     const g = symboolOp(e);
@@ -190,7 +192,7 @@ function koppelPlan() {
   }, true);
 
   svg.addEventListener('pointermove', (e) => {
-    if (!sleep) return;
+    if (!sleep) { toonSpook(e); return; }
     if (sleep.soort === 'zet') {
       const dx = e.clientX - sleep.start.x;
       const dy = e.clientY - sleep.start.y;
@@ -225,6 +227,7 @@ function koppelPlan() {
       else teken();
     }
   });
+  svg.addEventListener('pointerleave', () => { if (!sleep) $('#woning-svg .voorbeeld-laag').innerHTML = ''; });
   svg.addEventListener('pointercancel', () => { sleep = null; verbindVan = null; teken(); });
 
   svg.addEventListener('click', (e) => {
@@ -247,6 +250,16 @@ function koppelPlan() {
       hangAanKring(g.dataset.plaats);
     }
   });
+}
+
+/** Het gekozen symbool hangt aan de muis tot je klikt: een doorschijnend voorbeeld op de plaats waar het zou komen. */
+function toonSpook(e) {
+  const laag = $('#woning-svg .voorbeeld-laag');
+  if (stap !== 'componenten' || !gewapend || gewapend.tekst) { laag.innerHTML = ''; return; }
+  const item = nieuwItem(gewapend.soort, gewapend.waarden);
+  const plek = bepaalPlaats(vlak.naarTekening(e.clientX, e.clientY), item, e.altKey);
+  const plan = huidigPlan();
+  laag.innerHTML = `<g opacity=".55" pointer-events="none">${plaatsingSvg({ item, code: '' }, { ...plek, los: true }, plan.symbool || 1, false, '', { plan: { ...plan, beletteren: false, nummeren: false }, stijl: 'woning' })}</g>`;
 }
 
 function maakVerbinding(van, naar) {

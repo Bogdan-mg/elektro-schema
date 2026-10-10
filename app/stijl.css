@@ -508,3 +508,4 @@ dialog.import { width: min(1000px, 96vw); }
 .woning #woning-svg .geplaatst.gekozen .plaats-doel { fill: rgba(11,139,211,.12); stroke: #0b8bd3; stroke-width: .8; }
 
 .woning .w-hint { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); max-width: 460px; text-align: center; color: #5d6f86; font-size: 18px; line-height: 1.4; pointer-events: none; }
+.woning #woning-svg.gewapend { cursor: crosshair; }
