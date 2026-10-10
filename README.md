@@ -37,34 +37,65 @@ Het installatiebestand wordt automatisch gemaakt bij elke wijziging op `main` (z
   domotica, zonnepaneel en meer. Elk onderdeel heeft zijn eigen eigenschappen (zoals in Trikker).
 - Per onderdeel kan je ook een **adres** (de tekst langs het symbool), een **tekst rechts**, een **aantal** (x3) en de
   **plaatsing** instellen: automatisch, op de kringlijn (evenwijdig) of op een eigen rij.
-- Sneltoetsen: **Delete** verwijdert, **Ctrl+D** dupliceert, **Alt+↑/↓** verschuift, **Ctrl+Z / Ctrl+Y** ongedaan maken / opnieuw.
+- **Kopiëren** (Ctrl+C) en **plakken** (Ctrl+V) van kringen, groepen en onderdelen; de laatste 7 staan onder **Gekopieerd**.
+  **Favorieten**: bewaar een onderdeel met jouw eigenschappen (tot 91). Met **Eigen symbool importeren…** maak je van een afbeelding
+  (max. 250 × 250 pixels) een symbool met een eigen breedte en een omschrijving voor de materiaallijst.
+- **Nummer** bij het hoofdbord of een groep zet een voorvoegsel voor de kringen eronder (1A, 1B, …; 2A, 2B, …).
+  **Op nieuwe pagina starten** (rode lijn) bepaalt waar het schema bij het afdrukken een nieuw blad begint.
+- **Domotica functie** (input of output) en **adres**: een input toont de kring van de output met hetzelfde adres.
+- Sneltoetsen: **Delete** verwijdert, **Ctrl+D** dupliceert, **Alt+↑/↓** verschuift, **Ctrl+C / Ctrl+V** kopieert en plakt, **Ctrl+Z / Ctrl+Y** ongedaan maken / opnieuw.
 - Zoomen met het muiswiel, verschuiven door te slepen. **Bestand → Alle symbolen bekijken** toont alle onderdelen met hun varianten.
 
 ### Situatieschema
 
-- **Plan laden…**: een plan van de architect als achtergrond, als afbeelding (JPG, PNG) of PDF (bij meerdere pagina's kies je er één).
-  Daarna stel je meteen de **schaal** in: klik twee punten waarvan je de afstand kent (bv. de breedte van een deur of een muur) en
-  vul de afstand in meter in. Vanaf dan kloppen alle afmetingen in meter. Het plan zelf blijft ongewijzigd.
-- Geen plan? Dan werk je op een raster waar 100 punten één meter zijn; de schaal kan je altijd aanpassen via **Schaal…**.
-- Teken **muren** (klik per hoek, rechtsklik of Esc om te stoppen; Alt voor een schuine muur), **deuren** (klik de twee kanten van de
-  opening; **R** draait de draairichting om), **ramen** en **meetlijnen**. De **lengte in meter** zie je enkel **terwijl je tekent** of **als je een stuk aanklikt**; zo blijft het plan overzichtelijk.
-- Klik je een muur, deur, raam of meetlijn aan, dan verschijnt de lengte bij dat stuk en onderaan in de statusbalk; bij een muur staat daar ook
-  de **totale lengte van alle aaneengesloten muren** (bv. een hele kamer). Tijdens het tekenen van een reeks muren zie je de lengte van de
-  huidige muur en het totaal tot nu toe. In het veld **Lengte** typ je een nieuwe lengte in meter en het stuk wordt precies zo lang.
-  Met het vinkje **Alle afmetingen tonen** staan alle lengtes er permanent (en ook op de afdruk).
-- Zet er **tekst** bij (bv. de naam van een ruimte).
-- Symbolen **kleven aan de muur**: zet je een onderdeel (of sleep je het) in de buurt van een muur, dan springt het tegen die muur en wijst het de ruimte in, aan de kant waar je zit. Je ziet vooraf een doorschijnend voorbeeld. Houd **Alt** ingedrukt om het vrij te zetten, of haal het vinkje **Kleef aan muur** weg.
-- Klik links een onderdeel aan en klik op het plan: het staat er, en het volgende onderdeel staat meteen klaar.
-  Zo zet je alles snel na elkaar. **Esc** stopt.
-- Symbolen verslepen, **R** draait, **Delete** haalt van het plan. Met de schuifjes zet je de grootte van de symbolen
-  en hoe sterk het plan te zien is.
-- **+ Plan** voor een extra verdieping, kelder, garage, …
+**Het grondplan**
+
+- **Plan laden…**: een plan van de architect als achtergrond: afbeelding (JPG, PNG, …), **PDF** of **DXF** (AutoCAD).
+  Bij een PDF of DXF verschijnt eerst een venster waarin je de **pagina** kiest, **lagen** aan of uit zet, met de muis een
+  **uitsnede** sleept en eventueel **alles één kleur** (bv. lichtgrijs) geeft. Met **Tekening aanpassen** kan dat later nog.
+  Een DXF met eenheden brengt zijn **schaal** mee; anders klik je twee punten waarvan je de afstand kent. DWG kan niet rechtstreeks
+  gelezen worden: sla de tekening op als DXF of PDF.
+- Geen plan? Teken zelf. Het raster is 20 punten; 100 punten zijn standaard één meter (aanpasbaar met **Schaal…**).
+- **Tekenen**: **muur** (klik per hoek; klik opnieuw op het beginpunt, rechtsklik of Esc om te stoppen), **ronde muur** (begin, einde en
+  een punt op de ronding), **deur** (draai-, dubbele of schuifdeur; rechtsklik draait de openingsrichting om), **garagepoort**, **raam**,
+  **trap**, **draaitrap**, **rechthoek**, **vlak** (kleur en transparantie), **lijn** (dikte en kleur), **maatlijn** (twee meetpunten en
+  waar de lijn komt; eventueel een eigen tekst), **meetlijn**, **tekst** en **afbeelding** (of sleep een bestand op het plan).
+  **Ctrl** houdt de lijn recht, **Alt** zet het kleven even uit. De **lengte en hoek** staan onderaan terwijl je tekent.
+- De **lengte in meter** zie je enkel terwijl je tekent of als je iets aanklikt (bij een muur ook het **totaal van de aaneengesloten
+  muren**); met **Alle afmetingen** staan ze er altijd (ook op de afdruk).
+
+**Selecteren en wijzigen**
+
+- **Selecteren**: klik, **Shift+klik** om bij te voegen, of sleep een kader. Sleep om te **verplaatsen**; de oranje handvatten verplaatsen
+  een uiteinde, vergroten of draaien een rechthoek, vlak of afbeelding. De **pijltjestoetsen** verplaatsen (Shift = enkel het eerste,
+  Ctrl = enkel het tweede uiteinde, Alt = kleine stappen). **Ctrl+A** selecteert alles.
+- **Kopiëren** en **plakken** (Ctrl+C / Ctrl+V, ook naar een andere pagina), **spiegelen** (↔ ↕), **roteren** over een hoek,
+  **schalen** (vergroten of verkleinen), **kleuren** en **wissen**. **R** draait een symbool een kwartslag (met Alt in kleine stappen).
+- Rechts staan de **eigenschappen** van wat gekozen is: breedte, hoek, type van een deur, kleur, transparantie, vaste tekst bij een
+  maatlijn, plaats van de tekst en het adres bij een symbool, enz. Een afbeelding kan je **vergrendelen**.
+- Een **grid** (tonen en **kleven**), **Kleef aan muren** (muren springen naar andere muren en symbolen kleven tegen de muur) en een
+  **transparante modus** om iets over te tekenen. **A4- en A3-hulplijnen** tonen wat op een redelijke grootte afgedrukt wordt.
+
+**Symbolen plaatsen**
+
+- Klik links een onderdeel en klik op het plan: het staat er en het volgende staat klaar. Je ziet vooraf een voorbeeld. Symbolen
+  **kleven aan de muur** en wijzen de ruimte in; rechtsklik draait ze tijdens het plaatsen (met Alt in kleine stappen), **Alt** zet ze vrij.
+- De **tekst** bij een symbool staat zo dat ze geen muur of ander symbool raakt; je kan de plaats ook zelf kiezen (links, rechts, boven,
+  onder of verbergen). Zoals in Trikker staat het **adres** (bij een input ook de kring van de output) in plaats van de kring als het ingevuld is.
+  **Beletteren** en **Nummeren** zetten letter en nummer per pagina aan of uit.
+- **Zoek op ES** (Ctrl+F) toont het symbool op het ééndraadschema; **Zoek op situatieschema** in het ééndraadschema doet het omgekeerde.
+- **Losse symbolen** (aanzetten via **Instellingen**): symbolen die (nog) niet op het ééndraadschema staan. Ze tellen mee op de
+  materiaallijst en je koppelt ze later aan een kring in het ééndraadschema. Zo kan je ook eerst het situatieschema tekenen.
+- **Pagina’s**: vorige, volgende, nieuw, wissen en **Pagina’s…** om te herschikken en per pagina een titel, subtitel en een
+  **compact kader** in te stellen. **Afdrukschaal…** stelt per pagina een vaste schaal (1 : 100, …) in.
+- **Grondplan exporteren als PNG** (menu Bestand) bundelt alle pagina’s zonder symbolen in één afbeelding, bv. als achtergrond voor Niko Home Control.
 
 ### Materiaallijst
 
-Automaten, differentiëlen, kabel (met marge), stopcontacten, schakelaars, verlichting, inbouwdozen en aansluitpunten.
-Vul prijzen in en je krijgt een totaal; de prijzen worden onthouden voor volgende projecten.
-**Naar Excel (CSV)** bewaart de lijst voor Excel.
+Automaten, differentiëlen, kabel (met marge), stopcontacten, schakelaars, verlichting, inbouwdozen, aansluitpunten, eigen
+symbolen en de losse symbolen van het situatieschema. Vul prijzen in en je krijgt een totaal; de prijzen worden onthouden voor
+volgende projecten. **Naar Excel (.xlsx)** bewaart een echt Excel-bestand (of **Als CSV**). Met **Symbolen in de lijst** komt bij elke
+regel ook het symbool, handig als legende bij het dossier.
 
 ### Controle
 
@@ -81,17 +112,34 @@ Een controle op de belangrijkste AREI-regels voor woningen, o.a.:
 
 ### Afdrukken en PDF
 
-**Afdrukken / PDF** (Ctrl+P): kies A4 of A3 liggend en wat er op moet. Elk blad krijgt een titelhoek met project, klant,
-adres, installateur, datum en bladnummer (die vul je in via de projectnaam bovenaan). Een lang ééndraadschema wordt
-over meerdere bladen verdeeld, tussen twee kringen. Het situatieschema krijgt een legende, en er is een bladzijde
-**Lijst kringen** met de letter en de naam van elke kring, zoals in Trikker. Daarna volgt een bladzijde
-**Opmerkingen per kring**: wat de controle vindt (bv. "de oven staat best op een eigen kring") plus wat je zelf bij een
-kring of groep schreef in het veld **Wat kan beter?**. Kringen zonder opmerkingen staan er niet bij.
+**Afdrukken / PDF** (Ctrl+P): kies A4 of A3 liggend en wat er op moet: ééndraadschema (automatisch verdeeld over pagina’s, of enkel
+waar je “nieuwe pagina” instelde), situatieschema met legende, **Lijst kringen** (in de volgorde van het schema of alfabetisch),
+**Opmerkingen per kring** (wat de controle vindt plus wat je zelf bij een kring schreef) en de materiaallijst. Je kiest ook of de
+datum en het stroomtype in de titelhoek komen en kan er een extra tekst bijzetten.
+
+De titelhoek toont project, klant, plaats van de installatie (het werfadres), installateur, controleorganisme, datum, stroomtype, je
+**logo** en het bladnummer. Wil je enkel een eendraadschema of enkel een situatieschema (met losse symbolen) afdrukken, vink dan de
+rest uit.
+
+### Gegevens en instellingen
+
+- **Projectgegevens** (klik de projectnaam bovenaan): klant, adres, werfadres, installateur (ikzelf of iemand anders) en controleorganisme.
+- **Instellingen** (Ctrl+6, menu Bestand): jouw gegevens als installateur, een logo, een standaard controleorganisme voor nieuwe projecten,
+  **automatische backups** (om de zoveel minuten, in een map naar keuze; het programma wist nooit zelf een backup) en **losse symbolen**.
+- **F1** opent deze handleiding. **Bestand → Alle symbolen bekijken** toont alle onderdelen met hun varianten.
 
 ### Opslaan en veiligheid
 
 - **Ctrl+S** slaat het project op als `.eschema` (standaard in *Documenten*).
-- Loopt er iets mis voor je opgeslagen hebt, dan vraagt het programma bij de volgende start of het je werk mag terugzetten.
+- Loopt er iets mis voor je opgeslagen hebt, dan vraagt het programma bij de volgende start of het je werk mag terugzetten, en er worden automatisch backups bewaard (zie Instellingen).
+
+## Wat het niet doet
+
+Dit programma is geen kopie van Trikker maar een eigen programma met dezelfde werkwijze. Een paar dingen zijn er bewust niet in:
+
+- het tekenen van het ééndraadschema door op oranje aansluitpunten te klikken (hier werk je met de boom en de eigenschappen);
+- DWG-bestanden lezen (gebruik DXF of PDF), en de talen Frans en Engels (alles is Nederlands);
+- het formaat voor **Home Center** (Velbus/Qbus) en “Hulp op afstand”.
 
 ## Voor ontwikkelaars
 
