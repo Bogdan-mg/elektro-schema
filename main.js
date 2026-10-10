@@ -71,7 +71,11 @@ function maakMenu() {
         { label: 'Projectgegevens…', click: () => stuur('project') },
         { type: 'separator' },
         { label: 'Afdrukken of PDF…', accelerator: 'CmdOrCtrl+P', click: () => stuur('afdrukken') },
-        { label: 'Materiaallijst naar Excel (CSV)…', click: () => stuur('csv') },
+        { label: 'Materiaallijst naar Excel (xlsx)…', click: () => stuur('xlsx') },
+        { label: 'Materiaallijst als CSV…', click: () => stuur('csv') },
+        { label: 'Grondplan exporteren als PNG (bv. voor Niko)…', click: () => stuur('niko') },
+        { type: 'separator' },
+        { label: 'Instellingen…', accelerator: 'CmdOrCtrl+6', click: () => stuur('instellingen') },
         { type: 'separator' },
         { label: 'Voorbeeldproject openen', click: () => stuur('voorbeeld') },
         { label: 'Alle symbolen bekijken', click: () => stuur('symbolen') },
@@ -109,7 +113,7 @@ function maakMenu() {
     },
     {
       label: 'Help',
-      submenu: [{
+      submenu: [{ label: 'Handleiding', accelerator: 'F1', click: () => openHandleiding() }, { type: 'separator' }, {
         label: 'Over Elektro Schema',
         click: () => dialog.showMessageBox(venster, {
           message: `Elektro Schema ${app.getVersion()}`,
@@ -119,6 +123,16 @@ function maakMenu() {
       }],
     },
   ]);
+}
+
+// ---------- Handleiding ----------
+
+let handleiding = null;
+function openHandleiding() {
+  if (handleiding && !handleiding.isDestroyed()) { handleiding.focus(); return; }
+  handleiding = new BrowserWindow({ width: 980, height: 800, title: 'Handleiding – Elektro Schema', parent: venster || undefined, autoHideMenuBar: true, webPreferences: { sandbox: true } });
+  handleiding.setMenu(null);
+  handleiding.loadURL('app://elektro/handleiding.html');
 }
 
 // ---------- Venster ----------
@@ -206,6 +220,38 @@ function registreer() {
     await rm(HERSTEL(), { force: true });
     return doel;
   });
+
+  /** Een binair bestand bewaren (Excel, PNG): de inhoud komt als base64 binnen. */
+  ipcMain.handle('bewaar-binair', async (_e, naam, base64, soort, extensie) => {
+    const { canceled, filePath } = await dialog.showSaveDialog(venster, {
+      title: `${soort} opslaan`,
+      defaultPath: path.join(app.getPath('documents'), `${veiligeNaam(naam)}.${extensie}`),
+      filters: [{ name: soort, extensions: [extensie] }],
+    });
+    if (canceled || !filePath) return null;
+    await writeFile(filePath, Buffer.from(base64, 'base64'));
+    return filePath;
+  });
+
+  /** Een backup van het project bewaren; oude backups worden nooit gewist. */
+  ipcMain.handle('backup', async (_e, naam, inhoud, map) => {
+    const dir = map || path.join(app.getPath('documents'), 'Elektro Schema', 'Backups');
+    await mkdir(dir, { recursive: true });
+    const stempel = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19);
+    const bestand = path.join(dir, `${veiligeNaam(naam)} ${stempel}.${EXTENSIE}`);
+    await writeFile(bestand, inhoud);
+    return bestand;
+  });
+  ipcMain.handle('backup-map-kiezen', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog(venster, { title: 'Map voor backups', properties: ['openDirectory', 'createDirectory'] });
+    return canceled ? null : filePaths[0];
+  });
+  ipcMain.handle('map-openen', async (_e, map) => {
+    const dir = map || path.join(app.getPath('documents'), 'Elektro Schema', 'Backups');
+    await mkdir(dir, { recursive: true });
+    return shell.openPath(dir);
+  });
+  ipcMain.handle('handleiding', () => openHandleiding());
 
   ipcMain.handle('csv', async (_e, naam, inhoud) => {
     const { canceled, filePath } = await dialog.showSaveDialog(venster, {

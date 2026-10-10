@@ -295,7 +295,7 @@ body.afdrukken #afdruk { display: block; }
 
 .titelhoek {
   margin-top: 4mm; height: 20mm; flex: none;
-  display: grid; grid-template-columns: 2fr 1.3fr 2fr 1.3fr 1fr 1.4fr;
+  display: grid;
   border: 0.35mm solid #222; font-size: 8pt;
 }
 .blad.vrij .titelhoek { margin-top: 6mm; }
@@ -330,3 +330,10 @@ dialog.import { width: min(1000px, 96vw); }
 .imp-lagen { display: grid; gap: 4px; max-height: 240px; overflow: auto; border: 1px solid var(--rand); padding: 6px 8px; border-radius: 6px; }
 
 #afdruk .paginalijn { display: none; }
+
+.titelhoek.compact { height: 10mm; }
+.titelhoek .cel.logo { padding: 1mm; align-items: center; }
+.titelhoek .cel.logo img { max-width: 100%; max-height: 17mm; object-fit: contain; }
+.titelhoek .cel small { font-size: 6.5pt; color: #444; }
+.logorij { display: flex; align-items: center; gap: 10px; }
+.logo-voorbeeld { max-height: 60px; max-width: 140px; border: 1px solid var(--rand); padding: 2px; background: #fff; }

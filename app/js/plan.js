@@ -573,6 +573,12 @@ export function tekenPlan(project, plan, { selectie = [], raster = false, delen 
   } else if (raster && plan.toonGrid !== false) {
     uit.push(`<rect x="0" y="0" width="${plan.breedte}" height="${plan.hoogte}" fill="url(#raster)"/>`);
   }
+  if (raster) {
+    // Afdrukhulplijnen: wat binnen deze vakken blijft, wordt op een redelijke grootte afgedrukt (A4 en A3 liggend).
+    for (const [naam, b, h] of [['A4', 1115, 780], ['A3', 1730, 1215]]) {
+      uit.push(`<rect class="hulplijn" x="0" y="0" width="${b}" height="${h}"/><text class="hulplijn-tekst" x="${b - 6}" y="${h - 6}" text-anchor="end">${naam}</text>`);
+    }
+  }
 
   // Afbeeldingen en vlakken liggen onder de muren.
   const volgorde = { afbeelding: 0, vlak: 1, rechthoek: 2, trap: 3, draaitrap: 3, lijn: 4 };
@@ -614,6 +620,8 @@ export function legende(project, plan, delen = onderdelen(project)) {
 
 export const PLAN_STIJL = `
 .plan-vlak{fill:#fff;stroke:#c9ced6;stroke-width:1}
+.hulplijn{fill:none;stroke:#93c5fd;stroke-width:1.2;stroke-dasharray:10 6;pointer-events:none}
+.hulplijn-tekst{fill:#93c5fd;font:12px Arial,sans-serif;pointer-events:none}
 .muur{stroke:#2b2f36;stroke-linecap:square;cursor:pointer;fill:none}
 .muur.gekozen{stroke:#2563eb}
 .raak{stroke:transparent;fill:none;cursor:pointer}

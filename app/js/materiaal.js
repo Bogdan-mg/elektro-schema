@@ -37,10 +37,11 @@ const automaatModules = (polen) => (polen === 2 ? 1 : polen);
  */
 export function materiaallijst(project, { marge = 10 } = {}) {
   const regels = new Map();
+  let huidigItem = null; // het onderdeel waar de regel bij hoort, om er een symbool bij te kunnen tonen
   const tel = (groep, omschrijving, aantal = 1, eenheid = 'st') => {
     if (!aantal) return;
     const sleutel = `${groep}|${omschrijving}`;
-    const r = regels.get(sleutel) || { sleutel, groep, omschrijving, aantal: 0, eenheid };
+    const r = regels.get(sleutel) || { sleutel, groep, omschrijving, aantal: 0, eenheid, item: groep === 'Verdeelbord' || groep === 'Kabels en draad' ? null : huidigItem };
     r.aantal += aantal;
     regels.set(sleutel, r);
   };
@@ -83,6 +84,7 @@ export function materiaallijst(project, { marge = 10 } = {}) {
   for (const { item } of losseSymbolen(project)) telItem(item);
 
   function telItem(item) {
+    huidigItem = item;
     {
       switch (item.soort) {
         case 'stopcontact':
@@ -127,6 +129,7 @@ export function materiaallijst(project, { marge = 10 } = {}) {
     }
   }
 
+  huidigItem = null;
   for (const [naam, meter] of kabels) {
     tel('Kabels en draad', naam, Math.ceil(meter * (1 + marge / 100)), 'm');
   }

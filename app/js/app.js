@@ -7,6 +7,10 @@ import { startLijsten, csvTekst } from './lijsten.js';
 import { bouwAfdruk, ruimAfdrukOp } from './afdruk.js';
 import { vraag, bevestig, melding } from './dialoog.js';
 import { symbolenProject } from './overzicht.js';
+import { leesInstellingen, instellingenDialoog } from './instellingen.js';
+import { xlsxBase64 } from './lijsten.js';
+import { grondplanPng } from './exporteer.js';
+import { naarBase64 } from './xlsx.js';
 
 const desktop = window.elektro?.desktop ? window.elektro : null;
 const $ = (s) => document.querySelector(s);
@@ -83,7 +87,9 @@ function openProject(project, pad) {
 async function nieuw() {
   if (!await magVerder()) return;
   await wisHerstel();
-  openProject(nieuwProject(), null);
+  const p = nieuwProject();
+  p.info.controle = leesInstellingen().controle || '';
+  openProject(p, null);
   naarTab('eendraad');
   projectgegevens();
 }
@@ -142,14 +148,26 @@ async function projectgegevens() {
     velden: [
       { naam: 'titel', label: 'Project', waarde: i.titel },
       { naam: 'klant', label: 'Klant', waarde: i.klant },
-      { naam: 'adres', label: 'Adres van de installatie', waarde: i.adres },
-      { naam: 'installateur', label: 'Installateur', waarde: i.installateur },
+      { naam: 'adres', label: 'Adres van de klant', waarde: i.adres },
+      { naam: 'werfAdres', label: 'Werfadres (leeg = hetzelfde adres)', waarde: i.werfAdres || '' },
+      { naam: 'installateurType', label: 'Installateur', type: 'select', waarde: i.installateurEigen === false ? 'ander' : 'eigen', opties: [['eigen', 'Ikzelf (mijn gegevens uit Instellingen)'], ['ander', 'Iemand anders']] },
+      { naam: 'uitvoerder', label: 'Gegevens van de installateur (als iemand anders)', type: 'textarea', waarde: i.uitvoerder || i.installateur || '' },
+      { naam: 'controle', label: 'Controleorganisme', type: 'textarea', waarde: i.controle || '' },
       { naam: 'datum', label: 'Datum', type: 'date', waarde: i.datum },
       { naam: 'opmerking', label: 'Opmerking', type: 'textarea', waarde: i.opmerking },
     ],
   });
   if (knop !== 'ok') return;
-  wijzig((p) => { p.info = { ...p.info, ...waarden, titel: waarden.titel.trim() || 'Nieuw project' }; });
+  const { installateurType, ...rest } = waarden;
+  wijzig((p) => { p.info = { ...p.info, ...rest, installateurEigen: installateurType !== 'ander', titel: waarden.titel.trim() || 'Nieuw project' }; });
+}
+
+async function instellingen() {
+  const r = await instellingenDialoog(staat.project, desktop);
+  if (!r) return;
+  wijzig((p) => { p.opties = { ...p.opties, ...r.opties }; });
+  window.dispatchEvent(new Event('instellingen-bewaard'));
+  melding('Instellingen bewaard.');
 }
 
 async function symbolen() {
@@ -178,6 +196,11 @@ async function afdrukken() {
       { naam: 'lijst', label: 'Lijst kringen', type: 'checkbox', waarde: true },
       { naam: 'opmerkingen', label: 'Opmerkingen per kring', type: 'checkbox', waarde: true },
       { naam: 'materiaal', label: 'Materiaallijst', type: 'checkbox', waarde: true },
+      { naam: 'paginering', label: 'Ééndraadschema verdelen', type: 'select', waarde: 'auto', opties: [['auto', 'Automatisch in pagina’s verdelen'], ['manueel', 'Enkel waar ik “nieuwe pagina” instelde']] },
+      { naam: 'kringVolgorde', label: 'Lijst kringen', type: 'select', waarde: 'schema', opties: [['schema', 'In de volgorde van het schema'], ['alfabet', 'Alfabetisch']] },
+      { naam: 'toonDatum', label: 'Datum afdrukken', type: 'checkbox', waarde: true },
+      { naam: 'toonStroom', label: 'Stroomtype afdrukken', type: 'checkbox', waarde: true },
+      { naam: 'tekst', label: 'Extra tekst in de titelhoek', waarde: '' },
     ],
     knoppen: [
       ...(desktop ? [{ tekst: 'PDF opslaan', waarde: 'pdf', hoofd: true }] : []),
@@ -209,6 +232,40 @@ async function afdrukken() {
     document.body.classList.remove('afdrukken');
     ruimAfdrukOp();
   }
+}
+
+/** Een binair bestand bewaren: via het Windows-gedeelte, of als download in de browser. */
+async function bewaarBestand(naam, bytes, soort, extensie, mime) {
+  if (desktop) return desktop.bewaarBinair(naam, naarBase64(bytes), soort, extensie);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([bytes], { type: mime }));
+  a.download = `${naam}.${extensie}`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  return naam;
+}
+
+async function xlsx() {
+  const naam = `${staat.project.info.titel || 'project'} - materiaallijst`;
+  const bytes = Uint8Array.from(atob(xlsxBase64()), (c) => c.charCodeAt(0));
+  const pad = await bewaarBestand(naam, bytes, 'Excel', 'xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet').catch((e) => { melding(`Opslaan mislukt: ${e.message}`, 'fout'); return null; });
+  if (pad) melding('Materiaallijst opgeslagen als Excel-bestand.');
+}
+
+async function niko() {
+  try {
+    const blob = await grondplanPng(staat.project);
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    const pad = await bewaarBestand(`${staat.project.info.titel || 'project'} - grondplan`, bytes, 'PNG-afbeelding', 'png', 'image/png');
+    if (pad) melding('Grondplan opgeslagen. In Niko Home Control importeer je het via Grondplan opladen.');
+  } catch (e) {
+    melding(e.message, 'fout');
+  }
+}
+
+function handleiding() {
+  if (desktop) desktop.handleiding();
+  else window.open('/handleiding.html', '_blank');
 }
 
 async function csv() {
@@ -243,6 +300,10 @@ const acties = {
   project: projectgegevens,
   afdrukken,
   csv,
+  xlsx,
+  niko,
+  instellingen,
+  handleiding,
   voorbeeld,
   symbolen,
   ongedaan: () => { if (!ongedaan()) melding('Niets meer om ongedaan te maken.'); },
@@ -288,7 +349,10 @@ function sneltoetsen(e) {
       naarTab(['eendraad', 'situatie', 'materiaal', 'controle'][Number(toets) - 1]);
       return;
     }
+    if (toets === '5') { e.preventDefault(); acties.afdrukken(); return; }
+    if (toets === '6') { e.preventDefault(); acties.instellingen(); return; }
   }
+  if (e.key === 'F1') { e.preventDefault(); handleiding(); return; }
   if (inVeld) return;
   // In de desktopversie doet het menu kopiëren, plakken en alles selecteren zelf.
   if (desktop && ctrl && ['c', 'v', 'a'].includes(toets)) return;
@@ -301,6 +365,28 @@ function sneltoetsen(e) {
   } else if (staat.tab === 'situatie') {
     if (situatie.situatieToets(e)) e.preventDefault();
   }
+}
+
+// ---------- Backups ----------
+
+let laatsteBackup = '';
+async function maakBackup() {
+  const i = leesInstellingen().backup;
+  if (!desktop || !i.aan || !staat.gewijzigd) return;
+  const inhoud = teBewaren(staat.project);
+  if (inhoud === laatsteBackup) return; // niets veranderd sinds de vorige backup
+  laatsteBackup = inhoud;
+  await desktop.backup(staat.project.info.titel || 'project', inhoud, i.map).catch(() => {});
+}
+
+function startBackups() {
+  let timer = null;
+  const plan = () => {
+    clearInterval(timer);
+    timer = setInterval(maakBackup, Math.max(1, leesInstellingen().backup.minuten) * 60_000);
+  };
+  plan();
+  window.addEventListener('instellingen-bewaard', plan);
 }
 
 // ---------- Opstarten ----------
@@ -346,6 +432,7 @@ async function start() {
 
   naarTab('eendraad');
   zetTitel();
+  startBackups();
 
   // Een bestand dat met een dubbelklik geopend werd, of werk dat niet opgeslagen was.
   const startBestand = desktop ? await desktop.startBestand() : null;

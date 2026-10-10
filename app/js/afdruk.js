@@ -6,23 +6,43 @@ import { materiaalTabel } from './lijsten.js';
 import { alleKnopen, codes } from './model.js';
 import { controleer } from './regels.js';
 import { staat } from './staat.js';
+import { NETTEN } from './catalogus.js';
+import { leesInstellingen, ikTekst } from './instellingen.js';
 
 export const FORMATEN = { A4: { b: 297, h: 210 }, A3: { b: 420, h: 297 } };
 const MARGE = 10; // mm
 const TITELHOEK = 24; // mm
+const TITELHOEK_COMPACT = 12; // mm
 const EENHEID = 0.3; // mm per tekeneenheid op ware grootte van het ééndraadschema
 
-function titelhoek(soort, blad, totaal) {
+/** De titelhoek onderaan elk blad: project, klant, plaats, installateur, controleorganisme, datum, stroomtype en blad. */
+function titelhoek(blad, nr, totaal, opties) {
   const { info } = staat.project;
+  const inst = leesInstellingen();
+  const naam = blad.titel || blad.soort;
+  const bladTekst = `Blad ${nr} / ${totaal}`;
   const cel = (label, waarde, klasse = '') => `<div class="cel ${klasse}"><span>${esc(label)}</span><b>${esc(waarde || '—')}</b></div>`;
-  return `<div class="titelhoek">
-    ${cel('Project', info.titel, 'breed')}
-    ${cel('Klant', info.klant)}
-    ${cel('Adres', info.adres, 'breed')}
-    ${cel('Installateur', info.installateur)}
-    ${cel('Datum', info.datum ? info.datum.split('-').reverse().join('/') : '')}
-    ${cel(soort, `Blad ${blad} / ${totaal}`, 'soort')}
-  </div>`;
+  if (blad.compact) {
+    return `<div class="titelhoek compact" style="grid-template-columns:2fr 1.4fr">
+      ${cel('Project', info.titel, 'breed')}
+      <div class="cel soort"><span>${esc(naam)}</span><b>${esc(blad.subtitel || bladTekst)}</b></div></div>`;
+  }
+  const installateur = info.installateurEigen === false
+    ? info.uitvoerder || info.installateur
+    : ikTekst(inst) || info.installateur;
+  const stroom = NETTEN[staat.project.aansluiting.net]?.kort || '';
+  const delen = [];
+  if (inst.logo) delen.push({ w: '24mm', html: `<div class="cel logo"><img src="${esc(inst.logo)}" alt=""></div>` });
+  delen.push({ w: '2fr', html: cel('Project', info.titel, 'breed') });
+  delen.push({ w: '1.3fr', html: cel('Klant', info.klant) });
+  delen.push({ w: '2fr', html: cel('Plaats van de elektrische installatie', info.werfAdres?.trim() || info.adres, 'breed') });
+  delen.push({ w: '1.6fr', html: cel('Installateur', installateur) });
+  if (info.controle?.trim()) delen.push({ w: '1.5fr', html: cel('Controleorganisme', info.controle.trim().split(/\r?\n/)[0]) });
+  if (opties.toonDatum !== false) delen.push({ w: '0.9fr', html: cel('Datum', info.datum ? info.datum.split('-').reverse().join('/') : '') });
+  if (opties.toonStroom !== false && stroom) delen.push({ w: '1fr', html: cel('Stroom', stroom) });
+  if (opties.tekst?.trim()) delen.push({ w: '1.4fr', html: cel('Opmerking', opties.tekst.trim()) });
+  delen.push({ w: '1.5fr', html: `<div class="cel soort"><span>${esc(naam)}</span><b>${esc(blad.subtitel || bladTekst)}</b>${blad.subtitel ? `<small>${esc(bladTekst)}</small>` : ''}</div>` });
+  return `<div class="titelhoek" style="grid-template-columns:${delen.map((d) => d.w).join(' ')}">${delen.map((d) => d.html).join('')}</div>`;
 }
 
 const svg = (viewBox, b, h, inhoud, stijl) =>
@@ -85,11 +105,16 @@ function situatieBladen(formaat) {
     .map((pl) => {
       const legendeB = 50;
       const ruimteB = formaat.b - 2 * MARGE - legendeB - 4;
-      const ruimteH = formaat.h - 2 * MARGE - TITELHOEK - 10;
-      const k = Math.min(ruimteB / pl.breedte, ruimteH / pl.hoogte);
+      const ruimteH = formaat.h - 2 * MARGE - (pl.compact ? TITELHOEK_COMPACT : TITELHOEK) - 10;
+      // Automatisch: alles op het blad. Manueel: een vaste schaal (1 m op papier = 1000 / noemer mm).
+      const auto = Math.min(ruimteB / pl.breedte, ruimteH / pl.hoogte);
+      const k = pl.afdrukSchaal > 0 && pl.schaal ? 1000 / pl.afdrukSchaal / pl.schaal : auto;
       const items = legende(p, pl, delen);
       return {
         soort: `Situatieschema – ${pl.naam}`,
+        titel: pl.titel || '',
+        subtitel: pl.subtitel || '',
+        compact: Boolean(pl.compact),
         inhoud: `<div class="tekenruimte met-legende">
           <div class="plan">${svg(`0 0 ${pl.breedte} ${pl.hoogte}`, pl.breedte * k, pl.hoogte * k, tekenPlan(p, pl, { delen }), SCHEMA_STIJL + PLAN_STIJL)}</div>
           <div class="legende"><h4>Legende</h4>${items.map(({ naam, item }) => `<div>${icoon(item, 18)}<span>${esc(naam)}</span></div>`).join('')}</div>
@@ -99,10 +124,11 @@ function situatieBladen(formaat) {
 }
 
 /** "Lijst kringen" zoals in Trikker: de letter en de naam van elke groep en kring, in twee kolommen. */
-function lijstBladen(formaat) {
+function lijstBladen(formaat, volgorde = 'schema') {
   const p = staat.project;
   const code = codes(p);
   const regels = alleKnopen(p).map(({ knoop }) => ({ letter: code.get(knoop.id), naam: knoop.naam || '' }));
+  if (volgorde === 'alfabet') regels.sort((x, y) => x.letter.localeCompare(y.letter, 'nl', { numeric: true }));
   if (!regels.length) return [];
   const perKolom = Math.max(5, Math.floor((formaat.h - 2 * MARGE - TITELHOEK - 10) / 7));
   const perBlad = perKolom * 2;
@@ -175,23 +201,23 @@ function materiaalBlad() {
   return {
     soort: 'Materiaallijst',
     vrij: true,
-    inhoud: `<h2>Materiaallijst</h2>${materiaalTabel(false).html}`,
+    inhoud: `<h2>Materiaallijst</h2>${materiaalTabel(false, { symbolen: Boolean(staat.project.materiaal?.symbolen) }).html}`,
   };
 }
 
 /** Bouw de bladen op in #afdruk. */
-export function bouwAfdruk({ formaat = 'A4', eendraad = true, situatie = true, lijst = true, opmerkingen = true, materiaal = true, paginering = 'auto' }) {
+export function bouwAfdruk({ formaat = 'A4', eendraad = true, situatie = true, lijst = true, opmerkingen = true, materiaal = true, paginering = 'auto', kringVolgorde = 'schema', toonDatum = true, toonStroom = true, tekst = '' }) {
   const f = FORMATEN[formaat];
   const bladen = [
     ...(eendraad ? eendraadBladen(f, paginering) : []),
     ...(situatie ? situatieBladen(f) : []),
-    ...(lijst ? lijstBladen(f) : []),
+    ...(lijst ? lijstBladen(f, kringVolgorde) : []),
     ...(opmerkingen ? opmerkingenBladen(f) : []),
     ...(materiaal ? [materiaalBlad()] : []),
   ];
   const doel = document.getElementById('afdruk');
   doel.innerHTML = bladen.map((b, i) => `<section class="blad${b.vrij ? ' vrij' : ''}" style="--b:${f.b}mm;--h:${f.h}mm">
-      <div class="blad-inhoud">${b.inhoud}</div>${titelhoek(b.soort, i + 1, bladen.length)}</section>`).join('');
+      <div class="blad-inhoud">${b.inhoud}</div>${titelhoek(b, i + 1, bladen.length, { toonDatum, toonStroom, tekst })}</section>`).join('');
   let pagina = document.getElementById('pagina-stijl');
   if (!pagina) {
     pagina = document.createElement('style');

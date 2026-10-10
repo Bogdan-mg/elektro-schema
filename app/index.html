@@ -153,7 +153,9 @@
         <div class="pagina-kop">
           <h2>Materiaallijst</h2>
           <label class="inline">Marge op kabel <input type="number" id="marge" min="0" max="100" step="1"> %</label>
-          <button data-actie="csv">Naar Excel (CSV)</button>
+          <label class="inline"><input type="checkbox" id="symbolen-in-lijst"> Symbolen in de lijst</label>
+          <button data-actie="xlsx">Naar Excel (.xlsx)</button>
+          <button data-actie="csv">Als CSV</button>
         </div>
         <p id="modules" class="hint"></p>
         <div id="materiaal-tabel"></div>
