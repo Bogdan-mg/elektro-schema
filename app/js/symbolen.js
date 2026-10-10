@@ -2,7 +2,7 @@
 // Elk onderdeel begint op x = 0, waar de leiding van de kring aankomt, op hoogte y = 0.
 // Een symbool geeft terug: svg, b (breedte), boven/onder (hoe ver het boven en onder de leiding komt)
 // en midden (het midden van het eigenlijke teken, voor "x3", het adres en dergelijke).
-import { trikkerSymbool } from './trikker/kaart.js';
+import { trikkerSymbool, trikkerBordSymbool } from './trikker/kaart.js';
 
 export const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const r1 = (n) => Math.round(n * 10) / 10;
@@ -689,9 +689,9 @@ export function symbool(item) {
   return teken ? teken(item) : res(rechthoek(6, -8, 16, 16) + lijn(0, 0, 6, 0), 23, 14);
 }
 
-/** Schakel- en verdeelbord (algemene voorstelling), voor op het situatieschema. */
+/** Het verdeelbord op het situatieschema, zoals Trikker het tekent (VerdeelbordGrondplan). */
 export function bordSymbool() {
-  return res(rechthoek(0, -7, 34, 14), 34, 17, -8, 8);
+  return trikkerBordSymbool();
 }
 
 // ---------- Bord ----------

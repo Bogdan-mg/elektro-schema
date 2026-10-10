@@ -278,3 +278,76 @@ export function trikkerAdresSvg(item, rotatie, plaatsing, tekst) {
   g.tryDrawString(tekst, font, zwart, rect, sf);
   return `<g class="tk-adres" transform="translate(${knoop.Width * SCHAAL / 2} 0) scale(${SCHAAL})">${g.uit.replace(/#000000/g, 'currentColor')}</g>`;
 }
+
+// ---------- Verdeelbord (situatieschema) en iconen voor de toolbox ----------
+
+/** Het Verdeelbord van het situatieschema (VerdeelbordGrondplan.cs): een rechthoek met vier streepjes en een steeltje. */
+export function bordKnoop(props = {}) {
+  const n = { Width: 10, Height: 6, Nummer: '', ...props };
+  n.textOffset = () => ({ left: n.Width / 2 + 0.5, top: n.Height / 2 + 0.5, right: n.Width / 2 + 0.5, bottom: n.Height / 2 + 0.5 });
+  n.render = (g) => {
+    const middel = { breedte: 0.35, kleur: '#000000', streep: false };
+    const dun = { breedte: 0.25, kleur: '#000000', streep: false };
+    g.drawRectangle(middel, -n.Width / 2, -n.Height / 2 + 1.5, n.Width, n.Height - 3);
+    g.drawLine(dun, 0, n.Height / 2 - 1.5, 0, n.Height / 2);
+    for (let x = -n.Width / 2 + 1; x <= n.Width / 2 - 1 + 1e-6; x += (n.Width - 2) / 4) g.drawLine(dun, x, -n.Height / 2, x, -n.Height / 2 + 1.5);
+    if (n.Nummer) g.tryDrawString(n.Nummer, { grootte: 2, stijl: '' }, kwast(), 0, 0.25, SF.centerCenter);
+  };
+  return n;
+}
+
+/** Het symbool van een knoop (Trikker-object) in het formaat van symbolen.js, zoals trikkerSymbool het teruggeeft. */
+export function knoopSymbool(knoop, context = 'Grondplan') {
+  const g = new Graphics();
+  knoop.render(g, context, 0);
+  const b = knoop.Width * SCHAAL;
+  const h = knoop.Height * SCHAAL;
+  const t = knoop.textOffset(0);
+  return {
+    svg: `<g class="tk" transform="translate(${b / 2} 0) scale(${SCHAAL})">${g.uit.replace(/#000000/g, 'currentColor')}</g>`,
+    b, boven: -h / 2, onder: h / 2, midden: b / 2, door: b,
+    tekstRuimte: { links: t.left * SCHAAL, boven: t.top * SCHAAL, rechts: t.right * SCHAAL, onder: t.bottom * SCHAAL },
+  };
+}
+
+/** Het verdeelbord zoals Trikker het op het situatieschema tekent. */
+export const trikkerBordSymbool = () => knoopSymbool(bordKnoop());
+
+/** Een svg rond getekende Trikker-vormen (in Trikker-eenheden, gecentreerd rond 0,0), zoals de toolbox ze toont. */
+export function icoonUit(vormen, breedte, hoogte, { schaal = 4, past = 0, max = 140 } = {}) {
+  const s = past ? Math.min(schaal, (past - 6) / Math.max(breedte, hoogte, 1)) : schaal;
+  const w = Math.max(1, Math.min(max, Math.round(breedte * s + 6)));
+  const h = Math.max(1, Math.round(hoogte * s + 6));
+  return {
+    svg: `<svg class="tk-icoon" width="${w}" height="${h}" viewBox="${-w / 2} ${-h / 2} ${w} ${h}" aria-hidden="true"><g transform="scale(${s})">${vormen.replace(/#000000/g, 'currentColor')}</g></svg>`,
+    breedte: w,
+    hoogte: h,
+  };
+}
+
+/**
+ * Een icoon van een symbool zoals de toolbox van het situatieschema het toont (ToolBoxControlNode): de context
+ * GrondplanToolboxNode, 4 pixels per Trikker-eenheid en een rand van 6 pixels. Een drukknop toont er altijd één knop.
+ * @param {object|string} item een onderdeel (of 'bord' voor het verdeelbord)
+ * @param {{schaal?:number, past?:number, max?:number}} opties past = in een vierkant van zoveel pixels laten passen
+ * @returns {{svg:string, breedte:number, hoogte:number}|null}
+ */
+export function trikkerIcoon(item, opties = {}) {
+  try {
+    const knoop = item === 'bord' ? bordKnoop() : trikkerKnoop(item?.soort === 'drukknop' ? { ...item, aantal: 1 } : item);
+    if (!knoop) return null;
+    const g = new Graphics();
+    knoop.render(g, 'GrondplanToolboxNode', 0);
+    return icoonUit(g.uit, knoop.Width, knoop.Height, opties);
+  } catch (fout) {
+    console.warn('Icoon niet getekend', item?.soort, fout);
+    return null;
+  }
+}
+
+/** Het icoon van een nota (tekst) in de toolbox: de tekst in Arial, links in een kader van breedte × hoogte. */
+export function notaIcoon(tekstje, tekstGrootte, breedte, hoogte, opties) {
+  const g = new Graphics();
+  g.tryDrawString(tekstje, { grootte: tekstGrootte, stijl: '' }, kwast(), { x: -breedte / 2, y: -hoogte / 2, w: breedte, h: hoogte }, SF.leftCenter);
+  return icoonUit(g.uit, breedte, hoogte, opties);
+}
