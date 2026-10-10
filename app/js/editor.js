@@ -5,8 +5,9 @@ import {
 } from './catalogus.js';
 import {
   nieuwDifferentieel, nieuweKring, nieuwItem, voegKnoopToe, voegItemToe, verwijder, verschuif, dupliceer, verplaatsNaar,
-  zoek, codes, alleKnopen, alleKringen,
+  zoek, codes, alleKnopen, alleKringen, kopieerNode, plakNode, losseSymbolen, koppelLos,
 } from './model.js';
+import { vraag, melding } from './dialoog.js';
 import { tekenEendraad, SCHEMA_STIJL } from './eendraad.js';
 import { icoon, esc } from './symbolen.js';
 import { staat, wijzig, kies, opWijziging } from './staat.js';
@@ -50,6 +51,135 @@ export function verschuifGekozen(richting) {
   if (!staat.selectie || staat.selectie === 'hoofd') return;
   if (!zoek(staat.project, staat.selectie)) return;
   wijzig((p) => verschuif(p, staat.selectie, richting));
+}
+
+// ---------- Kopiëren en favorieten ----------
+
+const MAX_KOPIEEN = 7;
+const MAX_FAVORIETEN = 91;
+const FAV = 'elektro-favorieten';
+const gekopieerd = []; // de laatste gekopieerde groepen, kringen of onderdelen (nieuwste eerst)
+
+/** Het gekozen ding kopiëren; het staat daarna onder "Gekopieerd" en plakken doet Ctrl+V. */
+export function kopieerGekozen() {
+  if (!staat.selectie || staat.selectie === 'hoofd') { melding('Kies eerst een kring of onderdeel om te kopiëren.'); return; }
+  const node = kopieerNode(staat.project, staat.selectie);
+  if (!node) return;
+  gekopieerd.unshift(node);
+  gekopieerd.length = Math.min(gekopieerd.length, MAX_KOPIEEN);
+  melding('Gekopieerd. Plak met Ctrl+V of kies het onder "Gekopieerd".');
+  tekenEigenschappen();
+}
+
+/** Een gekopieerd ding invoegen na de selectie (standaard het laatst gekopieerde). */
+export function plakGekopieerd(index = 0) {
+  const node = gekopieerd[index];
+  if (!node) { melding('Er is niets gekopieerd.'); return; }
+  const nieuw = wijzig((p) => plakNode(p, staat.selectie, node));
+  if (nieuw) kies(nieuw.id);
+  else melding('Hier kan dit niet geplakt worden: kies een kring voor onderdelen, of het hoofdbord of een groep voor kringen.', 'fout');
+}
+
+function leesFavorieten() {
+  try { return JSON.parse(localStorage.getItem(FAV) || '[]'); } catch { return []; }
+}
+function bewaarFavorieten(lijst) {
+  try { localStorage.setItem(FAV, JSON.stringify(lijst)); } catch { melding('De favorieten konden niet bewaard worden.', 'fout'); }
+}
+
+/** Het gekozen onderdeel bij de favorieten zetten: een kopie met jouw eigenschappen, altijd beschikbaar. */
+function favorietToevoegen() {
+  const plek = zoek(staat.project, staat.selectie);
+  if (!plek || plek.ding.soort === 'kring' || plek.ding.soort === 'differentieel') { melding('Kies eerst een onderdeel.'); return; }
+  const lijst = leesFavorieten();
+  if (lijst.length >= MAX_FAVORIETEN) { melding(`Er kunnen maximaal ${MAX_FAVORIETEN} favorieten bewaard worden.`, 'fout'); return; }
+  const { id, ...item } = structuredClone(plek.ding);
+  lijst.push({ id: Math.random().toString(36).slice(2, 9), naam: itemNaam(plek.ding), item });
+  bewaarFavorieten(lijst);
+  melding('Toegevoegd aan je favorieten.');
+  tekenEigenschappen();
+}
+
+/** Een afbeelding als eigen symbool importeren (max. 250 × 250 pixels), met de breedte waarmee het wordt afgedrukt. */
+async function eigenSymboolImporteren(bestand) {
+  const src = await new Promise((ok, fout) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => fout(r.error); r.readAsDataURL(bestand); });
+  const img = await new Promise((ok, fout) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => fout(new Error('Deze afbeelding kan niet geopend worden.')); i.src = src; });
+  const f = Math.min(1, 250 / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(img.naturalWidth * f));
+  c.height = Math.max(1, Math.round(img.naturalHeight * f));
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  const afb = c.toDataURL('image/png');
+  const { knop, waarden } = await vraag({
+    titel: 'Eigen symbool',
+    tekst: 'Het symbool komt bij je favorieten. Een eigen symbool verandert niet van uitzicht als je eigenschappen wijzigt.',
+    velden: [
+      { naam: 'breedte', label: 'Breedte op papier (mm)', type: 'number', waarde: 10, min: 2 },
+      { naam: 'omschrijving', label: 'Omschrijving op materiaallijst', waarde: '' },
+    ],
+  });
+  if (knop !== 'ok') return;
+  const lijst = leesFavorieten();
+  if (lijst.length >= MAX_FAVORIETEN) { melding(`Er kunnen maximaal ${MAX_FAVORIETEN} favorieten bewaard worden.`, 'fout'); return; }
+  const { id, ...item } = nieuwItem('eigen', { afb, verhouding: c.height / c.width, breedteMm: Math.max(2, waarden.breedte || 10), omschrijving: waarden.omschrijving.trim() });
+  lijst.push({ id: Math.random().toString(36).slice(2, 9), naam: waarden.omschrijving.trim() || bestand.name, item });
+  bewaarFavorieten(lijst);
+  tekenEigenschappen();
+}
+
+/** Favorieten, gekopieerde onderdelen en losse symbolen als knoppen om toe te voegen. */
+function extraKeuzes(voorKring = null) {
+  const wrap = document.createElement('div');
+  const favorieten = leesFavorieten();
+  wrap.append(kop('Favorieten'));
+  const rij = document.createElement('div');
+  rij.className = 'palet';
+  for (const f of favorieten) {
+    const b = knop(`${icoon(nieuwItem(f.item.soort, f.item), 26)}<span>${esc(f.naam)}</span>`, () => voegOnderdeelToe(f.item.soort, f.item));
+    b.title = `${f.naam} toevoegen (rechtsklik haalt het uit je favorieten)`;
+    b.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      bewaarFavorieten(leesFavorieten().filter((x) => x.id !== f.id));
+      tekenEigenschappen();
+    });
+    rij.append(b);
+  }
+  wrap.append(rij);
+  const invoer = document.createElement('input');
+  invoer.type = 'file';
+  invoer.accept = 'image/*';
+  invoer.hidden = true;
+  invoer.addEventListener('change', async () => {
+    const bestand = invoer.files?.[0];
+    if (bestand) await eigenSymboolImporteren(bestand).catch((e) => melding(e.message, 'fout'));
+  });
+  wrap.append(invoer, knoppenrij(
+    knop('☆ Gekozen onderdeel als favoriet', favorietToevoegen, { titel: 'Bewaar het gekozen onderdeel met zijn eigenschappen' }),
+    knop('Eigen symbool importeren…', () => invoer.click(), { titel: 'Een afbeelding (max. 250 × 250 pixels) als symbool' }),
+  ));
+  if (gekopieerd.length) {
+    wrap.append(kop('Gekopieerd'));
+    const k = document.createElement('div');
+    k.className = 'palet';
+    gekopieerd.forEach((node, i) => {
+      const inhoud = node.soort === 'kring' ? `<span class="ic letter">K</span><span>Kring ${esc(node.naam || '')}</span>`
+        : node.soort === 'differentieel' ? `<span class="ic letter groep">G</span><span>Groep ${esc(node.naam || '')}</span>`
+          : `${icoon(node, 26)}<span>${esc(itemNaam(node))}</span>`;
+      k.append(knop(inhoud, () => plakGekopieerd(i), { titel: 'Invoegen' }));
+    });
+    wrap.append(k);
+  }
+  const los = losseSymbolen(staat.project);
+  if (los.length && voorKring) {
+    wrap.append(kop('Losse symbolen van het situatieschema'));
+    const l = document.createElement('div');
+    l.className = 'palet';
+    for (const x of los) {
+      l.append(knop(`${icoon(x.item, 26)}<span>${esc(itemNaam(x.item))}</span>`, () => { wijzig((p) => koppelLos(p, x.id, voorKring)); }, { titel: `Op ${x.planNaam}; toevoegen aan deze kring` }));
+    }
+    wrap.append(l);
+  }
+  return wrap;
 }
 
 // ---------- Boom ----------
@@ -230,6 +360,7 @@ function basisActies() {
     knop('↑', () => verschuifGekozen(-1), { titel: 'Omhoog (Alt+↑)' }),
     knop('↓', () => verschuifGekozen(1), { titel: 'Omlaag (Alt+↓)' }),
     knop('Dupliceren', dupliceerGekozen, { titel: 'Ctrl+D' }),
+    knop('Kopiëren', kopieerGekozen, { titel: 'Ctrl+C: daarna plakken met Ctrl+V' }),
     knop('Verwijderen', verwijderGekozen, { titel: 'Delete', klasse: 'gevaar' }),
   );
 }
@@ -334,6 +465,7 @@ function algemeneVelden(def, ding) {
   if (!def?.eigenAantal) velden.push({ label: 'Aantal (x3, x5, …)', pad: 'aantal', type: 'number', getal: true, min: 1, max: 99 });
   velden.push(
     { label: 'Adres (langs het symbool)', pad: 'adres', placeholder: 'bv. ZONE.01' },
+    { label: 'Domotica functie', pad: 'functie', type: 'select', opties: [['', 'Niet gespecificeerd'], ['input', 'Input (stuurt aan)'], ['output', 'Output (wordt aangestuurd)']] },
     { label: 'Tekst rechts', pad: 'tekst', placeholder: 'bv. hal, spiegel, tv' },
     {
       label: 'Plaatsing', pad: 'plaatsing', type: 'select',
@@ -360,6 +492,7 @@ function tekenEigenschappen() {
         { label: 'Kabel van het net', pad: 'aansluiting.kabelNet', placeholder: 'bv. EXVB 4x70' },
         { label: 'Kabel naar het bord', pad: 'aansluiting.kabelBord', placeholder: 'bv. XVB 5G10' },
         { label: 'Met teller (kWh)', pad: 'hoofd.teller', type: 'checkbox' },
+        { label: 'Nummer (voorvoegsel van de kringen)', pad: 'hoofd.nummer', placeholder: 'bv. 1: kringen 1A, 1B, …' },
       ], (pr) => pr, 'hoofd'),
       kop('Hoofdbeveiliging'),
       formulier(beveiligingVelden('hoofd.', p.hoofd), (pr) => pr, 'hoofd'),
@@ -390,6 +523,8 @@ function tekenEigenschappen() {
       formulier([
         { label: 'Naam', pad: 'naam', placeholder: 'bv. diff 30mA wassalon' },
         { label: 'Vaste letter', pad: 'letter', placeholder: 'leeg = automatisch' },
+        { label: 'Nummer (voorvoegsel van de kringen hierboven)', pad: 'nummer', placeholder: 'bv. 2: dan 2A, 2B, … vanaf A' },
+        { label: 'Op nieuwe pagina starten', pad: 'nieuwePagina', type: 'checkbox' },
       ], doel, id),
       kop('Opmerking'),
       formulier([OPMERKING], doel, id),
@@ -411,6 +546,7 @@ function tekenEigenschappen() {
         { label: 'Naam (bovenaan)', pad: 'naam', placeholder: 'bv. keuken stopcontacten' },
         { label: 'Vaste letter', pad: 'letter', placeholder: 'leeg = automatisch' },
         { label: 'Badkamer of natte ruimte', pad: 'badkamer', type: 'checkbox' },
+        { label: 'Op nieuwe pagina starten', pad: 'nieuwePagina', type: 'checkbox' },
       ], doel, id),
       kop('Opmerking'),
       formulier([OPMERKING], doel, id),
@@ -433,6 +569,7 @@ function tekenEigenschappen() {
       kop('Onderdeel toevoegen'),
       palet(),
       alleSoorten(),
+      extraKeuzes(id),
       knoppenrij(knop('+ Kring hierna', voegKringToe)),
       kop('Ordenen'),
       verplaatsKeuze(id, false),
@@ -446,9 +583,11 @@ function tekenEigenschappen() {
   paneel.append(
     kop(`${code.get(id)} ${itemNaam(ding)}`, `in kring ${code.get(plek.ouder.id)}`),
     formulier([...(def?.velden || []).map((v) => ({ herbouw: v.type === 'select' || v.type === 'checkbox', ...v })), ...algemeneVelden(def, ding)], doel, id),
+    knoppenrij(knop('Zoek op situatieschema', () => window.dispatchEvent(new CustomEvent('actie', { detail: 'zoekSS' })), { titel: 'Toon dit symbool op het plan (Ctrl+F op het plan zoekt terug)' })),
     kop('Onderdeel toevoegen na dit'),
     palet(),
     alleSoorten(),
+    extraKeuzes(null),
     kop('Ordenen'),
     verplaatsKeuze(id, true),
     basisActies(),

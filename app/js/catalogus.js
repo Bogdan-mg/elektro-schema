@@ -93,6 +93,14 @@ const namen = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v.
  * eigenAantal: de soort gebruikt "aantal" zelf (bv. meervoudig stopcontact), dus geen algemeen aantal-veld.
  */
 export const SOORTEN = {
+  eigen: {
+    naam: 'Eigen symbool', groep: 'Eigen symbolen', eigenAantal: false,
+    standaard: { afb: '', breedteMm: 10, verhouding: 1, omschrijving: '' },
+    velden: [
+      { label: 'Omschrijving op materiaallijst', pad: 'omschrijving', placeholder: 'leeg = niet op de materiaallijst' },
+      { label: 'Breedte op papier (mm)', pad: 'breedteMm', type: 'number', getal: true, min: 2, max: 80 },
+    ],
+  },
   aansluitpunt: { naam: 'Aansluitpunt', groep: 'Algemeen', standaard: { opschrift: '' }, velden: [tekstveld('opschrift', 'Tekst', 'bv. 1.2.3')] },
   aarding: { naam: 'Aarding', groep: 'Algemeen', standaard: { opschrift: '' }, velden: [tekstveld('opschrift', 'Tekst', 'bv. < 30Ω')] },
   aardingsstrip: { naam: 'Aardingsstrip', groep: 'Algemeen', standaard: {}, velden: [] },
@@ -254,7 +262,7 @@ export const SOORTEN = {
 };
 
 /** Volgorde van de groepen in het palet en de keuzelijst. */
-export const SOORT_GROEPEN = ['Contactdozen', 'Verlichting', 'Schakelaars', 'Toestellen', 'Beveiliging', 'Alarm en detectie', 'Toegang', 'Communicatie', 'Sturing', 'Algemeen'];
+export const SOORT_GROEPEN = ['Contactdozen', 'Verlichting', 'Schakelaars', 'Toestellen', 'Beveiliging', 'Alarm en detectie', 'Toegang', 'Communicatie', 'Sturing', 'Algemeen', 'Eigen symbolen'];
 
 /** Knoppen om snel iets aan een kring toe te voegen. */
 export const PALET = [
@@ -330,6 +338,7 @@ export function itemNaam(item) {
     default: {
       const def = SOORTEN[item.soort];
       if (!def) return item.soort;
+      if (item.soort === 'eigen') return item.omschrijving || def.naam;
       const v = variantNaam(item);
       return v && !/^(basis|niet gespecificeerd)/i.test(v) && v !== def.naam ? `${def.naam} (${v.toLowerCase()})` : def.naam;
     }

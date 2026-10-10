@@ -28,28 +28,46 @@ function titelhoek(soort, blad, totaal) {
 const svg = (viewBox, b, h, inhoud, stijl) =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" width="${b}mm" height="${h}mm" preserveAspectRatio="xMidYMid meet"><style>${stijl}</style>${inhoud}</svg>`;
 
-/** Het ééndraadschema over één of meer bladen, gesneden tussen kringen of differentiëlen. */
-function eendraadBladen(formaat) {
+/**
+ * Het ééndraadschema over één of meer bladen, gesneden tussen kringen of groepen.
+ * auto: nieuwe bladen waar je "op nieuwe pagina starten" instelde en waar het schema te breed wordt.
+ * manueel: enkel waar je dat instelde; de schaal past zich aan zodat het breedste stuk op een blad past.
+ */
+function eendraadBladen(formaat, paginering = 'auto') {
   const r = tekenEendraad(staat.project);
   const ruimteB = formaat.b - 2 * MARGE;
   const ruimteH = formaat.h - 2 * MARGE - TITELHOEK - 4;
+  const manueel = paginering === 'manueel';
   let k = Math.min(EENHEID, ruimteH / r.hoogte);
   const breedste = Math.max(...r.kolommen.map((c) => c.x1 - c.x0), 0);
   const eerste = r.kolommen[0] ? r.kolommen[0].x1 + 20 : r.breedte;
-  k = Math.min(k, ruimteB / (breedste + 30), ruimteB / eerste);
-  const perBlad = ruimteB / k;
 
-  const stukken = [];
-  let start = 0;
-  let einde = 0;
-  for (const c of r.kolommen) {
-    if (c.x1 - start > perBlad && einde > start) {
-      stukken.push([start, einde]);
-      start = c.x0 - 20;
+  /** De stukken (van x0 tot x1) bij een gegeven breedte per blad. */
+  const snij = (perBlad) => {
+    const lijst = [];
+    let start = 0;
+    let einde = 0;
+    for (const c of r.kolommen) {
+      const moetNieuw = c.nieuw && einde > start;
+      if (moetNieuw || (!manueel && c.x1 - start > perBlad && einde > start)) {
+        lijst.push([start, einde]);
+        start = c.x0 - 20;
+      }
+      einde = c.x1;
     }
-    einde = c.x1;
+    lijst.push([start, Math.max(einde, manueel ? r.breedte : Math.min(r.breedte, start + perBlad))]);
+    return lijst;
+  };
+
+  if (manueel) {
+    // Eerst knippen waar het moet, dan de schaal zo kiezen dat het breedste stuk op een blad past.
+    const stukken0 = snij(Infinity);
+    const breed = Math.max(...stukken0.map(([a, b]) => b - a));
+    k = Math.min(k, ruimteB / (breed + 30));
+  } else {
+    k = Math.min(k, ruimteB / (breedste + 30), ruimteB / eerste);
   }
-  stukken.push([start, Math.max(einde, Math.min(r.breedte, start + perBlad))]);
+  const stukken = snij(ruimteB / k);
 
   return stukken.map(([x0, x1], i) => ({
     soort: 'Ééndraadschema',
@@ -162,10 +180,10 @@ function materiaalBlad() {
 }
 
 /** Bouw de bladen op in #afdruk. */
-export function bouwAfdruk({ formaat = 'A4', eendraad = true, situatie = true, lijst = true, opmerkingen = true, materiaal = true }) {
+export function bouwAfdruk({ formaat = 'A4', eendraad = true, situatie = true, lijst = true, opmerkingen = true, materiaal = true, paginering = 'auto' }) {
   const f = FORMATEN[formaat];
   const bladen = [
-    ...(eendraad ? eendraadBladen(f) : []),
+    ...(eendraad ? eendraadBladen(f, paginering) : []),
     ...(situatie ? situatieBladen(f) : []),
     ...(lijst ? lijstBladen(f) : []),
     ...(opmerkingen ? opmerkingenBladen(f) : []),

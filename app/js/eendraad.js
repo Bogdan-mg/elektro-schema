@@ -2,7 +2,7 @@
 // groepen (generaal zekering, differentiëlen) als ketting naar boven tot hun verdeellijn, en de kringen
 // naar boven met hun onderdelen genummerd per rij, van onder naar boven.
 import { NETTEN, kabelTekst, komma } from './catalogus.js';
-import { codes, rijen } from './model.js';
+import { codes, rijen, alleKringen } from './model.js';
 import {
   symbool, zonderLeiding, plaatsingTeken, automaatSymbool, diffLiggend, aardeSymbool, aardingsonderbreker, ondergronds,
   tellerSymbool, lijn, tekst, esc,
@@ -76,6 +76,19 @@ function tekenOpschriften(kolommen, x, y) {
  */
 export function tekenEendraad(project, { selectie = null } = {}) {
   const code = codes(project);
+  // Een input (drukknop, schakelaar, …) toont de kringen van de outputs met hetzelfde adres: "K.01 → B1".
+  const uitgangen = new Map();
+  for (const kr of alleKringen(project)) {
+    for (const it of kr.knoop.items) {
+      if (it.functie === 'output' && it.adres?.trim()) uitgangen.set(it.adres.trim(), [...(uitgangen.get(it.adres.trim()) || []), code.get(it.id)]);
+    }
+  }
+  const adresTekst = (it) => {
+    const a = it.adres?.trim();
+    if (!a) return '';
+    const naar = it.functie === 'input' ? uitgangen.get(a) : null;
+    return naar?.length ? `${a} → ${naar.join(', ')}` : a;
+  };
   const doelen = [];
   const lijnen = [];
   const snijpunten = [];
@@ -95,7 +108,7 @@ export function tekenEendraad(project, { selectie = null } = {}) {
       const aantal = !d.item.eigenAantalTonen && d.item.soort !== 'stopcontact' && d.item.aantal > 1 ? `x${d.item.aantal}` : '';
       d.aantal = aantal;
       boven = Math.max(boven, -d.s.boven + (aantal ? 10 : 0));
-      onder = Math.max(onder, d.s.onder + (d.item.adres ? breedte(d.item.adres, 5.2) + 8 : 0));
+      onder = Math.max(onder, d.s.onder + (adresTekst(d.item) ? breedte(adresTekst(d.item), 5.2) + 8 : 0));
       x += d.s.door;
     }
     const laatste = delen.at(-1);
@@ -163,7 +176,7 @@ export function tekenEendraad(project, { selectie = null } = {}) {
       const x = sx + d.x;
       lijnen.push(`<g transform="translate(${r1(x)} ${r1(y)})">${d.s.svg}</g>`);
       if (d.aantal) lijnen.push(tekst(x + d.s.midden, y + d.s.boven - 2, d.aantal, 'k', 'middle'));
-      if (d.item.adres) lijnen.push(draai(x + d.s.midden + 3.5, y + d.s.onder + 4, d.item.adres, 'k cursief', 'end'));
+      if (adresTekst(d.item)) lijnen.push(draai(x + d.s.midden + 3.5, y + d.s.onder + 4, adresTekst(d.item), 'k cursief', 'end'));
     }
     const laatste = r.delen.at(-1);
     if (r.tekstje) lijnen.push(tekst(sx + laatste.x + laatste.s.b + 8, y + 3.5, r.tekstje, 'k'));
@@ -176,7 +189,7 @@ export function tekenEendraad(project, { selectie = null } = {}) {
     lijnen.push(`<g transform="translate(${r1(tx)} ${r1(ty)})">${s.svg}</g>`);
     if (nr) lijnen.push(tekst(x - (s.midden - s.begin) - 4, ty + 3.5, String(nr), 'k', 'end'));
     if (item.tekst) lijnen.push(tekst(tx + s.b + 6, ty + 3.5, item.tekst, 'k'));
-    if (item.adres) lijnen.push(draai(x + 3.5, ty + s.onder + 4, item.adres, 'k cursief', 'end'));
+    if (adresTekst(item)) lijnen.push(draai(x + 3.5, ty + s.onder + 4, adresTekst(item), 'k cursief', 'end'));
   }
 
   function kring(k, x, yb) {
@@ -246,12 +259,20 @@ export function tekenEendraad(project, { selectie = null } = {}) {
     }
     hoogste = Math.min(hoogste, top - 12);
     const b = Math.max(kolommen.reduce((som, kol) => som + kol.breedte, 0), MIN_KOLOM, LINKS + 10 + label.length * 10.5 + 14);
-    snijpunten.push({ x0: x, x1: x + b });
+    snijpunten.push({ x0: x, x1: x + b, id: k.id, nieuw: Boolean(k.nieuwePagina) });
     return { breedte: b };
   }
 
   /** Een groep: beveiliging (of niets bij een rij), en daarboven een verdeellijn met de kringen; één groep als kind komt er recht boven. */
   function groep(g, x, yb) {
+    const voorSnij = snijpunten.length;
+    const r = groepTekenen(g, x, yb);
+    // Een groep die op een nieuwe pagina begint, doet dat met haar eerste kring.
+    if (g.nieuwePagina && snijpunten.length > voorSnij) snijpunten[voorSnij].nieuw = true;
+    return r;
+  }
+
+  function groepTekenen(g, x, yb) {
     const lx = x + LINKS;
     const label = opschriften(g);
     let hoogte = 18;
@@ -273,7 +294,7 @@ export function tekenEendraad(project, { selectie = null } = {}) {
       lijnen.push(lijn(lx - 8, sb, lx + 30, sb, 'l bus'));
       hoogste = Math.min(hoogste, sb - 16);
       const b = Math.max(MIN_KOLOM, LINKS + 10 + label.length * 10.5 + 14);
-      snijpunten.push({ x0: x, x1: x + b });
+      snijpunten.push({ x0: x, x1: x + b, id: g.id, nieuw: false });
       return { breedte: b };
     }
     // Eén groep erboven: recht in de ketting, zonder verdeellijn (zoals generaal zekering → 300 mA → 30 mA).
@@ -349,8 +370,11 @@ export function tekenEendraad(project, { selectie = null } = {}) {
   lijnen.push(lijn(10, 0, eindeBus, 0, 'l bus'));
 
   const boven = -hoogste + 16;
+  // Rode lijnen waar een nieuwe pagina begint (enkel op het scherm).
+  const paginaLijnen = snijpunten.filter((c) => c.nieuw && c.x0 > START + 1)
+    .map((c) => `<line class="paginalijn" x1="${r1(c.x0 - 6)}" y1="${r1(hoogste - 6)}" x2="${r1(c.x0 - 6)}" y2="${Y + 40}"/>`).join('');
   return {
-    inhoud: `<g transform="translate(0 ${r1(boven)})"><g class="doelen">${doelen.join('')}</g><g class="tekening">${lijnen.join('')}</g></g>`,
+    inhoud: `<g transform="translate(0 ${r1(boven)})"><g class="doelen">${doelen.join('')}</g><g class="tekening">${lijnen.join('')}</g>${paginaLijnen}</g>`,
     breedte: Math.max(x, eindeBus) + 20,
     hoogte: boven + Y + 30 + Math.max(hoofdLabels.length, 2) * 12,
     kolommen: snijpunten.sort((a, b) => a.x0 - b.x0),
@@ -375,6 +399,7 @@ export const SCHEMA_STIJL = `
 .m{font:6px Arial,"Segoe UI",sans-serif;fill:currentColor}
 .groot{font:12px Arial,"Segoe UI",sans-serif;fill:currentColor}
 .letter{font:700 11.5px Arial,"Segoe UI",sans-serif;fill:currentColor}
+.paginalijn{stroke:#dc2626;stroke-width:1.6;stroke-dasharray:7 5;fill:none}
 .doel{fill:transparent;stroke:none;cursor:pointer}
 .doel:hover{fill:rgba(37,99,235,.06)}
 .doel.gekozen{fill:rgba(37,99,235,.13);stroke:rgba(37,99,235,.55);stroke-width:1}

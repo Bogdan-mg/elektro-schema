@@ -308,6 +308,49 @@ function bevat(diff, id) {
   return diff.kinderen.some((k) => k.id === id || (k.soort === 'differentieel' && bevat(k, id)));
 }
 
+const herid = (k) => {
+  k.id = nieuwId();
+  k.kinderen?.forEach(herid);
+  k.items?.forEach(herid);
+};
+
+/** Een diepe kopie van een groep, kring of onderdeel, om later (opnieuw) in te voegen. */
+export function kopieerNode(project, id) {
+  const plek = zoek(project, id);
+  return plek ? structuredClone(plek.ding) : null;
+}
+
+/** Een eerder gekopieerde groep, kring of onderdeel invoegen, met nieuwe id's. Geeft het nieuwe ding terug of null. */
+export function plakNode(project, selectieId, node) {
+  const kopie = structuredClone(node);
+  herid(kopie);
+  if (kopie.soort === 'kring' || kopie.soort === 'differentieel') return voegKnoopToe(project, selectieId, kopie);
+  return voegItemToe(project, selectieId, kopie);
+}
+
+/** De losse symbolen op de plannen: symbolen die nog bij geen kring horen. */
+export function losseSymbolen(project) {
+  return project.plannen.flatMap((pl) => Object.entries(pl.plaatsingen)
+    .filter(([, x]) => x.los)
+    .map(([id, x]) => ({ planId: pl.id, planNaam: pl.naam, id, item: x.item })));
+}
+
+/** Een los symbool aan een kring koppelen: het wordt een gewoon onderdeel van die kring, op dezelfde plaats op het plan. */
+export function koppelLos(project, itemId, kringId) {
+  const kring = zoek(project, kringId)?.ding;
+  if (kring?.soort !== 'kring') return false;
+  for (const pl of project.plannen) {
+    const x = pl.plaatsingen[itemId];
+    if (x?.los) {
+      kring.items.push(x.item);
+      delete x.los;
+      delete x.item;
+      return true;
+    }
+  }
+  return false;
+}
+
 /** Een geopend bestand nakijken en aanvullen, zodat oudere of onvolledige bestanden ook werken. */
 export function leesProject(tekst) {
   let data;

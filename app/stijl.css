@@ -328,3 +328,5 @@ dialog.import { width: min(1000px, 96vw); }
 .importopties { display: grid; gap: 8px; align-content: start; font-size: 13px; }
 .importopties h4 { margin: 8px 0 0; font-size: 13px; }
 .imp-lagen { display: grid; gap: 4px; max-height: 240px; overflow: auto; border: 1px solid var(--rand); padding: 6px 8px; border-radius: 6px; }
+
+#afdruk .paginalijn { display: none; }

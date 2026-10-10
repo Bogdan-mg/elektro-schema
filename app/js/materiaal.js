@@ -1,9 +1,9 @@
 // De materiaallijst, rechtstreeks uit het ééndraadschema.
 import { TOESTELLEN, KABELTYPES, SOORTEN, kabelTekst, komma, itemNaam } from './catalogus.js';
-import { alleKnopen } from './model.js';
+import { alleKnopen, losseSymbolen } from './model.js';
 
 export const GROEPEN = ['Verdeelbord', 'Kabels en draad', 'Stopcontacten', 'Schakelaars', 'Verlichting', 'Toestellen', 'Beveiliging',
-  'Alarm en detectie', 'Toegang', 'Communicatie', 'Sturing', 'Algemeen', 'Contactdozen', 'Dozen'];
+  'Alarm en detectie', 'Toegang', 'Communicatie', 'Sturing', 'Algemeen', 'Contactdozen', 'Dozen', 'Eigen symbolen'];
 
 const MEERVOUD = ['enkel', 'dubbel', 'drievoudig', 'viervoudig'];
 const voudig = (n) => MEERVOUD[n - 1] || `${n}-voudig`;
@@ -76,7 +76,14 @@ export function materiaallijst(project, { marge = 10 } = {}) {
       }
     }
 
-    for (const item of kring.items) {
+    kring.items.forEach(telItem);
+  }
+
+  // Losse symbolen op het situatieschema tellen ook mee.
+  for (const { item } of losseSymbolen(project)) telItem(item);
+
+  function telItem(item) {
+    {
       switch (item.soort) {
         case 'stopcontact':
           tel('Stopcontacten', stopcontactNaam(item));
@@ -109,6 +116,9 @@ export function materiaallijst(project, { marge = 10 } = {}) {
         }
         case 'aftakdoos':
           tel('Dozen', 'Aftakdoos');
+          break;
+        case 'eigen':
+          if (item.omschrijving?.trim()) tel('Eigen symbolen', item.omschrijving.trim(), item.aantal || 1);
           break;
         default:
           // Alle andere onderdelen uit de catalogus: per soort en variant.

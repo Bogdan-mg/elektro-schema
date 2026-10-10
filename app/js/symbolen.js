@@ -663,7 +663,16 @@ function nota(it) {
 
 // ---------- Overzicht ----------
 
+/** Een eigen (geïmporteerd) symbool: een afbeelding, op de gevraagde breedte (1 mm op papier is ongeveer 3,6 eenheden). */
+function eigen(it) {
+  const b = Math.max(8, (Number(it.breedteMm) || 10) * 3.6);
+  const h = b * (Number(it.verhouding) || 1);
+  const s = lijn(0, 0, 5, 0) + (it.afb ? `<image href="${esc(it.afb)}" x="5" y="${r1(-h / 2)}" width="${r1(b)}" height="${r1(h)}" preserveAspectRatio="xMidYMid meet"/>` : rechthoek(5, -h / 2, b, h));
+  return res(s, b + 7, 5 + b / 2, -h / 2 - 2, h / 2 + 2);
+}
+
 const TEKENAARS = {
+  eigen,
   stopcontact: contactdoos, communicatie, lichtpunt, voorschakelapparaat, schakelaar, drukknop,
   bewegingsdetector, bewegingsdetectorActief, beveiligingscontact, beveiliging, branddetector, camera, trillingsdetector,
   slot, deurslot, geluidsbron, intercom, kiezer, luidspreker, microfoon, monitor,
