@@ -737,14 +737,21 @@ export function zonderLeiding(s) {
   return m ? { ...s, svg: s.svg.slice(m[0].length), begin: Number(m[1]) } : { ...s, begin: 0 };
 }
 
-/** Plaatsing van een leiding (AREI C), liggend: in een wand, op een wand, in de lucht, ondergronds of in een buis. */
+/**
+ * Plaatsing van een leiding (AREI C), zoals Trikker het tekent. De leiding loopt liggend langs y, de tekens staan erboven:
+ * op een wand een "Ш" (de balk tegen de leiding), in een wand een "m" (de balk aan de buitenkant), een luchtleiding een cirkel
+ * op de leiding, ondergronds drie streepjes en in een buis een cirkel boven de leiding.
+ */
 export function plaatsingTeken(x, y, plaatsing) {
+  const dicht = y - 2.2; // de kant van het teken die het dichtst bij de leiding staat
+  const ver = y - 7.8;
+  const kam = (balk, poten) => pad(`M${r1(x - 4.5)} ${r1(poten)} V${r1(balk)} H${r1(x + 4.5)} V${r1(poten)} M${r1(x)} ${r1(balk)} V${r1(poten)}`);
   switch (plaatsing) {
-    case 'inWand': return pad(`M${x - 6} ${y + 1} V${y - 5} H${x - 1} V${y + 1} M${x + 1} ${y + 1} V${y - 5} H${x + 6} V${y + 1}`);
-    case 'opWand': return pad(`M${x - 6} ${y - 5} V${y + 1} H${x - 1} V${y - 5} M${x + 1} ${y - 5} V${y + 1} H${x + 6} V${y - 5}`);
-    case 'lucht': return cirkel(x, y - 3, 2.6);
-    case 'buis': return cirkel(x, y - 4, 2.6);
-    case 'ondergronds': return lijn(x - 5, y - 3, x + 5, y - 3) + lijn(x - 3.5, y - 5.5, x + 3.5, y - 5.5) + lijn(x - 2, y - 8, x + 2, y - 8);
+    case 'opWand': return kam(dicht, ver);
+    case 'inWand': return kam(ver, dicht);
+    case 'lucht': return cirkel(x, y, 2.8);
+    case 'buis': return cirkel(x, y - 4.8, 2.8);
+    case 'ondergronds': return lijn(x - 4.75, ver, x + 4.75, ver) + lijn(x - 3.8, y - 5, x + 3.8, y - 5) + lijn(x - 2.8, dicht, x + 2.8, dicht);
     default: return '';
   }
 }

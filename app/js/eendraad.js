@@ -198,7 +198,11 @@ export function tekenEendraad(project, { selectie = null } = {}) {
       draai(lx + 10, kabelY, kabel),
     );
     if (k.kabel.plaatsing) {
-      for (const py of [kabelY + 4, kabelEinde - 8]) lijnen.push(`<g transform="translate(${lx} ${r1(py)}) rotate(-90)">${plaatsingTeken(0, -6, k.kabel.plaatsing)}</g>`);
+      // Tegen een wand staat het teken aan het begin en het einde van de kabel, anders één keer.
+      const opWand = k.kabel.plaatsing === 'inWand' || k.kabel.plaatsing === 'opWand';
+      for (const py of opWand ? [kabelY + 7, kabelEinde - 11] : [kabelY + 7]) {
+        lijnen.push(`<g transform="translate(${lx} ${r1(py)}) rotate(-90)">${plaatsingTeken(0, 0, k.kabel.plaatsing)}</g>`);
+      }
     }
     doel(x + 2, yb - kop + 14, LINKS + 34, kop - 12, k.id);
 
@@ -314,7 +318,7 @@ export function tekenEendraad(project, { selectie = null } = {}) {
     lijnen.push(lijn(vx, Y, vx + lengte, Y));
     if (tekstje) {
       lijnen.push(tekst(vx + lengte / 2, Y + 12, tekstje, 'k', 'middle'));
-      lijnen.push(plaatsingTeken(vx + 12, Y - 3, 'opWand'), plaatsingTeken(vx + lengte - 12, Y - 3, 'opWand'));
+      lijnen.push(plaatsingTeken(vx + 14, Y, 'inWand'), plaatsingTeken(vx + lengte - 14, Y, 'inWand'));
     }
     vx += lengte;
   };
