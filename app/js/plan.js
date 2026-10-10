@@ -126,6 +126,55 @@ export function muurKeten(plan, i) {
 /** De samengetelde lengte (in tekeneenheden) van de aaneengesloten muren rond muur i. */
 export const ketenLengte = (plan, i) => muurKeten(plan, i).reduce((som, j) => som + afstand(plan.muren[j]), 0);
 
+/** Eén geplaatst onderdeel: het symbool met zijn code, op de plaats en onder de hoek die bij pl hoort. */
+export function plaatsingSvg(deel, pl, s, gekozen = false, id = '') {
+  const { svg, b, boven = -13, onder = 13 } = deel.item === 'bord' ? bordSymbool() : symbool(deel.item);
+  const titel = deel.item === 'bord' ? 'Verdeelbord' : `${deel.code} ${itemNaam(deel.item)}`;
+  return `<g class="geplaatst${gekozen ? ' gekozen' : ''}" data-plaats="${esc(id)}" transform="translate(${pl.x} ${pl.y})">`
+    + `<title>${esc(titel)}</title>`
+    + `<g transform="rotate(${pl.rot || 0}) scale(${s})">`
+    + `<rect class="plaats-doel" x="${-b / 2 - 5}" y="${boven - 4}" width="${b + 10}" height="${onder - boven + 8}" rx="4"/>`
+    + `<g transform="translate(${-b / 2} 0)">${svg}</g></g>`
+    + `<g transform="scale(${s})">${tekst(b / 2 + 4, -10, deel.code, 'b plan-code')}</g>`
+    + '</g>';
+}
+
+/** De breedte van het symbool van een onderdeel (zie symbolen.js). */
+export const symboolBreedte = (deel) => (deel.item === 'bord' ? bordSymbool() : symbool(deel.item)).b;
+
+/**
+ * Een symbool tegen de dichtstbijzijnde muur zetten. Het symbool staat dan met zijn leiding op de muur en wijst de ruimte in,
+ * aan de kant waar het punt ligt. Geeft { x, y, rot, muur } terug, of null als er geen muur dichtbij genoeg is.
+ * @param {number} breedte de breedte van het symbool, in symboolruimte (voor de schaal van het plan)
+ */
+export function kleefAanMuur(plan, punt, breedte) {
+  const s = plan.symbool || 1;
+  const dikte = Math.max(4, 6 * s);
+  const afstandTotMidden = dikte / 2 + (breedte * s) / 2; // van de muurlijn tot het midden van het symbool
+  const bereik = afstandTotMidden + 18 * s;
+  let beste = null;
+  plan.muren.forEach((m, i) => {
+    if ((m.soort || 'muur') !== 'muur') return;
+    const dx = m.x2 - m.x1;
+    const dy = m.y2 - m.y1;
+    const l2 = dx * dx + dy * dy;
+    if (!l2) return;
+    const t = Math.max(0, Math.min(1, ((punt.x - m.x1) * dx + (punt.y - m.y1) * dy) / l2));
+    const cx = m.x1 + t * dx;
+    const cy = m.y1 + t * dy;
+    const d = Math.hypot(punt.x - cx, punt.y - cy);
+    if (d > bereik || (beste && d >= beste.d)) return;
+    const l = Math.sqrt(l2);
+    let nx = -dy / l;
+    let ny = dx / l;
+    if ((punt.x - cx) * nx + (punt.y - cy) * ny < 0) [nx, ny] = [-nx, -ny];
+    beste = { d, x: cx + nx * afstandTotMidden, y: cy + ny * afstandTotMidden, nx, ny, muur: i };
+  });
+  if (!beste) return null;
+  const rot = ((Math.round((Math.atan2(beste.ny, beste.nx) * 180) / Math.PI) % 360) + 360) % 360;
+  return { x: Math.round(beste.x * 10) / 10, y: Math.round(beste.y * 10) / 10, rot, muur: beste.muur };
+}
+
 /** Alle onderdelen per id, met hun code. */
 export function onderdelen(project) {
   const code = codes(project);
@@ -168,18 +217,7 @@ export function tekenPlan(project, plan, { selectie = null, raster = false, dele
   for (const [id, pl] of Object.entries(plan.plaatsingen)) {
     const deel = delen.get(id);
     if (!deel) continue;
-    const { svg, b, boven = -13, onder = 13 } = deel.item === 'bord' ? bordSymbool() : symbool(deel.item);
-    const gekozen = selectie?.soort === 'item' && selectie.id === id;
-    const titel = deel.item === 'bord' ? 'Verdeelbord' : `${deel.code} ${itemNaam(deel.item)}`;
-    uit.push(
-      `<g class="geplaatst${gekozen ? ' gekozen' : ''}" data-plaats="${esc(id)}" transform="translate(${pl.x} ${pl.y})">`
-      + `<title>${esc(titel)}</title>`
-      + `<g transform="rotate(${pl.rot || 0}) scale(${s})">`
-      + `<rect class="plaats-doel" x="${-b / 2 - 5}" y="${boven - 4}" width="${b + 10}" height="${onder - boven + 8}" rx="4"/>`
-      + `<g transform="translate(${-b / 2} 0)">${svg}</g></g>`
-      + `<g transform="scale(${s})">${tekst(b / 2 + 4, -10, deel.code, 'b plan-code')}</g>`
-      + '</g>',
-    );
+    uit.push(plaatsingSvg(deel, pl, s, selectie?.soort === 'item' && selectie.id === id, id));
   }
   return uit.join('');
 }

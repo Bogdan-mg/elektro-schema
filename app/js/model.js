@@ -17,6 +17,7 @@ export function nieuwPlan(naam = 'Gelijkvloers') {
     hoogte: 1000,
     symbool: 1.5, // grootte van de symbolen op dit plan
     schaal: 100, // tekeneenheden per meter; null = nog niet ingesteld
+    kleefMuur: true, // symbolen tegen de dichtstbijzijnde muur zetten
     alleMaten: false, // alle lengtes tonen; anders enkel tijdens het tekenen of van het gekozen lijnstuk
     muren: [], // lijnstukken: { soort: 'muur' | 'deur' | 'raam' | 'meet', x1, y1, x2, y2 }
     teksten: [],

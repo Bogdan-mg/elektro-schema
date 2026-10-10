@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { nieuwProject, nieuwPlan, leesProject, teBewaren } from '../app/js/model.js';
-import { tekenPlan, lengteTekst, afstand, segmentSvg, muurKeten, ketenLengte } from '../app/js/plan.js';
+import { tekenPlan, lengteTekst, afstand, segmentSvg, muurKeten, ketenLengte, kleefAanMuur } from '../app/js/plan.js';
 
 test('lengtes in meter met een komma', () => {
   assert.equal(lengteTekst(250, 100), '2,50 m');
@@ -95,4 +95,43 @@ test('de oude instelling afmetingen verdwijnt uit een geopend project', () => {
   const plan = leesProject(JSON.stringify(oud)).plannen[0];
   assert.equal(plan.afmetingen, undefined);
   assert.equal(plan.alleMaten, false);
+});
+
+test('een symbool kleeft aan de muur en wijst de ruimte in', () => {
+  const plan = nieuwPlan();
+  plan.symbool = 1;
+  plan.muren.push({ soort: 'muur', x1: 0, y1: 0, x2: 1000, y2: 0 });
+  // Onder de muur (in beeld lager = y groter): het symbool wijst naar beneden en staat tegen de muur.
+  const onder = kleefAanMuur(plan, { x: 300, y: 25 }, 20);
+  assert.equal(onder.rot, 90);
+  assert.equal(onder.x, 300);
+  assert.equal(onder.y, 3 + 10); // de helft van de muurdikte (6) plus de helft van het symbool (20)
+  // Boven de muur wijst het omhoog.
+  assert.equal(kleefAanMuur(plan, { x: 300, y: -25 }, 20).rot, 270);
+  // Te ver weg: vrij.
+  assert.equal(kleefAanMuur(plan, { x: 300, y: 400 }, 20), null);
+  // Langs het einde van de muur blijft het binnen het stuk.
+  assert.equal(kleefAanMuur(plan, { x: 1010, y: 20 }, 20).x, 1000);
+});
+
+test('kleven werkt op elke muur en negeert deuren, ramen en meetlijnen', () => {
+  const plan = nieuwPlan();
+  plan.symbool = 1.5;
+  plan.muren.push({ soort: 'deur', x1: 0, y1: 0, x2: 90, y2: 0 }, { soort: 'raam', x1: 0, y1: 100, x2: 90, y2: 100 }, { soort: 'meet', x1: 0, y1: 200, x2: 90, y2: 200 });
+  assert.equal(kleefAanMuur(plan, { x: 40, y: 10 }, 20), null);
+  plan.muren.push({ soort: 'muur', x1: 500, y1: 0, x2: 500, y2: 500 });
+  const rechts = kleefAanMuur(plan, { x: 520, y: 250 }, 20);
+  assert.equal(rechts.rot, 0);
+  assert.equal(rechts.muur, 3);
+  assert.equal(kleefAanMuur(plan, { x: 480, y: 250 }, 20).rot, 180);
+  // De dichtstbijzijnde van twee muren wint.
+  plan.muren.push({ soort: 'muur', x1: 560, y1: 0, x2: 560, y2: 500 });
+  assert.equal(kleefAanMuur(plan, { x: 545, y: 250 }, 20).muur, 4);
+});
+
+test('een nieuw plan laat symbolen aan de muur kleven', () => {
+  assert.equal(nieuwPlan().kleefMuur, true);
+  const oud = JSON.parse(teBewaren(nieuwProject()));
+  delete oud.plannen[0].kleefMuur;
+  assert.equal(leesProject(JSON.stringify(oud)).plannen[0].kleefMuur, true);
 });

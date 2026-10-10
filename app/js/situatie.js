@@ -1,7 +1,10 @@
 // Het tabblad Situatieschema: plannen per verdieping, muren en teksten, en de onderdelen op hun plaats zetten.
 import { nieuwPlan, nieuwId, alleKringen, codes } from './model.js';
 import { itemNaam } from './catalogus.js';
-import { tekenPlan, onderdelen, PLAN_STIJL, segmentSvg, afstand, lengteTekst, ketenLengte, muurKeten, SEGMENTEN } from './plan.js';
+import {
+  tekenPlan, onderdelen, PLAN_STIJL, segmentSvg, afstand, lengteTekst, ketenLengte, muurKeten, SEGMENTEN,
+  kleefAanMuur, plaatsingSvg, symboolBreedte,
+} from './plan.js';
 import { SCHEMA_STIJL } from './eendraad.js';
 import { icoon, esc } from './symbolen.js';
 import { staat, wijzig, herteken, opWijziging } from './staat.js';
@@ -100,6 +103,7 @@ function tekenVlak() {
   lengte.disabled = !(lijnstuk && plan.schaal);
   if (document.activeElement !== lengte) lengte.value = lijnstuk && plan.schaal ? (afstand(lijnstuk) / plan.schaal).toFixed(2) : '';
   $('#plan-maten').checked = plan.alleMaten === true;
+  $('#plan-kleef').checked = plan.kleefMuur !== false;
   const info = $('#plan-schaal-info');
   info.textContent = plan.schaal ? `Schaal: 1 m = ${Math.round(plan.schaal * 10) / 10} punten` : 'Schaal nog niet ingesteld: kies Schaal…';
   info.classList.toggle('mist', !plan.schaal);
@@ -127,7 +131,7 @@ function tekenStatus() {
   let t;
   if (plaatsen) {
     const d = delen.get(plaatsen);
-    t = `Klik op het plan om ${d?.item === 'bord' ? 'het verdeelbord' : `${d?.code} ${itemNaam(d.item)}`} te plaatsen · Esc om te stoppen`;
+    t = `Klik op het plan om ${d?.item === 'bord' ? 'het verdeelbord' : `${d?.code} ${itemNaam(d.item)}`} te plaatsen: het kleeft aan een muur in de buurt (Alt = vrij) · Esc om te stoppen`;
   } else if (gereedschap === 'muur') {
     t = 'Klik om een muur te beginnen en klik voor elke hoek · rechtsklik of Esc om te stoppen · Alt voor een schuine muur';
   } else if (gereedschap === 'deur' || gereedschap === 'raam' || gereedschap === 'meet') {
@@ -137,7 +141,7 @@ function tekenStatus() {
   } else if (gereedschap === 'tekst') {
     t = 'Klik waar de tekst moet komen (bv. de naam van een ruimte)';
   } else {
-    t = gekozenLengte() || 'Sleep symbolen om ze te verplaatsen · R draait · Delete haalt van het plan · scroll om te zoomen, sleep om te verschuiven';
+    t = gekozenLengte() || 'Sleep symbolen om ze te verplaatsen (ze kleven aan de muur, Alt = vrij) · R draait · Delete haalt van het plan · scroll om te zoomen, sleep om te verschuiven';
   }
   $('#plan-status').textContent = t;
   $('#situatie-svg').classList.toggle('plaatsen', Boolean(plaatsen) || gereedschap !== 'kies');
@@ -161,11 +165,24 @@ function startPlaatsen(id) {
   tekenVlak();
 }
 
-function plaatsOp(punt) {
+/**
+ * Waar een onderdeel terechtkomt als je het bij dit punt loslaat: tegen de dichtstbijzijnde muur (met Alt vrij),
+ * anders precies op het punt met de hoek die het al had.
+ */
+function vastePlaats(punt, id, alt, rot = 0) {
+  const plan = huidigPlan();
+  const deel = onderdelen(staat.project).get(id);
+  const kleef = !alt && plan.kleefMuur !== false && deel ? kleefAanMuur(plan, punt, symboolBreedte(deel)) : null;
+  return kleef ? { x: kleef.x, y: kleef.y, rot: kleef.rot } : { x: Math.round(punt.x), y: Math.round(punt.y), rot };
+}
+
+function plaatsOp(punt, alt = false) {
   const id = plaatsen;
+  const plek = vastePlaats(punt, id, alt);
+  $('#situatie-svg .voorbeeld-laag').innerHTML = '';
   wijzig((p) => {
     for (const pl of p.plannen) delete pl.plaatsingen[id];
-    huidigPlan(p).plaatsingen[id] = { x: Math.round(punt.x), y: Math.round(punt.y), rot: 0 };
+    huidigPlan(p).plaatsingen[id] = plek;
   }, { paneel: false });
   staat.planSelectie = { soort: 'item', id };
   if (id !== 'bord') staat.selectie = id;
@@ -385,7 +402,7 @@ export function startSituatie() {
     const punt = vlak.naarTekening(e.clientX, e.clientY);
 
     if (plaatsen) {
-      plaatsOp(punt);
+      plaatsOp(punt, e.altKey);
       return;
     }
     if (LIJNSTUKKEN.includes(gereedschap)) {
@@ -459,7 +476,7 @@ export function startSituatie() {
       const plan = huidigPlan();
       return soort === 'item' ? plan.plaatsingen[id] : plan.teksten.find((t) => t.id === id);
     };
-    const begin = { x: vind().x, y: vind().y };
+    const begin = { x: vind().x, y: vind().y, rot: vind().rot || 0 };
     let bewogen = false;
     svg.setPointerCapture(e.pointerId);
     const beweeg = (ev) => {
@@ -472,13 +489,21 @@ export function startSituatie() {
         wijzig(() => {}, { paneel: false });
       }
       const ding = vind();
-      ding.x = Math.round(begin.x + dx);
-      ding.y = Math.round(begin.y + dy);
       const el = soort === 'item'
         ? svg.querySelector(`[data-plaats="${CSS.escape(id)}"]`)
         : svg.querySelector(`[data-tekst="${CSS.escape(id)}"]`);
-      if (soort === 'item') el?.setAttribute('transform', `translate(${ding.x} ${ding.y})`);
-      else { el?.setAttribute('x', ding.x); el?.setAttribute('y', ding.y); }
+      if (soort === 'item') {
+        // Een symbool kleeft aan een muur in de buurt en draait mee; ver van een muur krijgt het zijn eigen hoek terug.
+        const plek = vastePlaats({ x: begin.x + dx, y: begin.y + dy }, id, ev.altKey, begin.rot);
+        Object.assign(ding, plek);
+        el?.setAttribute('transform', `translate(${ding.x} ${ding.y})`);
+        el?.firstElementChild?.nextElementSibling?.setAttribute('transform', `rotate(${ding.rot || 0}) scale(${huidigPlan().symbool || 1})`);
+      } else {
+        ding.x = Math.round(begin.x + dx);
+        ding.y = Math.round(begin.y + dy);
+        el?.setAttribute('x', ding.x);
+        el?.setAttribute('y', ding.y);
+      }
     };
     const los = () => {
       svg.removeEventListener('pointermove', beweeg);
@@ -494,6 +519,14 @@ export function startSituatie() {
 
   svg.addEventListener('pointermove', (e) => {
     const laag = $('#situatie-svg .voorbeeld-laag');
+    if (plaatsen) {
+      // Een doorschijnend voorbeeld van het onderdeel, op de plaats waar het zou komen.
+      const deel = onderdelen(staat.project).get(plaatsen);
+      if (!deel) return;
+      const plek = vastePlaats(vlak.naarTekening(e.clientX, e.clientY), plaatsen, e.altKey);
+      laag.innerHTML = `<g opacity=".55" pointer-events="none">${plaatsingSvg(deel, plek, huidigPlan().symbool || 1)}</g>`;
+      return;
+    }
     if (!muurStart || !(LIJNSTUKKEN.includes(gereedschap) || gereedschap === 'schaal')) return;
     const plan = huidigPlan();
     const eind = gereedschap === 'schaal' ? vlak.naarTekening(e.clientX, e.clientY) : kleef(vlak.naarTekening(e.clientX, e.clientY), muurStart, e.altKey);
@@ -576,6 +609,9 @@ export function startSituatie() {
       m.x2 = Math.round((m.x1 + (m.x2 - m.x1) * f) * 10) / 10;
       m.y2 = Math.round((m.y1 + (m.y2 - m.y1) * f) * 10) / 10;
     }, { paneel: false });
+  });
+  $('#plan-kleef').addEventListener('change', (e) => {
+    wijzig((p) => { huidigPlan(p).kleefMuur = e.target.checked; }, { paneel: false });
   });
   $('#plan-maten').addEventListener('change', (e) => {
     wijzig((p) => { huidigPlan(p).alleMaten = e.target.checked; }, { paneel: false });

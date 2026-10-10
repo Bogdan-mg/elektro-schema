@@ -53,6 +53,7 @@ Het installatiebestand wordt automatisch gemaakt bij elke wijziging op `main` (z
   huidige muur en het totaal tot nu toe. In het veld **Lengte** typ je een nieuwe lengte in meter en het stuk wordt precies zo lang.
   Met het vinkje **Alle afmetingen tonen** staan alle lengtes er permanent (en ook op de afdruk).
 - Zet er **tekst** bij (bv. de naam van een ruimte).
+- Symbolen **kleven aan de muur**: zet je een onderdeel (of sleep je het) in de buurt van een muur, dan springt het tegen die muur en wijst het de ruimte in, aan de kant waar je zit. Je ziet vooraf een doorschijnend voorbeeld. Houd **Alt** ingedrukt om het vrij te zetten, of haal het vinkje **Kleef aan muur** weg.
 - Klik links een onderdeel aan en klik op het plan: het staat er, en het volgende onderdeel staat meteen klaar.
   Zo zet je alles snel na elkaar. **Esc** stopt.
 - Symbolen verslepen, **R** draait, **Delete** haalt van het plan. Met de schuifjes zet je de grootte van de symbolen
