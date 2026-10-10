@@ -50,7 +50,7 @@ export function maatLabel(m, plan, dikte, { zijde = 1, richting = null } = {}) {
 }
 
 /** Eén lijnstuk tekenen: muur, deur (met draaiboog), raam of meetlijn. */
-export function segmentSvg(m, i, plan, { gekozen = false, voorbeeld = false } = {}) {
+export function segmentSvg(m, i, plan, { gekozen = false } = {}) {
   const s = plan.symbool || 1;
   const dikte = Math.max(4, 6 * s);
   const soort = m.soort || 'muur';
@@ -92,9 +92,39 @@ export function segmentSvg(m, i, plan, { gekozen = false, voorbeeld = false } = 
     default:
       svg = `<line class="muur${kl}"${data} x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="${r1(dikte)}"/>`;
   }
-  const maat = plan.afmetingen === false && !voorbeeld ? '' : maatLabel(m, plan, soort === 'meet' ? 0 : dikte, zijde);
-  return { svg: svg + raak, maat };
+  return { svg: svg + raak, maat: maatLabel(m, plan, soort === 'meet' ? 0 : dikte, zijde) };
 }
+
+const GELIJK = 1; // twee hoekpunten die dichter dan dit bij elkaar liggen horen samen
+
+const zelfdePunt = (a, b) => Math.hypot(a.x - b.x, a.y - b.y) <= GELIJK;
+
+/**
+ * De muren die aan de gekozen muur vastzitten, van hoek tot hoek, met de gekozen muur zelf erbij (de indexen in plan.muren).
+ * Zo zie je de totale lengte van een kamer of een gevel en niet enkel van het ene stuk.
+ */
+export function muurKeten(plan, i) {
+  const start = plan.muren[i];
+  if (!start || (start.soort || 'muur') !== 'muur') return [];
+  const gezien = new Set([i]);
+  const wachtrij = [i];
+  while (wachtrij.length) {
+    const m = plan.muren[wachtrij.pop()];
+    for (const [j, andere] of plan.muren.entries()) {
+      if (gezien.has(j) || (andere.soort || 'muur') !== 'muur') continue;
+      const raakt = [{ x: m.x1, y: m.y1 }, { x: m.x2, y: m.y2 }]
+        .some((a) => [{ x: andere.x1, y: andere.y1 }, { x: andere.x2, y: andere.y2 }].some((b) => zelfdePunt(a, b)));
+      if (raakt) {
+        gezien.add(j);
+        wachtrij.push(j);
+      }
+    }
+  }
+  return [...gezien].sort((a, b) => a - b);
+}
+
+/** De samengetelde lengte (in tekeneenheden) van de aaneengesloten muren rond muur i. */
+export const ketenLengte = (plan, i) => muurKeten(plan, i).reduce((som, j) => som + afstand(plan.muren[j]), 0);
 
 /** Alle onderdelen per id, met hun code. */
 export function onderdelen(project) {
@@ -120,10 +150,12 @@ export function tekenPlan(project, plan, { selectie = null, raster = false, dele
   }
 
   const maten = [];
+  // De lengte staat enkel bij het gekozen lijnstuk, tenzij je alle afmetingen wil zien (ook op de afdruk).
   plan.muren.forEach((m, i) => {
-    const { svg, maat } = segmentSvg(m, i, plan, { gekozen: selectie?.soort === 'muur' && selectie.id === i });
+    const gekozen = selectie?.soort === 'muur' && selectie.id === i;
+    const { svg, maat } = segmentSvg(m, i, plan, { gekozen });
     uit.push(svg);
-    maten.push(maat);
+    if (gekozen || plan.alleMaten === true) maten.push(maat);
   });
 
   for (const t of plan.teksten) {

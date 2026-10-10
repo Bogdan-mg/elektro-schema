@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { nieuwProject, nieuwPlan, leesProject, teBewaren } from '../app/js/model.js';
-import { tekenPlan, lengteTekst, afstand, segmentSvg } from '../app/js/plan.js';
+import { tekenPlan, lengteTekst, afstand, segmentSvg, muurKeten, ketenLengte } from '../app/js/plan.js';
 
 test('lengtes in meter met een komma', () => {
   assert.equal(lengteTekst(250, 100), '2,50 m');
@@ -11,25 +11,51 @@ test('lengtes in meter met een komma', () => {
   assert.equal(lengteTekst(0, 100), '');
 });
 
-test('een muur toont zijn lengte', () => {
+test('een muur toont zijn lengte enkel als je erop klikt of alle afmetingen aanstaan', () => {
   const p = nieuwProject();
   const plan = p.plannen[0];
   plan.muren.push({ soort: 'muur', x1: 0, y1: 0, x2: 300, y2: 400 });
   assert.equal(afstand(plan.muren[0]), 500);
+  assert.equal(plan.alleMaten, false);
+  assert.doesNotMatch(tekenPlan(p, plan), /class="maat"/);
+  assert.match(tekenPlan(p, plan, { selectie: { soort: 'muur', id: 0 } }), />5,00 m</);
+  plan.alleMaten = true;
   assert.match(tekenPlan(p, plan), />5,00 m</);
   plan.schaal = 50;
   assert.match(tekenPlan(p, plan), />10,00 m</);
 });
 
-test('zonder schaal of met afmetingen uit staan er geen lengtes', () => {
+test('enkel het gekozen lijnstuk krijgt zijn lengte', () => {
+  const p = nieuwProject();
+  const plan = p.plannen[0];
+  plan.muren.push({ soort: 'muur', x1: 0, y1: 0, x2: 200, y2: 0 }, { soort: 'muur', x1: 200, y1: 0, x2: 200, y2: 100 });
+  const svg = tekenPlan(p, plan, { selectie: { soort: 'muur', id: 1 } });
+  assert.match(svg, />1,00 m</);
+  assert.doesNotMatch(svg, />2,00 m</);
+});
+
+test('zonder schaal staan er geen lengtes', () => {
   const p = nieuwProject();
   const plan = p.plannen[0];
   plan.muren.push({ soort: 'muur', x1: 0, y1: 0, x2: 200, y2: 0 });
   plan.schaal = null;
-  assert.doesNotMatch(tekenPlan(p, plan), /class="maat"/);
-  plan.schaal = 100;
-  plan.afmetingen = false;
-  assert.doesNotMatch(tekenPlan(p, plan), /class="maat"/);
+  plan.alleMaten = true;
+  assert.doesNotMatch(tekenPlan(p, plan, { selectie: { soort: 'muur', id: 0 } }), /class="maat"/);
+});
+
+test('aaneengesloten muren worden samengeteld', () => {
+  const plan = nieuwPlan();
+  plan.muren.push(
+    { soort: 'muur', x1: 0, y1: 0, x2: 300, y2: 0 },
+    { soort: 'muur', x1: 300, y1: 0, x2: 300, y2: 200 },
+    { soort: 'muur', x1: 300, y1: 200, x2: 0, y2: 200 },
+    { soort: 'muur', x1: 900, y1: 900, x2: 1000, y2: 900 }, // staat los
+    { soort: 'raam', x1: 0, y1: 0, x2: 0, y2: 90 }, // een raam telt niet mee
+  );
+  assert.deepEqual(muurKeten(plan, 1), [0, 1, 2]);
+  assert.equal(ketenLengte(plan, 0), 800);
+  assert.deepEqual(muurKeten(plan, 3), [3]);
+  assert.deepEqual(muurKeten(plan, 4), []);
 });
 
 test('deur, raam en meetlijn tonen hun lengte en hebben hun eigen vorm', () => {
@@ -61,4 +87,12 @@ test('oudere plannen: muren worden muren, een plan met achtergrond heeft nog gee
   assert.equal(leesProject(JSON.stringify(oud)).plannen[0].schaal, 100);
   oud.plannen[0].achtergrond = 'abc';
   assert.equal(leesProject(JSON.stringify(oud)).plannen[0].schaal, null);
+});
+
+test('de oude instelling afmetingen verdwijnt uit een geopend project', () => {
+  const oud = JSON.parse(teBewaren(nieuwProject()));
+  oud.plannen[0].afmetingen = true;
+  const plan = leesProject(JSON.stringify(oud)).plannen[0];
+  assert.equal(plan.afmetingen, undefined);
+  assert.equal(plan.alleMaten, false);
 });

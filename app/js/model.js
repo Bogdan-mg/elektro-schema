@@ -17,7 +17,7 @@ export function nieuwPlan(naam = 'Gelijkvloers') {
     hoogte: 1000,
     symbool: 1.5, // grootte van de symbolen op dit plan
     schaal: 100, // tekeneenheden per meter; null = nog niet ingesteld
-    afmetingen: true, // lengtes in meter tonen
+    alleMaten: false, // alle lengtes tonen; anders enkel tijdens het tekenen of van het gekozen lijnstuk
     muren: [], // lijnstukken: { soort: 'muur' | 'deur' | 'raam' | 'meet', x1, y1, x2, y2 }
     teksten: [],
     plaatsingen: {}, // item-id (of 'bord') -> { x, y, rot }
@@ -302,7 +302,7 @@ export function leesProject(tekst) {
   };
   if (!NETTEN[project.aansluiting.net]) project.aansluiting.net = '1F230';
   project.plannen = (Array.isArray(data.plannen) && data.plannen.length ? data.plannen : [nieuwPlan()])
-    .map((p) => ({
+    .map(({ afmetingen: _oud, ...p }) => ({
       ...nieuwPlan(),
       ...p,
       // Een plan uit een oudere versie met een achtergrond heeft geen gekende schaal.

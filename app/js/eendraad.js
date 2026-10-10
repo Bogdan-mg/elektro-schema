@@ -355,22 +355,22 @@ export function tekenEendraad(project, { selectie = null } = {}) {
 
 /** De stijl van de tekening, ook voor afdrukken. */
 export const SCHEMA_STIJL = `
-.l{fill:none;stroke:currentColor;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}
-.l.dik{stroke-width:2.6}
-.l.half{stroke-width:1.8}
-.l.dun{stroke-width:0.8}
-.l.bus{stroke-width:2.6}
-.l.blok{stroke-width:3.4;stroke-linecap:butt}
+.l{fill:none;stroke:currentColor;stroke-width:0.75;stroke-linecap:round;stroke-linejoin:round}
+.l.dik{stroke-width:1.6}
+.l.half{stroke-width:0.9}
+.l.dun{stroke-width:0.6}
+.l.bus{stroke-width:1.9}
+.l.blok{stroke-width:2.2;stroke-linecap:butt}
 .l.w{fill:#fff}
 .l.vol{fill:currentColor}
 .l.stippel{stroke-dasharray:1.6 1.2;stroke-linecap:butt}
 .v{fill:currentColor;stroke:none}
-.b{font:600 10px Arial,"Segoe UI",sans-serif;fill:currentColor}
-.k{font:9px Arial,"Segoe UI",sans-serif;fill:currentColor}
+.b{font:700 8.6px Arial,"Segoe UI",sans-serif;fill:currentColor}
+.k{font:7.8px Arial,"Segoe UI",sans-serif;fill:currentColor}
 .k.cursief{font-style:italic}
-.m{font:7px Arial,"Segoe UI",sans-serif;fill:currentColor}
-.groot{font:14px Arial,"Segoe UI",sans-serif;fill:currentColor}
-.letter{font:700 14px Arial,"Segoe UI",sans-serif;fill:currentColor}
+.m{font:6px Arial,"Segoe UI",sans-serif;fill:currentColor}
+.groot{font:12px Arial,"Segoe UI",sans-serif;fill:currentColor}
+.letter{font:700 11.5px Arial,"Segoe UI",sans-serif;fill:currentColor}
 .doel{fill:transparent;stroke:none;cursor:pointer}
 .doel:hover{fill:rgba(37,99,235,.06)}
 .doel.gekozen{fill:rgba(37,99,235,.13);stroke:rgba(37,99,235,.55);stroke-width:1}

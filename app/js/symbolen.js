@@ -109,46 +109,46 @@ function lichtpunt(it) {
   let m;
   const nood = it.nood && it.nood !== 'geen' ? it.nood : '';
   if (it.variant === 'tl' || it.variant === 'ledstrip') {
-    const x0 = 8;
-    const x1 = 46;
+    const x0 = 6;
+    const x1 = 34;
     const n = Number(it.buizen) || 1;
-    const ys = n === 1 ? [0] : n === 2 ? [-2.2, 2.2] : [-4.4, 0, 4.4];
-    const t = n === 1 ? 5 : 7;
+    const ys = n === 1 ? [0] : n === 2 ? [-2, 2] : [-3.6, 0, 3.6];
+    const t = n === 1 ? 4 : 5.6;
     s += lijn(0, 0, x0, 0);
     for (const y of ys) s += lijn(x0, y, x1, y);
     s += lijn(x0, -t, x0, t, 'l half') + lijn(x1, -t, x1, t, 'l half');
     m = (x0 + x1) / 2;
-    if (it.variant === 'ledstrip') s += tekst(m, -t - 3, 'LED', 'm', 'middle');
-    if (it.wand) s += lijn(m - 7, t + 5, m + 7, t + 5, 'l half');
-    if (nood === 'centraal') s += kruis(m, -t - 6, 3.2, 'l half') + stip(m, -t - 6, 1.6);
-    if (nood === 'decentraal') s += rechthoek(m - 4.5, -t - 10.5, 9, 9, 'l half') + kruis(m, -t - 6, 3) + stip(m, -t - 6, 1.6);
+    if (it.variant === 'ledstrip') s += tekst(m, -t - 2.5, 'LED', 'm', 'middle');
+    if (it.wand) s += lijn(m - 6, t + 4, m + 6, t + 4, 'l half');
+    if (nood === 'centraal') s += kruis(m, -t - 5, 2.6) + stip(m, -t - 5, 1.3);
+    if (nood === 'decentraal') s += rechthoek(m - 4, -t - 9, 8, 8) + kruis(m, -t - 5, 2.4) + stip(m, -t - 5, 1.3);
     b = x1 + 2;
   } else {
-    const c = 22;
+    const c = 15;
     m = c;
     switch (it.variant) {
       case 'spot':
-        s += lijn(0, 0, c - 9.5, 0) + cirkel(c, 0, 6) + kruis(c, 0, 4.2) + pad(`M${c} -9.5 A9.5 9.5 0 0 0 ${c} 9.5`);
+        s += lijn(0, 0, c - 6.5, 0) + cirkel(c, 0, 3.6) + kruis(c, 0, 2.5) + pad(`M${c} -6.5 A6.5 6.5 0 0 0 ${c} 6.5`);
         break;
       case 'led':
-        s += lijn(0, 0, c - 6, 0) + pad(`M${c - 6} -6 L${c - 6} 6 L${c + 4} 0 Z`) + lijn(c + 4, -6, c + 4, 6) + lijn(c + 4, 0, c + 8, 0)
-          + pijl(c - 2, -8, c + 1, -13, 1.8) + pijl(c + 1.5, -8, c + 4.5, -13, 1.8);
+        s += lijn(0, 0, c - 4.5, 0) + pad(`M${c - 4.5} -4.5 L${c - 4.5} 4.5 L${c + 3} 0 Z`) + lijn(c + 3, -4.5, c + 3, 4.5) + lijn(c + 3, 0, c + 6, 0)
+          + pijl(c - 2, -6, c + 0.5, -10, 1.6) + pijl(c + 1.5, -6, c + 4, -10, 1.6);
         break;
       case 'signalisatie':
-        s += lijn(0, 0, c - 7, 0) + cirkel(c, 0, 7) + kruis(c, 0, 5);
+        s += lijn(0, 0, c - 4.6, 0) + cirkel(c, 0, 4.6) + kruis(c, 0, 3.2);
         break;
       default:
-        s += lijn(0, 0, c, 0) + kruis(c, 0, 7);
-        if (it.schakelaar) s += lijn(c + 7, -7, c + 10, -4);
+        s += lijn(0, 0, c, 0) + kruis(c, 0, 4.4);
+        if (it.schakelaar) s += lijn(c + 4.4, -4.4, c + 7.2, -2.4);
     }
-    if (it.wand) s += lijn(c - 7, 11, c + 7, 11, 'l half');
-    if (nood === 'centraal') s += stip(c, 0, 3.4);
-    if (nood === 'decentraal') s += rechthoek(c - 10, -10, 20, 20, 'l dik') + stip(c, 0, 3.4);
-    b = c + (it.variant === 'led' ? 10 : 11);
+    if (it.wand) s += lijn(c - 4.6, 7.4, c + 4.6, 7.4, 'l half');
+    if (nood === 'centraal') s += stip(c, 0, 2.1);
+    if (nood === 'decentraal') s += rechthoek(c - 6.8, -6.8, 13.6, 13.6, 'l half') + stip(c, 0, 2.1);
+    b = c + (nood === 'decentraal' ? 9 : it.variant === 'led' ? 7.5 : 7);
   }
-  if (it.waterdicht) s += tekst(m, -12, 'h', 'k', 'middle');
+  if (it.waterdicht) s += tekst(m, -9, 'h', 'k', 'middle');
   const door = it.variant === 'plafond' && !nood ? m : b;
-  return res(s, b, m, it.waterdicht || nood ? -20 : -11, it.wand ? 14 : 10, door);
+  return res(s, b, m, it.waterdicht || nood ? -15 : -8, it.wand ? 10 : 7, door);
 }
 
 function voorschakelapparaat() {
@@ -159,75 +159,76 @@ function voorschakelapparaat() {
 
 function schakelaar(it) {
   const cx = { wissel: 15, dubbelewissel: 20, kruis: 15, serie: 12 }[it.variant] || 9;
-  const rx = 3.8; // het lichaam is een licht ovaal
-  const ry = 3.6;
-  const lang = 3.6 + 11;
+  const rx = it.verklikker ? 3.2 : 2.4; // een klein rond lichaam
+  const ry = rx;
+  const lang = 11;
   let s = '';
   // Een hendel met zijn streepjes (polen) aan het uiteinde; kant = +1 wijst het streepje naar rechts, -1 naar links.
-  const hendel = (hoek, streepjes, kant, dx = 0, dy = 0, begin = 3.5) => {
+  const hendel = (hoek, streepjes, kant, dx = 0, dy = 0, begin = rx + 0.4) => {
     const [x1, y1] = punt(cx + dx, dy, hoek, begin);
     const [x2, y2] = punt(cx + dx, dy, hoek, lang);
     let t = lijn(x1, y1, x2, y2);
     const boven = Math.sin((hoek * Math.PI) / 180) > 0;
     for (let i = 0; i < streepjes; i++) {
-      const [px, py] = punt(cx + dx, dy, hoek, lang - i * 2.6);
-      t += lijn(px, py, px + kant * 5, py + (boven ? 2.2 : -2.2));
+      const [px, py] = punt(cx + dx, dy, hoek, lang - i * 2.2);
+      t += lijn(px, py, px + kant * 3.2, py + (boven ? 1.8 : -1.8));
     }
     return t;
   };
   let lead = cx - rx;
   if (it.signalisatie) {
-    const lx = cx - rx - 3.4;
-    s += cirkel(lx, 0, 3.4) + kruis(lx, 0, 2.4);
-    lead = lx - 3.4;
+    const lx = cx - rx - 2.8;
+    s += cirkel(lx, 0, 2.8) + kruis(lx, 0, 2);
+    lead = lx - 2.8;
   }
   if (it.variant === 'dubbelewissel') {
     // Twee wisselschakelaars in één: een afgerond lichaam met twee evenwijdige hendels naar beide kanten.
-    s += lijn(0, 0, cx - 9, 0) + `<rect class="l" x="${cx - 9}" y="-3.6" width="18" height="7.2" rx="3.6"/>`;
-    for (const dx of [-3.8, 3.8]) s += hendel(64, 1, 1, dx, -3.4, 0) + hendel(244, 1, -1, dx, 3.4, 0);
+    s += lijn(0, 0, cx - 7, 0) + `<rect class="l" x="${cx - 7}" y="-2.4" width="14" height="4.8" rx="2.4"/>`;
+    for (const dx of [-3, 3]) s += hendel(64, 1, 1, dx, -2.2, 0) + hendel(244, 1, -1, dx, 2.2, 0);
   } else {
     s += lijn(0, 0, lead, 0) + `<ellipse class="l" cx="${cx}" cy="0" rx="${rx}" ry="${ry}"/>`;
     if (it.signalisatie) s += lijn(lead, 0, cx - rx, 0);
-    if (it.verklikker) s += kruis(cx, 0, 2.4);
+    if (it.verklikker) s += kruis(cx, 0, 2.2);
   }
-  let b = cx + 12;
+  let b = cx + 10;
   switch (it.variant) {
     case 'onbepaald': s += hendel(64, 0, 1); break;
     case 'tweepolig': s += hendel(64, 2, 1); break;
     case 'vierpolig': s += hendel(64, 4, 1); break;
     case 'wissel': s += hendel(64, 1, 1) + hendel(244, 1, -1); break;
-    case 'dubbelewissel': b = cx + 16; break;
+    case 'dubbelewissel': b = cx + 12; break;
     case 'kruis': s += hendel(64, 1, 1) + hendel(116, 1, -1) + hendel(244, 1, -1) + hendel(296, 1, 1); break;
     case 'serie': s += hendel(70, 1, 1) + hendel(110, 1, -1); break;
     default: s += hendel(64, 1, 1);
   }
   const [tx, ty] = punt(cx, 0, 64, lang);
   if (it.dimmer) {
-    const [mx, my] = punt(cx, 0, 64, 3.6 + 6.8);
-    s += pad(`M${r1(mx - 4.8)} ${r1(my + 0.2)} L${r1(mx + 6.4)} ${r1(my - 2.8)} L${r1(mx + 6.4)} ${r1(my + 2.8)} Z`);
-    b = Math.max(b, cx + 16);
+    const [mx, my] = punt(cx, 0, 64, 2.8 + 4.8);
+    s += pad(`M${r1(mx - 3.4)} ${r1(my + 0.2)} L${r1(mx + 4.6)} ${r1(my - 2.2)} L${r1(mx + 4.6)} ${r1(my + 2.2)} Z`);
+    b = Math.max(b, cx + 13);
   }
   if (it.rolluik) {
-    s += pad(`M${r1(tx + 4)} ${r1(ty + 1)} l2.4 3.4 h-4.8 Z M${r1(tx + 4)} ${r1(ty + 9)} l2.4 -3.4 h-4.8 Z`, 'v');
+    s += pad(`M${r1(tx + 4.4)} ${r1(ty + 0.4)} l1.8 2.6 h-3.6 Z M${r1(tx + 4.4)} ${r1(ty + 6.6)} l1.8 -2.6 h-3.6 Z`, 'v');
     b = Math.max(b, tx + 8);
   }
-  if (it.trek) s += pijl(tx + 3, ty + 1, tx + 3, ty + 8, 1.8);
+  if (it.trek) s += pijl(tx + 2.4, ty + 1, tx + 2.4, ty + 7, 1.6);
   const links = [it.waterdicht ? 'h' : '', it.vertraagd ? 't' : ''].filter(Boolean).join(' ');
-  if (links) s += tekst(tx - 4, ty + 2, links, 'k', 'end');
+  if (links) s += tekst(tx - 2, ty + 1.5, links, 'k', 'end');
   const ruim = ['wissel', 'kruis', 'dubbelewissel'].includes(it.variant);
-  return res(s, b, cx, it.variant === 'serie' || it.variant === 'kruis' ? -16 : -15, ruim ? 15 : 6, cx + rx);
+  return res(s, b, cx, -13, ruim ? 13 : 5, cx + rx);
 }
 
 function drukknop(it) {
-  const c = 17;
-  let s = lijn(0, 0, c - 9, 0) + cirkel(c, 0, 9);
-  s += it.verklikker ? cirkel(c, 0, 3.6) + kruis(c, 0, 2.5) : cirkel(c, 0, 3.2);
-  if (it.afgeschermd) s += pad(`M${c - 9} -10.5 V-13 H${c + 9} V-10.5`);
-  if (it.rolluik) s += pad(`M${c - 12} -13 l2.4 3.4 h-4.8 Z M${c - 12} -4.5 l2.4 -3.4 h-4.8 Z`, 'v');
-  if (it.dimmer) s += pad(`M${c - 12} -9 H${c - 4} L${c - 12} -12.5 Z`);
-  if (it.knoppen > 1) s += lijn(c + 5.5, -5.5, c + 9.5, -9.5) + tekst(c + 10, -9, String(it.knoppen), 'k');
-  if (it.waterdicht) s += tekst(c, it.afgeschermd ? -15.5 : -12, 'h', 'k', 'middle');
-  return res(s, c + (it.knoppen > 1 ? 16 : 10), c, it.waterdicht || it.afgeschermd ? -22 : -13, 10, c + 9);
+  const c = 12;
+  const r = 6.6;
+  let s = lijn(0, 0, c - r, 0) + cirkel(c, 0, r);
+  s += it.verklikker ? cirkel(c, 0, 3) + kruis(c, 0, 2) : cirkel(c, 0, 2.3);
+  if (it.afgeschermd) s += pad(`M${c - r} -${r + 1.5} V-${r + 4} H${c + r} V-${r + 1.5}`);
+  if (it.rolluik) s += pad(`M${c - 9} -9.5 l1.8 2.6 h-3.6 Z M${c - 9} -3 l1.8 -2.6 h-3.6 Z`, 'v');
+  if (it.dimmer) s += pad(`M${c - 9.5} -7 H${c - 3.5} L${c - 9.5} -9.6 Z`);
+  if (it.knoppen > 1) s += lijn(c + 4, -4, c + 7.5, -7.5) + tekst(c + 8, -6.5, String(it.knoppen), 'k');
+  if (it.waterdicht) s += tekst(c, it.afgeschermd ? -12 : -9, 'h', 'k', 'middle');
+  return res(s, c + (it.knoppen > 1 ? 13 : 8), c, it.waterdicht || it.afgeschermd ? -17 : -10, 8, c + r);
 }
 
 // ---------- Alarm en detectie ----------
@@ -265,7 +266,7 @@ function beveiligingscontact(it) {
     case 'tril': s += lijn(0, 0, 10.5, 0) + lijn(8, -9, 20, -9) + pad('M14 -8.5 L20 4 L8 4 Z', 'v'); break;
     case 'drukmat': s += lijn(0, 0, 9, 0) + pad('M6 -7 L22 -7 L18 5 L10 5 Z', 'v') + lijn(5, 8, 23, 8); b = 24; break;
     case 'afneem': s += lijn(0, 0, 13.5, 0) + cirkel(16.5, 0, 3) + lijn(16.5, -3, 16.5, -11); b = 20; break;
-    default: s += lijn(0, 0, 8, 0) + rechthoek(8, -6.5, 13, 13, 'v');
+    default: s += lijn(0, 0, 8, 0) + rechthoek(8, -5.5, 11, 11, 'v'); b = 20;
   }
   return res(s, b, 15, -12, 9);
 }

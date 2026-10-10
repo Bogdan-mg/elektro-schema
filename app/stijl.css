@@ -141,18 +141,19 @@ main { flex: 1; min-height: 0; display: flex; }
 
 /* Symbolen als icoon */
 .icoon { color: var(--tekst); overflow: visible; }
-.icoon .l, svg .l { fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
-.icoon .v, svg .v { fill: currentColor; stroke: none; }
+.icoon .l { fill: none; stroke: currentColor; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.icoon .v { fill: currentColor; stroke: none; }
 .icoon .b { font: 600 10px "Segoe UI", Arial, sans-serif; fill: currentColor; }
 .icoon .m { font: 600 7px "Segoe UI", Arial, sans-serif; fill: currentColor; }
-.icoon .l.dik { stroke-width: 2.6; }
-svg .l.half { stroke-width: 2; }
-svg .l.stippel { stroke-dasharray: 1.6 1.2; stroke-linecap: butt; }
-svg .l.blok { stroke-width: 3.4; stroke-linecap: butt; }
-svg .l.vol { fill: currentColor; }
-svg .l.dun { stroke-width: 0.8; }
+.icoon .k { font: 8px Arial, sans-serif; fill: currentColor; }
+.icoon .l.dik { stroke-width: 2.4; }
+.icoon .l.half { stroke-width: 1.6; }
+.icoon .l.stippel { stroke-dasharray: 1.6 1.2; stroke-linecap: butt; }
+.icoon .l.blok { stroke-width: 3; stroke-linecap: butt; }
+.icoon .l.vol { fill: currentColor; }
+.icoon .l.dun { stroke-width: 0.8; }
 .icoon .groot { font: 14px Arial, sans-serif; fill: currentColor; }
-svg .l.w { fill: #fff; }
+.icoon .l.w { fill: #fff; }
 
 /* Formulieren */
 .formulier { display: grid; gap: 8px; }

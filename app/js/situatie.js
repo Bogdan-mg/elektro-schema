@@ -1,7 +1,7 @@
 // Het tabblad Situatieschema: plannen per verdieping, muren en teksten, en de onderdelen op hun plaats zetten.
 import { nieuwPlan, nieuwId, alleKringen, codes } from './model.js';
 import { itemNaam } from './catalogus.js';
-import { tekenPlan, onderdelen, PLAN_STIJL, segmentSvg, afstand, lengteTekst, SEGMENTEN } from './plan.js';
+import { tekenPlan, onderdelen, PLAN_STIJL, segmentSvg, afstand, lengteTekst, ketenLengte, muurKeten, SEGMENTEN } from './plan.js';
 import { SCHEMA_STIJL } from './eendraad.js';
 import { icoon, esc } from './symbolen.js';
 import { staat, wijzig, herteken, opWijziging } from './staat.js';
@@ -14,6 +14,7 @@ let gereedschap = 'kies'; // 'kies' | 'muur' | 'deur' | 'raam' | 'meet' | 'tekst
 const LIJNSTUKKEN = ['muur', 'deur', 'raam', 'meet'];
 let plaatsen = null; // id van het onderdeel dat geplaatst wordt
 let muurStart = null;
+let lopendeSom = 0; // samengetelde lengte van de muren die je in één keer aan het tekenen bent
 let achtergrondSleutel = null;
 
 const huidigPlan = (p = staat.project) => p.plannen.find((pl) => pl.id === staat.planId) || p.plannen[0];
@@ -98,12 +99,27 @@ function tekenVlak() {
   const lengte = $('#plan-lengte');
   lengte.disabled = !(lijnstuk && plan.schaal);
   if (document.activeElement !== lengte) lengte.value = lijnstuk && plan.schaal ? (afstand(lijnstuk) / plan.schaal).toFixed(2) : '';
-  $('#plan-maten').checked = plan.afmetingen !== false;
+  $('#plan-maten').checked = plan.alleMaten === true;
   const info = $('#plan-schaal-info');
   info.textContent = plan.schaal ? `Schaal: 1 m = ${Math.round(plan.schaal * 10) / 10} punten` : 'Schaal nog niet ingesteld: kies Schaal…';
   info.classList.toggle('mist', !plan.schaal);
   for (const b of document.querySelectorAll('[data-gereedschap]')) b.classList.toggle('aan', b.dataset.gereedschap === gereedschap && !plaatsen);
   tekenStatus();
+}
+
+/** De lengte van het gekozen lijnstuk, bij een muur ook van alle muren die eraan vastzitten. */
+function gekozenLengte() {
+  const plan = huidigPlan();
+  const iets = staat.planSelectie;
+  const m = iets?.soort === 'muur' ? plan.muren[iets.id] : null;
+  if (!m) return '';
+  const naam = SEGMENTEN[m.soort || 'muur'].naam;
+  if (!plan.schaal) return `${naam} gekozen · stel eerst de schaal in (Schaal…) om de lengte in meter te zien`;
+  let t = `${naam}: ${lengteTekst(afstand(m), plan.schaal)}`;
+  if ((m.soort || 'muur') === 'muur' && muurKeten(plan, iets.id).length > 1) {
+    t += ` · aaneengesloten muren samen: ${lengteTekst(ketenLengte(plan, iets.id), plan.schaal)}`;
+  }
+  return `${t} · Delete haalt het van het plan`;
 }
 
 function tekenStatus() {
@@ -121,7 +137,7 @@ function tekenStatus() {
   } else if (gereedschap === 'tekst') {
     t = 'Klik waar de tekst moet komen (bv. de naam van een ruimte)';
   } else {
-    t = 'Sleep symbolen om ze te verplaatsen · R draait · Delete haalt van het plan · scroll om te zoomen, sleep om te verschuiven';
+    t = gekozenLengte() || 'Sleep symbolen om ze te verplaatsen · R draait · Delete haalt van het plan · scroll om te zoomen, sleep om te verschuiven';
   }
   $('#plan-status').textContent = t;
   $('#situatie-svg').classList.toggle('plaatsen', Boolean(plaatsen) || gereedschap !== 'kies');
@@ -378,12 +394,14 @@ export function startSituatie() {
         const van = muurStart;
         const soort = gereedschap;
         wijzig((pr) => huidigPlan(pr).muren.push({ soort, x1: van.x, y1: van.y, x2: p.x, y2: p.y }), { paneel: false });
+        lopendeSom += Math.hypot(p.x - van.x, p.y - van.y);
         // Een muur loopt door naar de volgende hoek; deur, raam en meetlijn zijn telkens één stuk.
         muurStart = soort === 'muur' ? p : null;
         if (!muurStart) $('#situatie-svg .voorbeeld-laag').innerHTML = '';
         return;
       }
       muurStart = p;
+      lopendeSom = 0;
       return;
     }
     if (gereedschap === 'schaal') {
@@ -481,8 +499,12 @@ export function startSituatie() {
     const eind = gereedschap === 'schaal' ? vlak.naarTekening(e.clientX, e.clientY) : kleef(vlak.naarTekening(e.clientX, e.clientY), muurStart, e.altKey);
     const stuk = { soort: gereedschap === 'schaal' ? 'meet' : gereedschap, x1: muurStart.x, y1: muurStart.y, x2: eind.x, y2: eind.y };
     // Tijdens het tekenen zie je meteen de lengte (bij het instellen van de schaal in punten, want die is dan nog niet gekend).
-    const { svg, maat } = segmentSvg(stuk, null, gereedschap === 'schaal' ? { ...plan, schaal: 1 } : plan, { voorbeeld: true });
+    const { svg, maat } = segmentSvg(stuk, null, gereedschap === 'schaal' ? { ...plan, schaal: 1 } : plan);
     laag.innerHTML = `<g opacity=".6">${svg}</g>${gereedschap === 'schaal' ? '' : maat}`;
+    const eigen = Math.hypot(stuk.x2 - stuk.x1, stuk.y2 - stuk.y1);
+    if (gereedschap === 'muur' && lopendeSom > 0 && plan.schaal) {
+      $('#plan-status').textContent = `Muur: ${lengteTekst(eigen, plan.schaal)} · samen met de vorige: ${lengteTekst(lopendeSom + eigen, plan.schaal)} · rechtsklik of Esc om te stoppen`;
+    }
   });
 
   svg.addEventListener('contextmenu', (e) => {
@@ -556,7 +578,7 @@ export function startSituatie() {
     }, { paneel: false });
   });
   $('#plan-maten').addEventListener('change', (e) => {
-    wijzig((p) => { huidigPlan(p).afmetingen = e.target.checked; }, { paneel: false });
+    wijzig((p) => { huidigPlan(p).alleMaten = e.target.checked; }, { paneel: false });
   });
   $('#plan-verwijder').addEventListener('click', verwijderGekozen);
   $('#plan-symbool').addEventListener('input', (e) => {

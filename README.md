@@ -47,9 +47,11 @@ Het installatiebestand wordt automatisch gemaakt bij elke wijziging op `main` (z
   vul de afstand in meter in. Vanaf dan kloppen alle afmetingen in meter. Het plan zelf blijft ongewijzigd.
 - Geen plan? Dan werk je op een raster waar 100 punten één meter zijn; de schaal kan je altijd aanpassen via **Schaal…**.
 - Teken **muren** (klik per hoek, rechtsklik of Esc om te stoppen; Alt voor een schuine muur), **deuren** (klik de twee kanten van de
-  opening; **R** draait de draairichting om), **ramen** en **meetlijnen**. Bij elk stuk staat **de lengte in meter**, ook al terwijl je tekent.
-- Klik je een muur, deur, raam of meetlijn aan, dan staat bovenaan het veld **Lengte**: typ een nieuwe lengte in meter en het stuk
-  wordt precies zo lang. Met het vinkje **Afmetingen** zet je alle lengtes aan of uit (ook op de afdruk).
+  opening; **R** draait de draairichting om), **ramen** en **meetlijnen**. De **lengte in meter** zie je enkel **terwijl je tekent** of **als je een stuk aanklikt**; zo blijft het plan overzichtelijk.
+- Klik je een muur, deur, raam of meetlijn aan, dan verschijnt de lengte bij dat stuk en onderaan in de statusbalk; bij een muur staat daar ook
+  de **totale lengte van alle aaneengesloten muren** (bv. een hele kamer). Tijdens het tekenen van een reeks muren zie je de lengte van de
+  huidige muur en het totaal tot nu toe. In het veld **Lengte** typ je een nieuwe lengte in meter en het stuk wordt precies zo lang.
+  Met het vinkje **Alle afmetingen tonen** staan alle lengtes er permanent (en ook op de afdruk).
 - Zet er **tekst** bij (bv. de naam van een ruimte).
 - Klik links een onderdeel aan en klik op het plan: het staat er, en het volgende onderdeel staat meteen klaar.
   Zo zet je alles snel na elkaar. **Esc** stopt.
