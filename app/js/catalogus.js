@@ -297,6 +297,7 @@ export const komma = (getal) => String(getal).replace('.', ',');
 
 /** Zoals in het AREI: "XVB Cca 3G2,5" (met de brandklasse als die gekend is). */
 export function kabelTekst(kabel) {
+  if (kabel.tekst) return kabel.tekst;
   const t = KABELTYPES[kabel.type];
   if (t?.soort === 'draad') return `${kabel.type} ${kabel.aders}×${komma(kabel.sectie)}`;
   return `${kabel.type}${t?.klasse ? ` ${t.klasse}` : ''} ${kabel.aders}G${komma(kabel.sectie)}`;

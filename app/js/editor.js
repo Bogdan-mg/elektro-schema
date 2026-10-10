@@ -609,48 +609,244 @@ const kringIcoon = (polen, curve, stroom) =>
   `<svg viewBox="0 0 90 44" width="86" height="42" class="icoon"><g transform="translate(0 7)"><line class="l" x1="2" y1="22" x2="30" y2="22"/><g transform="rotate(90 31 22) translate(9 -9)">${automaatSymbool(22, 0)}</g><line class="l" x1="38" y1="22" x2="88" y2="22"/></g><text class="k" x="52" y="14" text-anchor="middle">${polen}P - ${curve}${stroom}A</text></svg>`;
 const kabelIcoon = (t) => `<svg viewBox="0 0 90 28" width="86" height="26" class="icoon"><line class="l" x1="6" y1="8" x2="84" y2="8"/><text class="k" x="45" y="22" text-anchor="middle">${esc(t)}</text></svg>`;
 
-/** De bibliotheek: categorieën met symbolen en eventueel een tweede kolom met varianten. */
+/**
+ * De bibliotheek, opgebouwd zoals in Trikker: tien tabbladen, per symbool een eerste kolom met een tweede kolom
+ * met varianten. Combinaties (kring met kabel en onderdelen, schakelaar met lamp) komen in één klik op het schema.
+ */
 function bibliotheek() {
-  const sec = (soort, waarden = {}) => ({ type: 'item', maak: () => nieuwItem(soort, structuredClone(waarden)), icoon: icoon(nieuwItem(soort, structuredClone(waarden)), 30), naam: itemNaam(nieuwItem(soort, waarden)) });
-  const kringMet = (soort, waarden = {}, kabel = {}) => ({
-    type: 'kring', naam: `Kring met ${itemNaam(nieuwItem(soort, waarden)).toLowerCase()}`,
-    icoon: `<span class="combo">${kringIcoon(2, 'C', 20)}${icoon(nieuwItem(soort, waarden), 24)}</span>`,
-    maak: () => { const k = nieuweKring({ kabel: { type: 'XVB', aders: 3, sectie: 2.5, lengte: 0, ...kabel } }); k.items.push(nieuwItem(soort, structuredClone(waarden))); return k; },
+  const nieuw = (soort, w = {}) => nieuwItem(soort, structuredClone(w));
+  const item = (soort, w = {}, naam) => ({ type: 'item', naam: naam || itemNaam(nieuw(soort, w)), icoon: icoon(nieuw(soort, w), 30), maak: () => nieuw(soort, w) });
+  const tekst = () => ({ ...item('nota', { opschrift: 'Tekst' }), naam: 'Tekst', icoon: '<span class="k">Tekst</span>' });
+  /** Een rij onderdelen die samen komen (bv. schakelaar met lichtpunt). */
+  const keten = (lijst, naam) => ({
+    type: 'items', naam,
+    icoon: `<span class="combo">${lijst.map(([s, w]) => icoon(nieuw(s, w), 24)).join('')}</span>`,
+    maak: () => lijst.map(([s, w]) => nieuw(s, w)),
   });
+  const automaatWaarden = (polen, stroom, curve = 'C') => ({ stroom, curve, polen, onderbreking: 3000 });
+  const KABELS = { VOB: { type: 'VOB', aders: 3, sectie: 1.5 }, XVB: { type: 'XVB', aders: 3, sectie: 1.5 } };
+  /** Een volledige kring: automaat, kabel en onderdelen. */
+  const kring = ({ polen = 2, stroom = 16, kabel = {}, items = [], naam, icoonItems = items, plaatsing }) => ({
+    type: 'kring', naam: naam || `${polen}P - C${stroom}A${kabel.type ? ` ${kabel.type}` : ''}`,
+    icoon: `<span class="combo">${kringIcoon(polen, 'C', stroom)}${icoonItems.map(([s, w]) => icoon(nieuw(s, w), 24)).join('')}</span>`,
+    maak: () => {
+      const k = nieuweKring({ automaat: automaatWaarden(polen, stroom), kabel: { lengte: 0, ...kabel, ...(plaatsing !== undefined ? { plaatsing } : {}) } });
+      k.items.push(...items.map(([s, w]) => nieuw(s, w)));
+      return k;
+    },
+  });
+  const PLAATSINGEN3 = [['', 'Zonder plaatsing'], ['inWand', 'In de wand'], ['opWand', 'Op de wand']];
+  /** Een kring met kabel in drie plaatsingen: de eerste is het hoofditem, de andere komen in het tweede vak. */
+  const metPlaatsingen = (opties) => {
+    const [basis, ...rest] = PLAATSINGEN3.map(([p, l]) => ({ ...kring({ ...opties, plaatsing: p }), naam: `${kring(opties).naam} (${l.toLowerCase()})` }));
+    return { ...basis, tweede: [basis, ...rest] };
+  };
   const cats = [];
-  const bev = [
-    { type: 'kring', naam: 'Automaat 2P', icoon: kringIcoon(2, 'C', 16), maak: (a) => nieuweKring({ automaat: { stroom: a || 16, curve: 'C', polen: 2, onderbreking: 3000 } }), tweede: STROMEN.map((a) => ({ type: 'kring', naam: `2P - C${a}A`, icoon: kringIcoon(2, 'C', a), maak: () => nieuweKring({ automaat: { stroom: a, curve: 'C', polen: 2, onderbreking: 3000 } }) })) },
-    { type: 'kring', naam: 'Automaat 4P', icoon: kringIcoon(4, 'C', 16), maak: () => nieuweKring({ automaat: { stroom: 16, curve: 'C', polen: 4, onderbreking: 3000 } }), tweede: STROMEN.map((a) => ({ type: 'kring', naam: `4P - C${a}A`, icoon: kringIcoon(4, 'C', a), maak: () => nieuweKring({ automaat: { stroom: a, curve: 'C', polen: 4, onderbreking: 3000 } }) })) },
-  ];
-  const diff = (g) => ({ type: 'groep', naam: `Differentieel ${g} mA`, icoon: `<span class="k">Δ${g}mA</span>`, maak: () => nieuwDifferentieel({ gevoeligheid: g, polen: 2, stroom: 40 }),
-    tweede: [2, 4].flatMap((polen) => [25, 40, 63].map((stroom) => ({ type: 'groep', naam: `Type A - Δ${g}mA ${polen}P - ${stroom}A`, icoon: `<span class="k">Δ${g}mA ${polen}P - ${stroom}A</span>`, maak: () => nieuwDifferentieel({ gevoeligheid: g, polen, stroom }) }))) });
-  bev.push(diff(30), diff(300),
-    { type: 'groep', naam: 'Generaal zekering', icoon: `<span class="k">Automaat als groep</span>`, maak: () => nieuwDifferentieel({ beveiliging: 'automaat', polen: 4, stroom: 40, curve: 'C', gevoeligheid: 0 }) },
-    { type: 'groep', naam: 'Verdeellijn (rij)', icoon: '<svg viewBox="0 0 80 30" width="80" height="26" class="icoon"><line class="l bus" x1="6" y1="8" x2="74" y2="8"/><line class="l" x1="40" y1="8" x2="40" y2="24"/></svg>', maak: () => nieuwDifferentieel({ beveiliging: 'geen' }) },
-    { type: 'kabel', naam: 'Kabel 3G', icoon: kabelIcoon('3G2,5'), maak: () => ({ aders: 3, sectie: 2.5 }), tweede: [1.5, 2.5, 4, 6, 10, 16].map((x) => ({ type: 'kabel', naam: `3G${x}`, icoon: kabelIcoon(`3G${String(x).replace('.', ',')}`), maak: () => ({ aders: 3, sectie: x }) })) },
-    { type: 'kabel', naam: 'Kabel 5G', icoon: kabelIcoon('5G2,5'), maak: () => ({ aders: 5, sectie: 2.5 }), tweede: [1.5, 2.5, 4, 6, 10, 16].map((x) => ({ type: 'kabel', naam: `5G${x}`, icoon: kabelIcoon(`5G${String(x).replace('.', ',')}`), maak: () => ({ aders: 5, sectie: x }) })) },
-    { type: 'kabel', naam: 'Kabeltype', icoon: kabelIcoon('XVB / XGB / VOB'), maak: () => ({ type: 'XVB' }), tweede: Object.keys(KABELTYPES).map((t) => ({ type: 'kabel', naam: t, icoon: kabelIcoon(t), maak: () => ({ type: t }) })) },
-    { ...sec('aarding') }, { ...sec('teller') }, { ...sec('nota', { opschrift: 'Tekst' }), naam: 'Tekst' },
-  );
-  cats.push({ id: 'beveiliging', naam: 'Beveiliging', icoon: icoon(nieuwItem('automaat'), 34), items: bev });
 
-  for (const g of SOORT_GROEPEN.filter((x) => x !== 'Beveiliging' && x !== 'Eigen symbolen')) {
-    const soorten = Object.entries(SOORTEN).filter(([, d]) => d.groep === g && !['nota', 'aarding', 'teller'].includes(d.naam ? Object.keys(SOORTEN).find((k) => SOORTEN[k] === d) : ''));
-    const items = [];
-    for (const [k, d] of soorten) {
-      const variant = d.velden?.find((v) => v.pad === 'variant');
-      const palet = PALET.filter((x) => x.soort === k);
-      const basis = palet[0] ? sec(k, palet[0].waarden) : sec(k);
-      if (['stopcontact', 'lichtpunt', 'schakelaar', 'toestel'].includes(k)) items.push(kringMet(k, palet[0]?.waarden || {}));
-      const tweede = [
-        ...palet.slice(1).map((x) => ({ ...sec(k, x.waarden), naam: x.naam })),
-        ...(variant ? variant.opties.map(([w, l]) => ({ ...sec(k, { ...(palet[0]?.waarden || {}), variant: w }), naam: l })) : []),
-      ];
-      items.push({ ...basis, tweede: tweede.length ? tweede : undefined });
-    }
-    if (items.length) cats.push({ id: g, naam: g, icoon: icoon(nieuwItem(soorten[0][0], PALET.find((x) => x.soort === soorten[0][0])?.waarden || {}), 30), items });
-  }
-  cats.push({ id: 'gekopieerd', naam: 'Gekopieerd', icoon: '⧉', items: gekopieerd.map((node, i) => ({ type: node.soort === 'kring' ? 'kring' : node.soort === 'differentieel' ? 'groep' : 'item', naam: node.naam || itemNaam(node), icoon: node.soort === 'kring' || node.soort === 'differentieel' ? `<span class="k">${esc(node.naam || node.soort)}</span>` : icoon(node, 30), maak: () => plakKopie(node) })) });
+  // 1. Verlichting
+  const trafoSpot = [['transformator', {}], ['lichtpunt', { variant: 'spot' }]];
+  const trafoLed = [['transformator', {}], ['lichtpunt', { variant: 'led' }]];
+  const licht = (extra) => [
+    { ...item('lichtpunt'), tweede: [
+      item('lichtpunt', { variant: 'spot' }), keten(trafoSpot, 'Transformator met spot'), item('lichtpunt', { variant: 'led' }), item('lichtpunt', { variant: 'ledstrip' }),
+      keten(trafoLed, 'Transformator met led'), item('lichtpunt', { variant: 'signalisatie' }), item('lichtpunt', { wand: true }, 'Wandverlichting'),
+      item('lichtpunt', { nood: 'centraal' }, 'Noodverlichting centraal'), item('lichtpunt', { nood: 'decentraal' }, 'Noodverlichting decentraal'), item('transformator'),
+    ] },
+    { ...item('lichtpunt', { variant: 'tl' }), tweede: [2, 3].map((n) => item('lichtpunt', { variant: 'tl', buizen: n }, `TL met ${n} buislampen`)) },
+    ...extra,
+  ];
+  const lichtKring = (kabel) => metPlaatsingen({ polen: 2, stroom: 16, kabel });
+  cats.push({
+    id: 'verlichting', naam: 'Verlichting', icoon: icoon(nieuw('schakelaar'), 34),
+    items: [
+      { ...item('schakelaar'), tweede: [item('schakelaar', { variant: 'wissel' }), item('schakelaar', { variant: 'kruis' }), item('schakelaar', { variant: 'tweepolig' }), item('schakelaar', { variant: 'serie' })] },
+      ...licht([
+        lichtKring(KABELS.VOB), lichtKring(KABELS.XVB),
+        keten([['schakelaar', {}], ['lichtpunt', {}]], 'Enkelpolige schakeling'),
+        keten([['schakelaar', { variant: 'wissel' }], ['schakelaar', { variant: 'wissel' }], ['lichtpunt', {}]], 'Wisselschakeling'),
+        keten([['schakelaar', { variant: 'wissel' }], ['schakelaar', { variant: 'kruis' }], ['schakelaar', { variant: 'wissel' }], ['lichtpunt', {}]], 'Kruisschakeling'),
+        { ...keten([['schakelaar', { variant: 'tweepolig' }], ['lichtpunt', {}]], 'Tweepolige schakelaar met lichtpunt'), tweede: [
+          keten([['schakelaar', { variant: 'tweepolig' }], ['lichtpunt', {}]], 'Tweepolige schakelaar met lichtpunt'),
+          keten([['schakelaar', { variant: 'tweepolig', verklikker: true }], ['lichtpunt', {}]], 'Met verklikkerlamp'),
+          keten([['schakelaar', { variant: 'serie' }], ['lichtpunt', {}], ['lichtpunt', {}]], 'Serieschakelaar met twee lichtpunten'),
+          keten([['schakelaar', { variant: 'dubbelewissel' }], ['schakelaar', { variant: 'wissel' }], ['lichtpunt', {}], ['lichtpunt', {}]], 'Dubbele wisselschakeling'),
+        ] },
+        item('automaat', { variant: 'contact', polen: 0 }, 'Contact'), item('voorschakelapparaat'),
+      ]),
+      tekst(),
+    ],
+  });
+
+  // 2. Kringen
+  const poolKeuzes = (polen) => ({ type: 'kring', naam: `Automaat ${polen}P`, icoon: kringIcoon(polen, 'C', 16), maak: () => nieuweKring({ automaat: automaatWaarden(polen, 2) }),
+    tweede: STROMEN.map((a) => ({ type: 'kring', naam: `${polen}P - C${a}A`, icoon: kringIcoon(polen, 'C', a), maak: () => nieuweKring({ automaat: automaatWaarden(polen, a) }) })) });
+  const diffs = [2, 4].flatMap((polen) => [40, 63].flatMap((stroom) => [30, 300].map((g) => ({ polen, stroom, g }))));
+  const diffItem = ({ polen, stroom, g }) => ({ type: 'groep', naam: `Type A - Δ${g}mA ${polen}P - ${stroom}A`, icoon: `<span class="k">Δ${g}mA ${polen}P - ${stroom}A</span>`, maak: () => nieuwDifferentieel({ gevoeligheid: g, polen, stroom }) });
+  const kabelRij = (aders) => ({ type: 'kabel', naam: `Leiding ${aders}G`, icoon: kabelIcoon(`${aders}G1,5`), maak: () => ({ aders, sectie: 1.5 }),
+    tweede: [1.5, 2.5, 4, 6, 10, 16].map((x) => ({ type: 'kabel', naam: `${aders}G${x}`, icoon: kabelIcoon(`${aders}G${komma(x)}`), maak: () => ({ aders, sectie: x }) })) });
+  const meter = (sectie) => kring({ polen: 4, stroom: 40, kabel: { type: 'EXVB', aders: 4, sectie, plaatsing: 'ondergronds' }, items: [['teller', { opschrift: 'kWh' }]], naam: `Teller met EXVB 4G${sectie}` });
+  cats.push({
+    id: 'kringen', naam: 'Kringen', icoon: kringIcoon(2, 'C', 16),
+    items: [
+      poolKeuzes(2), poolKeuzes(4),
+      { ...diffItem(diffs[1]), tweede: diffs.map(diffItem) },
+      { type: 'groep', naam: 'Verdeelbord', icoon: '<svg viewBox="0 0 80 30" width="80" height="26" class="icoon"><line class="l bus" x1="6" y1="8" x2="74" y2="8"/><line class="l" x1="40" y1="8" x2="40" y2="24"/></svg>', maak: () => nieuwDifferentieel({ beveiliging: 'geen' }) },
+      { ...item('smeltveiligheid'), tweede: [item('automaat', { variant: 'zekeringscheider', polen: 0 }, 'Zekeringscheider'), item('beveiliging', { variant: 'thermisch' }), item('beveiliging', { variant: 'elektromagnetisch' }), item('overspanning')] },
+      kabelRij(3), kabelRij(5),
+      item('aansluitpunt', {}, 'Aansluitklem'), item('automaat', { variant: 'draai', polen: 0 }, 'Draaischakelaar'),
+      { ...item('aardingsstrip'), tweede: [item('aarding')] },
+      { ...item('teller'), tweede: [10, 16, 25].map(meter) },
+      tekst(),
+    ],
+  });
+
+  // 3. Stopcontacten
+  const sc = (w, naam) => item('stopcontact', w, naam);
+  const stopKring = (kabel) => metPlaatsingen({ polen: 2, stroom: 16, kabel: { ...kabel, sectie: 2.5 }, items: [['stopcontact', {}]] });
+  cats.push({
+    id: 'stopcontacten', naam: 'Stopcontacten', icoon: icoon(nieuw('stopcontact'), 34),
+    items: [
+      sc({}), sc({ aantal: 2 }), sc({ aantal: 3 }), sc({ aantal: 4 }),
+      { ...sc({ kinderveilig: false, aarding: false }, 'Contactdoos zonder bescherming'), tweede: [
+        sc({ kinderveilig: true, aarding: false }), sc({ kinderveilig: false, aarding: false, fasen: 1, nul: true }), sc({ kinderveilig: false, aarding: true, fasen: 1, nul: true, pe: true }),
+        sc({ kinderveilig: false, aarding: false, fasen: 3 }), sc({ kinderveilig: false, aarding: true, fasen: 3, nul: true, pe: true }),
+        sc({ kinderveilig: false, aarding: false, transformator: true }), sc({ kinderveilig: false, aarding: false, transformator: true, opschrift: 'USB' }),
+      ] },
+      { ...sc({ waterdicht: true }), tweede: [sc({ waterdicht: true, aantal: 2 }), sc({ waterdicht: true, aantal: 3 })] },
+      stopKring(KABELS.VOB), stopKring(KABELS.XVB),
+      tekst(),
+    ],
+  });
+
+  // 4. Toestellen
+  const toestel = (variant) => item('toestel', { variant });
+  cats.push({
+    id: 'toestellen', naam: 'Toestellen', icoon: icoon(nieuw('toestel', { variant: 'kookplaat' }), 34),
+    items: [
+      ...['ander', 'wasmachine', 'droogkast', 'kookplaat', 'vaatwasser', 'koelkast', 'diepvries', 'oven', 'microgolf', 'stoomoven', 'ventilatie'].map(toestel),
+      { ...item('ketel', { energie: 'gasVentilator' }), tweede: [
+        item('ketel', { energie: 'gasAtmosferisch' }), item('ketel', { energie: 'vloeibaar' }), item('ketel', { energie: 'vast' }), item('ketel', { energie: 'elektriciteit' }),
+        item('pomp'), item('ventiel'), item('relais', { variant: 'thermostaat' }),
+      ] },
+      item('ketel', { energie: 'elektriciteit', variant: 'warmtewisselaar', functie: 'beide' }), item('aftakdoos'),
+      tekst(),
+    ],
+  });
+
+  // 5. Impulsschakelingen
+  const drukRelais = (soortRelais, kinderen, naam) => keten([['drukknop', {}], ['relais', { variant: soortRelais }], ...kinderen], naam);
+  cats.push({
+    id: 'impuls', naam: 'Impulsschakelingen', icoon: icoon(nieuw('drukknop'), 34),
+    items: [
+      { ...item('drukknop'), tweede: [
+        item('drukknop', { waterdicht: true }), item('drukknop', { verklikker: true }, 'Drukknop met verklikkerlamp'), item('drukknop', { afgeschermd: true }),
+        item('drukknop', { knoppen: 2 }), item('drukknop', { knoppen: 4 }), item('drukknop', { knoppen: 6 }), item('drukknop', { dimmer: true }), item('drukknop', { rolluik: true }),
+      ] },
+      { ...item('relais', { variant: 'impuls' }), tweede: ['dimmer', 'relais', 'basis', 'minuterie', 'thermostaat', 'tijd'].map((v) => item('relais', { variant: v })) },
+      ...licht([
+        lichtKring(KABELS.VOB), lichtKring(KABELS.XVB),
+        { ...drukRelais('impuls', [['lichtpunt', {}]], 'Drukknop, impulsrelais en lichtpunt'), tweede: [
+          drukRelais('impuls', [['lichtpunt', {}]], 'Drukknop, impulsrelais en lichtpunt'), drukRelais('impuls', [], 'Drukknop en impulsrelais'),
+          drukRelais('impuls', [['lichtpunt', { variant: 'tl' }]], 'Met TL'), drukRelais('impuls', [['lichtpunt', { variant: 'spot' }]], 'Met spot'),
+          drukRelais('impuls', trafoSpot, 'Met transformator en spot'), drukRelais('impuls', trafoLed, 'Met transformator en led'),
+        ] },
+        { ...drukRelais('dimmer', [['lichtpunt', {}]], 'Drukknop, dimmer en lichtpunt'), tweede: [
+          drukRelais('dimmer', [['lichtpunt', {}]], 'Drukknop, dimmer en lichtpunt'), drukRelais('dimmer', [], 'Drukknop en dimmer'),
+          drukRelais('dimmer', [['lichtpunt', { variant: 'tl' }]], 'Met TL'), drukRelais('dimmer', [['lichtpunt', { variant: 'spot' }]], 'Met spot'),
+          drukRelais('dimmer', trafoSpot, 'Met transformator en spot'), drukRelais('dimmer', trafoLed, 'Met transformator en led'),
+        ] },
+        kring({ polen: 2, stroom: 6, items: [['transformator', {}], ['drukknop', {}]], naam: 'Kring met transformator en drukknoppen' }),
+      ]),
+      tekst(),
+    ],
+  });
+
+  // 6. Laagspanning
+  cats.push({
+    id: 'laagspanning', naam: 'Laagspanning', icoon: icoon(nieuw('geluidsbron'), 34),
+    items: [
+      keten([['transformator', {}], ['drukknop', {}], ['geluidsbron', { variant: 'bel' }]], 'Transformator, drukknop en bel'),
+      item('transformator'), item('drukknop'),
+      { ...item('geluidsbron', { variant: 'bel' }), tweede: ['hoorn', 'sirene', 'zoemer'].map((v) => item('geluidsbron', { variant: v })) },
+      item('deurslot'), item('intercom'), item('monitor'), item('luidspreker'),
+      tekst(),
+    ],
+  });
+
+  // 7. Beveiliging (alarm en detectie)
+  const alarmKabel = (t) => ({ type: 'kabel', naam: t, icoon: kabelIcoon(t), maak: () => ({ type: 'XVB', tekst: t }) });
+  cats.push({
+    id: 'alarm', naam: 'Beveiliging', icoon: icoon(nieuw('bewegingsdetector'), 34),
+    items: [
+      { ...kring({ polen: 2, stroom: 6, items: [['transformator', {}], ['domotica', { module: 'Centrale' }]], naam: 'Kring met transformator en centrale' }) },
+      { ...alarmKabel('2x0,75 + 4x0,22'), tweede: ['2x0,75 + 4x0,22', '2x0,75 + 6x0,22', '2x0,75 + 8x0,22', '4x0,22', '6x0,22', '8x0,22'].map(alarmKabel) },
+      { ...item('branddetector', { variant: 'rook' }), tweede: ['gas', 'manueel', 'straal', 'vlam', 'warmte'].map((v) => item('branddetector', { variant: v })) },
+      item('bewegingsdetector', { variant: 'basis' }),
+      { ...item('bewegingsdetector', { variant: 'gespreid' }), tweede: [
+        item('bewegingsdetector', { variant: 'gericht' }), item('bewegingsdetector', { variant: 'rondom' }), item('bewegingsdetectorActief'),
+        item('bewegingsdetector', { variant: 'gespreid', infrarood: false, ultrasoon: true }), item('bewegingsdetector', { variant: 'gespreid', infrarood: false, radar: true }),
+        item('bewegingsdetector', { variant: 'gespreid', radar: true }), item('bewegingsdetector', { variant: 'gespreid', ultrasoon: true }),
+        item('bewegingsdetector', { variant: 'rondom', radar: true }), item('bewegingsdetector', { variant: 'rondom', ultrasoon: true }),
+      ] },
+      { ...item('geluidsbron', { variant: 'hoorn' }), tweede: [
+        item('geluidsbron', { variant: 'hoorn', autonoom: true }), keten([['lichtpunt', { variant: 'signalisatie' }], ['geluidsbron', { variant: 'hoorn' }]], 'Signalisatielamp met hoorn'),
+        keten([['lichtpunt', { variant: 'signalisatie' }], ['geluidsbron', { variant: 'hoorn', autonoom: true }]], 'Signalisatielamp met autonome hoorn'),
+        item('geluidsbron', { variant: 'bel' }), item('geluidsbron', { variant: 'sirene' }), item('geluidsbron', { variant: 'zoemer' }), item('lichtpunt', { variant: 'signalisatie' }),
+      ] },
+      { ...item('beveiligingscontact', { variant: 'magneet' }), tweede: ['schoot', 'mechanisch', 'tril', 'drukmat', 'afneem'].map((v) => item('beveiligingscontact', { variant: v })) },
+      { ...item('trillingsdetector', { variant: 'glasbreuk' }), tweede: [item('trillingsdetector', { variant: 'glasbreuk', actief: true }), item('trillingsdetector', { variant: 'mechanisch' }), item('trillingsdetector', { variant: 'mechanisch', actief: true })] },
+      { ...item('camera'), tweede: [
+        item('camera', { beweegbaar: true }), item('camera', { variant: 'dome', beweegbaar: true }), item('camera', { variant: 'behuizing' }), item('camera', { variant: 'behuizing', beweegbaar: true }),
+        item('intercom'), item('microfoon'), item('monitor'),
+      ] },
+      { ...item('slot', { variant: 'code' }), tweede: [item('slot', { variant: 'inschakel' }), item('slot', { variant: 'tijd' }), item('deurslot'), item('drukknop')] },
+      item('kiezer'),
+      item('toestelKlein', { opschrift: 'C' }, 'Centrale'),
+      tekst(),
+    ],
+  });
+
+  // 8. Relais
+  cats.push({
+    id: 'relais', naam: 'Relais', icoon: icoon(nieuw('relais', { variant: 'relais' }), 34),
+    items: [
+      ...['basis', 'relais', 'dimmer', 'impuls', 'minuterie', 'thermostaat', 'tijd'].map((v) => item('relais', { variant: v })),
+      item('automaat', { variant: 'contact', polen: 0 }, 'Contact'), item('automaat', { variant: 'schemer', polen: 0 }, 'Schemerschakelaar'),
+      tekst(),
+    ],
+  });
+
+  // 9. Domotica
+  const domKring = (items, naam) => kring({ polen: 2, stroom: 16, kabel: { ...KABELS.VOB }, items, naam });
+  cats.push({
+    id: 'domotica', naam: 'Domotica', icoon: '<span class="k">Domotica</span>',
+    items: [
+      domKring([['domotica', { module: 'Domotica' }]], 'Kring met domoticamodule'), kring({ polen: 2, stroom: 16, kabel: { ...KABELS.VOB }, naam: 'Kring met leiding' }),
+      item('domotica', { module: 'Domotica' }),
+      { ...item('drukknop', { compact: true }, 'Drukknop (domotica)'), tweede: [item('drukknop', { knoppen: 2 }), item('drukknop', { knoppen: 4 }), item('drukknop', { verklikker: true }), item('schakelaar', { variant: 'enkelpolig', verklikker: true })] },
+      { ...item('schakelaar', { variant: 'enkelpolig', verklikker: true }), tweede: [item('drukknop'), item('drukknop', { verklikker: true })] },
+      { ...item('stopcontact', { schakelaar: 'enkel' }, 'Contactdoos met schakelaar'), tweede: [item('drukknop'), item('drukknop', { verklikker: true })] },
+      item('domotica', { module: 'Sturing', uitgangen: '' }, 'Domoticasturing'),
+      { ...item('aansluitpunt'), tweede: [item('aansluitpunt', { opschrift: '1' })] },
+      { ...keten([['relais', { variant: 'relais' }], ['lichtpunt', {}]], 'Relais met lichtpunt'), tweede: [keten([['relais', { variant: 'dimmer' }], ['lichtpunt', {}]], 'Dimmer met lichtpunt')] },
+      tekst(),
+    ],
+  });
+
+  // 10. Varia
+  const batterij = item('omvormer', {}, 'Omvormer');
+  cats.push({
+    id: 'varia', naam: 'Varia', icoon: icoon(nieuw('zonnepaneel', { gestandaardiseerd: true }), 34),
+    items: [
+      item('zonnepaneel', { gestandaardiseerd: true }), batterij, item('toestel', { variant: 'laadpaal' }),
+      item('ketel', { energie: 'elektriciteit', variant: 'warmtewisselaar', functie: 'beide' }), item('verwarmingstoestel'), item('boiler'), item('motor'),
+      item('schakelaar', { rolluik: true }, 'Rolluikschakelaar'), item('pomp'), item('ventiel'), item('communicatie'),
+      { ...item('aansluitpunt', {}, 'Aansluitklem'), tweede: [item('aansluitpunt', { opschrift: '1' })] },
+      tekst(),
+    ],
+  });
+
+  cats.push({ id: 'gekopieerd', naam: 'Gekopieerd', icoon: '⧉', items: gekopieerd.map((node) => ({ type: node.soort === 'kring' ? 'kring' : node.soort === 'differentieel' ? 'groep' : 'item', naam: node.naam || itemNaam(node), icoon: node.soort === 'kring' || node.soort === 'differentieel' ? `<span class="k">${esc(node.naam || node.soort)}</span>` : icoon(node, 30), maak: () => plakKopie(node) })) });
   cats.push({ id: 'favorieten', naam: 'Favorieten', icoon: '☆', items: leesFavorieten().map((f) => ({ type: 'item', naam: f.naam, icoon: icoon(nieuwItem(f.item.soort, f.item), 30), maak: () => { const { id, ...rest } = structuredClone(f.item); return nieuwItem(f.item.soort, rest); } })) });
   return cats;
 }
@@ -679,7 +875,7 @@ function tekenBibliotheek() {
 /** Waar mag het gekozen symbool komen? */
 function geldigePunten(punten) {
   const vrij = $('#vrij-tekenen').checked;
-  const soort = modus === 'verplaats' ? (() => { const d = zoek(staat.project, verplaatsId)?.ding; return d ? (d.soort === 'kring' || d.soort === 'differentieel' ? 'knoop' : 'item') : null; })() : bibGekozen ? ({ kring: 'knoop', groep: 'knoop', item: 'item', kabel: 'kabel' })[bibGekozen.soort] : null;
+  const soort = modus === 'verplaats' ? (() => { const d = zoek(staat.project, verplaatsId)?.ding; return d ? (d.soort === 'kring' || d.soort === 'differentieel' ? 'knoop' : 'item') : null; })() : bibGekozen ? ({ kring: 'knoop', groep: 'knoop', item: 'item', items: 'item', kabel: 'kabel' })[bibGekozen.soort] : null;
   if (!soort) return [];
   return punten.filter((p) => {
     if (vrij) return true;
@@ -746,6 +942,16 @@ function klikPunt(punt) {
     return;
   }
   const nieuw = bibGekozen.maak();
+  if (Array.isArray(nieuw)) {
+    wijzig((p) => {
+      const k = zoek(p, punt.ouder)?.ding;
+      if (!k?.items) return;
+      const i = punt.na ? k.items.findIndex((x) => x.id === punt.na) + 1 : k.items.length;
+      k.items.splice(i, 0, ...nieuw);
+    });
+    kies(nieuw[0].id);
+    return;
+  }
   voegBijPunt(punt, nieuw);
   kies(nieuw.id);
 }
