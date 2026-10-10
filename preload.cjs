@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('elektro', {
   herstelLees: () => ipcRenderer.invoke('herstel-lees'),
   herstelBewaar: (inhoud) => ipcRenderer.invoke('herstel-bewaar', inhoud),
   herstelWis: () => ipcRenderer.invoke('herstel-wis'),
+  transparant: (aan) => ipcRenderer.invoke('transparant', aan),
   zetGewijzigd: (waarde) => ipcRenderer.send('gewijzigd', waarde),
   sluit: () => ipcRenderer.send('sluit'),
   opMenu: (fn) => ipcRenderer.on('menu', (_e, actie, extra) => fn(actie, extra)),

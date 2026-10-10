@@ -86,9 +86,9 @@ function maakMenu() {
         { label: 'Opnieuw', accelerator: 'CmdOrCtrl+Y', click: () => stuur('opnieuw') },
         { type: 'separator' },
         { label: 'Knippen', role: 'cut' },
-        { label: 'Kopiëren', role: 'copy' },
-        { label: 'Plakken', role: 'paste' },
-        { label: 'Alles selecteren', role: 'selectAll' },
+        { label: 'Kopiëren', accelerator: 'CmdOrCtrl+C', click: () => stuur('kopieer') },
+        { label: 'Plakken', accelerator: 'CmdOrCtrl+V', click: () => stuur('plak') },
+        { label: 'Alles selecteren', accelerator: 'CmdOrCtrl+A', click: () => stuur('alles') },
       ],
     },
     {
@@ -239,6 +239,8 @@ function registreer() {
   ipcMain.handle('afdrukken', (e) => new Promise((resolve) => {
     e.sender.print({ silent: false, printBackground: true }, (ok, fout) => resolve({ ok, fout: ok ? '' : String(fout || '') }));
   }));
+
+  ipcMain.handle('transparant', (_e, aan) => { venster?.setOpacity(aan ? 0.55 : 1); });
 
   ipcMain.handle('herstel-lees', () => readFile(HERSTEL(), 'utf8').catch(() => null));
   ipcMain.handle('herstel-bewaar', (_e, inhoud) => schrijfVeilig(HERSTEL(), inhoud));

@@ -304,3 +304,15 @@ body.afdrukken #afdruk { display: block; }
 .titelhoek .cel span { color: #555; font-size: 6.5pt; text-transform: uppercase; letter-spacing: .3px; }
 .titelhoek .cel b { font-size: 9pt; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .titelhoek .cel.soort { background: #f2f2f2; }
+
+/* Situatieschema: werkbalken met meerdere rijen en het venster om pagina's te herschikken */
+.vlak-wrap { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.vlak-wrap .werkbalk { flex-wrap: wrap; row-gap: 4px; }
+.vlak-wrap .werkbalk .groep { flex-wrap: wrap; }
+.vlak-wrap .vlak { flex: 1; min-height: 0; }
+.werkbalk button[hidden] { display: none; }
+dialog.dialoog.breed { width: min(900px, 94vw); }
+.paginarijen { display: grid; gap: 6px; margin: 8px 0; }
+.paginarij { display: grid; grid-template-columns: 22px 1.2fr 1.5fr 1fr auto auto auto auto; gap: 6px; align-items: center; }
+.paginarij input[type=text], .paginarij input:not([type]) { width: 100%; }
+.rij.kop.klaar .letter { opacity: .35; }

@@ -8,7 +8,7 @@ export const staat = {
   selectie: 'hoofd', // gekozen ding in het ééndraadschema
   tab: 'eendraad',
   planId: null,
-  planSelectie: null, // { soort: 'item' | 'muur' | 'tekst', id }
+  planKeuze: [], // gekozen dingen op het plan: { soort: 'item' | 'el' | 'tekst', id }
   dicht: new Set(), // ingeklapte kringen in de boom
 };
 
@@ -33,7 +33,7 @@ function zetMoment(tekst) {
   data.afbeeldingen = staat.project.afbeeldingen;
   staat.project = data;
   staat.selectie = _selectie || 'hoofd';
-  staat.planSelectie = null;
+  staat.planKeuze = [];
   if (!data.plannen.some((p) => p.id === staat.planId)) staat.planId = data.plannen[0]?.id;
 }
 
@@ -89,7 +89,7 @@ export function laad(project, pad = null) {
   staat.pad = pad;
   staat.selectie = 'hoofd';
   staat.planId = project.plannen[0]?.id || null;
-  staat.planSelectie = null;
+  staat.planKeuze = [];
   staat.dicht.clear();
   terug.length = 0;
   vooruit.length = 0;

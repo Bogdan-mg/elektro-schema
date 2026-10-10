@@ -228,6 +228,13 @@ async function csv() {
 
 // ---------- Acties en sneltoetsen ----------
 
+const inVeldActief = () => Boolean(document.activeElement?.closest?.('input, textarea, [contenteditable]'));
+
+function zetTransparant(aan) {
+  if (desktop?.transparant) desktop.transparant(aan);
+  else document.body.style.opacity = aan ? '0.55' : '';
+}
+
 const acties = {
   nieuw,
   openen,
@@ -241,6 +248,23 @@ const acties = {
   ongedaan: () => { if (!ongedaan()) melding('Niets meer om ongedaan te maken.'); },
   opnieuw: () => { if (!opnieuw()) melding('Niets om opnieuw te doen.'); },
   tab: (t) => naarTab(t),
+  zoekES: () => {
+    const id = situatie.gekozenSymbool();
+    if (!id) return;
+    staat.selectie = id;
+    naarTab('eendraad');
+  },
+  zoekSS: () => {
+    const id = staat.selectie;
+    if (!id || id === 'hoofd') return;
+    naarTab('situatie');
+    if (!situatie.toonOpPlan(id)) melding('Dit onderdeel staat nog niet op het situatieschema.');
+  },
+  kopieer: () => (inVeldActief() ? document.execCommand('copy') : staat.tab === 'situatie' ? situatie.kopieer() : editor.kopieerGekozen?.()),
+  plak: () => (inVeldActief() ? navigator.clipboard?.readText().then((t) => document.execCommand('insertText', false, t)).catch(() => {}) : staat.tab === 'situatie' ? situatie.plak() : editor.plakGekopieerd?.()),
+  alles: () => (inVeldActief() ? document.activeElement.select?.() : staat.tab === 'situatie' ? situatie.alleSelecteren() : undefined),
+  transparantAan: () => zetTransparant(true),
+  transparantUit: () => zetTransparant(false),
   openPad: (r) => r && magVerder().then((ok) => ok && openTekst(r.inhoud, r.pad)),
   opslaanEnSluiten: async () => { if (await opslaan(false)) desktop?.sluit(); },
 };
@@ -266,6 +290,8 @@ function sneltoetsen(e) {
     }
   }
   if (inVeld) return;
+  // In de desktopversie doet het menu kopiëren, plakken en alles selecteren zelf.
+  if (desktop && ctrl && ['c', 'v', 'a'].includes(toets)) return;
 
   if (staat.tab === 'eendraad') {
     if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); editor.verwijderGekozen(); }
@@ -273,9 +299,7 @@ function sneltoetsen(e) {
     else if (e.altKey && e.key === 'ArrowUp') { e.preventDefault(); editor.verschuifGekozen(-1); }
     else if (e.altKey && e.key === 'ArrowDown') { e.preventDefault(); editor.verschuifGekozen(1); }
   } else if (staat.tab === 'situatie') {
-    if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); situatie.verwijderGekozen(); }
-    else if (toets === 'r' && !ctrl) { e.preventDefault(); situatie.draaiGekozen(); }
-    else if (e.key === 'Escape') situatie.annuleer();
+    if (situatie.situatieToets(e)) e.preventDefault();
   }
 }
 

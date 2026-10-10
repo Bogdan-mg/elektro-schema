@@ -18,7 +18,7 @@ test('een muur toont zijn lengte enkel als je erop klikt of alle afmetingen aans
   assert.equal(afstand(plan.muren[0]), 500);
   assert.equal(plan.alleMaten, false);
   assert.doesNotMatch(tekenPlan(p, plan), /class="maat"/);
-  assert.match(tekenPlan(p, plan, { selectie: { soort: 'muur', id: 0 } }), />5,00 m</);
+  assert.match(tekenPlan(p, plan, { selectie: { soort: 'el', id: 0 } }), />5,00 m</);
   plan.alleMaten = true;
   assert.match(tekenPlan(p, plan), />5,00 m</);
   plan.schaal = 50;
@@ -29,7 +29,7 @@ test('enkel het gekozen lijnstuk krijgt zijn lengte', () => {
   const p = nieuwProject();
   const plan = p.plannen[0];
   plan.muren.push({ soort: 'muur', x1: 0, y1: 0, x2: 200, y2: 0 }, { soort: 'muur', x1: 200, y1: 0, x2: 200, y2: 100 });
-  const svg = tekenPlan(p, plan, { selectie: { soort: 'muur', id: 1 } });
+  const svg = tekenPlan(p, plan, { selectie: { soort: 'el', id: 1 } });
   assert.match(svg, />1,00 m</);
   assert.doesNotMatch(svg, />2,00 m</);
 });
@@ -40,7 +40,7 @@ test('zonder schaal staan er geen lengtes', () => {
   plan.muren.push({ soort: 'muur', x1: 0, y1: 0, x2: 200, y2: 0 });
   plan.schaal = null;
   plan.alleMaten = true;
-  assert.doesNotMatch(tekenPlan(p, plan, { selectie: { soort: 'muur', id: 0 } }), /class="maat"/);
+  assert.doesNotMatch(tekenPlan(p, plan, { selectie: { soort: 'el', id: 0 } }), /class="maat"/);
 });
 
 test('aaneengesloten muren worden samengeteld', () => {

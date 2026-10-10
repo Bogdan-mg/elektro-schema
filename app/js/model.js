@@ -17,18 +17,33 @@ export function nieuwPlan(naam = 'Gelijkvloers') {
     hoogte: 1000,
     symbool: 1.5, // grootte van de symbolen op dit plan
     schaal: 100, // tekeneenheden per meter; null = nog niet ingesteld
-    kleefMuur: true, // symbolen tegen de dichtstbijzijnde muur zetten
+    kleefMuur: true, // symbolen tegen de dichtstbijzijnde muur zetten en muren aan elkaar laten kleven
+    kleefGrid: false, // alles op de kruispunten van het raster zetten
+    toonGrid: true,
     alleMaten: false, // alle lengtes tonen; anders enkel tijdens het tekenen of van het gekozen lijnstuk
-    muren: [], // lijnstukken: { soort: 'muur' | 'deur' | 'raam' | 'meet', x1, y1, x2, y2 }
+    beletteren: true, // de kringletter bij de symbolen
+    nummeren: true, // het nummer bij de symbolen
+    compact: false, // een kleinere titelbalk bij het afdrukken
+    titel: '',
+    subtitel: '',
+    afdrukSchaal: 0, // 0 = automatisch; anders de noemer van de schaal (100 = 1:100)
+    muren: [], // elementen van het grondplan, zie ELEMENTEN in plan.js
     teksten: [],
-    plaatsingen: {}, // item-id (of 'bord') -> { x, y, rot }
+    plaatsingen: {}, // item-id (of een los symbool) -> { x, y, rot, kleur, tekstPlaats, adresPlaats, [los, item] }
   };
 }
+
+/** Een element van het grondplan (muur, deur, raam, trap, vlak, …) met een eigen id. */
+export const nieuwElement = (soort, waarden = {}) => ({ id: nieuwId(), soort, ...waarden });
 
 export function nieuwProject() {
   return {
     versie: VERSIE,
-    info: { titel: 'Nieuw project', klant: '', adres: '', installateur: '', datum: vandaag(), opmerking: '' },
+    info: {
+      titel: 'Nieuw project', klant: '', adres: '', installateur: '', datum: vandaag(), opmerking: '',
+      werfAdres: '', installateurEigen: true, uitvoerder: '', controle: '',
+    },
+    opties: { losseSymbolen: false },
     aansluiting: { net: '1F230', hoofdzekering: 40, aardingsweerstand: 0, kabelNet: '', kabelBord: '' },
     hoofd: { beveiliging: 'differentieel', gevoeligheid: 300, type: 'A', stroom: 40, polen: 2, curve: 'C', onderbreking: 0, teller: true },
     kinderen: [],
@@ -145,17 +160,32 @@ export function letter(i) {
   return s;
 }
 
-/** De codes zoals op het schema: kringen krijgen een letter, onderdelen letter + nummer (A1, A2, …). */
+/**
+ * De codes zoals op het schema: kringen krijgen een letter, onderdelen letter + nummer (A1, A2, …).
+ * Een verdeelbord (het hoofdbord of een groep) met een "nummer" zet dat voor de letter van al zijn kringen,
+ * en die kringen beginnen opnieuw bij A.
+ */
 export function codes(project) {
   const map = new Map();
   // Zoals in Trikker krijgt elke kring en elke groep een letter, in tekenvolgorde.
   // Een vaste letter (zoals "XYZ") telt niet mee voor de automatische letters.
-  let i = 0;
-  for (const { knoop } of alleKnopen(project)) {
-    const l = knoop.letter?.trim() || letter(i++);
-    map.set(knoop.id, l);
-    if (knoop.soort === 'kring') rijen(knoop).forEach((rij, j) => rij.forEach((item) => map.set(item.id, `${l}${j + 1}`)));
-  }
+  const tellers = new Map();
+  const loop = (kinderen, voorvoegsel) => {
+    for (const knoop of kinderen) {
+      const eigen = knoop.letter?.trim();
+      let l = eigen;
+      if (!l) {
+        const n = tellers.get(voorvoegsel) || 0;
+        tellers.set(voorvoegsel, n + 1);
+        l = letter(n);
+      }
+      l = `${voorvoegsel}${l}`;
+      map.set(knoop.id, l);
+      if (knoop.soort === 'kring') rijen(knoop).forEach((rij, j) => rij.forEach((item) => map.set(item.id, `${l}${j + 1}`)));
+      if (knoop.soort === 'differentieel') loop(knoop.kinderen, knoop.nummer?.trim() || voorvoegsel);
+    }
+  };
+  loop(project.kinderen, project.hoofd?.nummer?.trim() || '');
   return map;
 }
 
@@ -298,6 +328,7 @@ export function leesProject(tekst) {
     aansluiting: { ...basis.aansluiting, ...data.aansluiting },
     hoofd: { ...basis.hoofd, ...data.hoofd },
     materiaal: { ...basis.materiaal, ...data.materiaal },
+    opties: { ...basis.opties, ...data.opties },
     afbeeldingen: data.afbeeldingen || {},
     versie: VERSIE,
   };
@@ -309,7 +340,7 @@ export function leesProject(tekst) {
       // Een plan uit een oudere versie met een achtergrond heeft geen gekende schaal.
       schaal: p.schaal === undefined ? (p.achtergrond ? null : 100) : p.schaal,
       plaatsingen: p.plaatsingen || {},
-      muren: (p.muren || []).map((m) => ({ soort: 'muur', ...m })),
+      muren: (p.muren || []).map((m) => ({ soort: 'muur', id: nieuwId(), ...m })),
       teksten: p.teksten || [],
     }));
   const vul = (k) => {
