@@ -4,9 +4,8 @@ import { penDun, penMiddel, penDik, kwast, fontNormaal, SF, rechthoek } from './
 export const KLASSE = 'AutomatischeSchakelaar';
 
 const POLEN = { NietGespecifieerd: 0, Enkelpolig: 1, Dubbelpolig: 2, Driepolig: 3, Vierpolig: 4 };
-// Environment.NewLine tussen de tekstregels. De proefopstelling (Linux) schrijft "\n" weg uit de SVG-tekst,
-// zodat de regels daar aan elkaar plakken; voor een echte regelafbreking moet g.js tekst met "\n" kunnen tekenen.
-const NIEUWE_REGEL = '';
+// Environment.NewLine tussen de tekstregels (g.js kan ze samenvoegen om met de proefopstelling te vergelijken).
+const NIEUWE_REGEL = '\n';
 // MeasureString van de proefopstelling (geen echte Arial-meting): breedte = tekens × grootte × 0,55, hoogte = grootte × 1,15.
 const meetBreedte = (tekst, grootte) => tekst.length * grootte * 0.55;
 const meetHoogte = (grootte) => grootte * 1.15;
@@ -41,6 +40,7 @@ export function maak(props = {}) {
     if (t) uit.push(t);
     return uit;
   };
+  n.tekstRegels = tekstRegels; // voor de lay-out (WorldAreaMargin)
   for (const [k, v] of Object.entries(props)) n[k] = v;
 
   n.textOffset = () => {

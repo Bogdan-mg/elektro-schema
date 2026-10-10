@@ -1,5 +1,8 @@
 // Gemeenschappelijke vergelijking: de nabouw tegenover de uitvoer van Trikker (getallen met een kleine tolerantie).
-import { Graphics } from '../../app/js/trikker/g.js';
+import { Graphics, opties } from '../../app/js/trikker/g.js';
+
+// De proefopstelling (Linux) schrijft de regeleinden uit de tekst weg: voeg de regels ook hier samen.
+opties.regelsSamenvoegen = true;
 
 const TOL = 0.0025;
 const tokens = (s) => String(s).split(/(-?\d+(?:\.\d+)?(?:e-?\d+)?)/).filter((x) => x !== '');

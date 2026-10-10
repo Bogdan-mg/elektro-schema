@@ -51,7 +51,7 @@ export function maak(props = {}) {
     if (n.NaamModule) {
       const bew = g.save();
       let r;
-      if (shouldFlipText((rotation ?? 0) - Math.PI / 2)) {
+      if (shouldFlipText((rotation ?? n.Rotation ?? 0) - Math.PI / 2)) {
         g.rotateTransform(90);
         r = { x: -H / 2 + 2, y: -W / 2, w: H - 4, h: W / 2 + 3 };
       } else {
