@@ -824,7 +824,7 @@ function bibliotheek() {
     id: 'domotica', naam: 'Domotica', icoon: '<span class="k">Domotica</span>',
     items: [
       domKring([['domotica', { module: 'Domotica' }]], 'Kring met domoticamodule'), kring({ polen: 2, stroom: 16, kabel: { ...KABELS.VOB }, naam: 'Kring met leiding' }),
-      item('domotica', { module: 'Domotica' }),
+      item('domotica', { module: 'Domotica' }), item('touchscreen'),
       { ...item('drukknop', { compact: true }, 'Drukknop (domotica)'), tweede: [item('drukknop', { knoppen: 2 }), item('drukknop', { knoppen: 4 }), item('drukknop', { verklikker: true }), item('schakelaar', { variant: 'enkelpolig', verklikker: true })] },
       { ...item('schakelaar', { variant: 'enkelpolig', verklikker: true }), tweede: [item('drukknop'), item('drukknop', { verklikker: true })] },
       { ...item('stopcontact', { schakelaar: 'enkel' }, 'Contactdoos met schakelaar'), tweede: [item('drukknop'), item('drukknop', { verklikker: true })] },
@@ -840,7 +840,7 @@ function bibliotheek() {
   cats.push({
     id: 'varia', naam: 'Varia', icoon: icoon(nieuw('zonnepaneel', { gestandaardiseerd: true }), 34),
     items: [
-      item('zonnepaneel', { gestandaardiseerd: true }), batterij, item('toestel', { variant: 'laadpaal' }),
+      item('zonnepaneel', { gestandaardiseerd: true }), batterij, item('batterij'), item('toestel', { variant: 'laadpaal' }),
       item('ketel', { energie: 'elektriciteit', variant: 'warmtewisselaar', functie: 'beide' }), item('verwarmingstoestel'), item('boiler'), item('motor'),
       item('schakelaar', { rolluik: true }, 'Rolluikschakelaar'), item('pomp'), item('ventiel'), item('communicatie'),
       { ...item('aansluitpunt', {}, 'Aansluitklem'), tweede: [item('aansluitpunt', { opschrift: '1' })] },

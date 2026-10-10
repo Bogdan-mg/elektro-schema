@@ -106,7 +106,7 @@ export const SOORTEN = {
   aardingsstrip: { naam: 'Aardingsstrip', groep: 'Algemeen', standaard: {}, velden: [] },
   aftakdoos: { naam: 'Aftakkast', groep: 'Algemeen', standaard: {}, velden: [] },
   automaat: {
-    naam: 'Automatische schakelaar', groep: 'Beveiliging',
+    naam: 'Automatische Schakelaar', groep: 'Beveiliging',
     standaard: { variant: 'automaat', polen: 0, stroom: 0, curve: '', eenheid: 'A', gevoeligheid: 0, maxstroom: false, kortsluit: 0, selectief: false, gesloten: false, fase: '' },
     velden: [
       keuze('variant', 'Type', { automaat: 'Automaat', contact: 'Contact', schemer: 'Schemerschakelaar', draai: 'Draaischakelaar', zekeringscheider: 'Zekeringscheider' }),
@@ -131,7 +131,8 @@ export const SOORTEN = {
     naam: 'Bewegingsdetector', groep: 'Alarm en detectie', standaard: { variant: 'basis', infrarood: false, radar: false, ultrasoon: false },
     velden: [keuze('variant', 'Type', { basis: 'Basis', gericht: 'Gericht', gespreid: 'Gespreid', rondom: 'Rondom' }), ja('infrarood', 'Infrarood'), ja('radar', 'Radar'), ja('ultrasoon', 'Ultrasoon')],
   },
-  bewegingsdetectorActief: { naam: 'Bewegingsdetector actief', groep: 'Alarm en detectie', standaard: {}, velden: [] },
+  bewegingsdetectorActief: { naam: 'Actieve bewegingsdetector', groep: 'Alarm en detectie', standaard: {}, velden: [] },
+  batterij: { naam: 'Batterij', groep: 'Toestellen', standaard: {}, velden: [] },
   boiler: { naam: 'Boiler', groep: 'Toestellen', standaard: { accumulatie: false }, velden: [ja('accumulatie', 'Accumulatie')] },
   branddetector: {
     naam: 'Branddetector', groep: 'Alarm en detectie', standaard: { variant: 'onbepaald' },
@@ -148,7 +149,7 @@ export const SOORTEN = {
       getalKeuze('aantal', 'Aantal', { 1: 'Enkel', 2: 'Dubbel', 3: 'Drievoudig', 4: 'Viervoudig' }),
       ja('aarding', 'Beschermingsgeleider (aarding)'),
       ja('kinderveilig', 'Kinderbescherming'),
-      ja('waterdicht', 'Halfwaterdicht (h)'),
+      ja('waterdicht', 'Half waterdicht'),
       keuze('schakelaar', 'Schakelaar ingebouwd', { geen: 'Nee', enkel: 'Enkelpolig', dubbel: 'Dubbelpolig' }),
       ja('transformator', 'Transformator ingebouwd'),
       getalKeuze('fasen', 'Aantal fasen', { 0: 'Niet tonen', 1: 'Eén', 3: 'Drie' }),
@@ -165,7 +166,7 @@ export const SOORTEN = {
   },
   drukknop: {
     naam: 'Drukknop', groep: 'Schakelaars', standaard: { knoppen: 1, verklikker: false, waterdicht: false, afgeschermd: false, rolluik: false, dimmer: false },
-    velden: [getal('knoppen', 'Aantal knoppen', 1, 12), ja('verklikker', 'Verklikkerlamp'), ja('waterdicht', 'Halfwaterdicht (h)'), ja('afgeschermd', 'Afgeschermd'), ja('rolluik', 'Rolluikdrukknop'), ja('dimmer', 'Dimmer')],
+    velden: [getal('knoppen', 'Aantal knoppen', 1, 12), ja('verklikker', 'Verklikkerlamp'), ja('waterdicht', 'Half waterdicht'), ja('afgeschermd', 'Afgeschermd'), ja('rolluik', 'Rolluikdrukknop'), ja('dimmer', 'Dimmer')],
   },
   geluidsbron: {
     naam: 'Geluidsbron', groep: 'Communicatie', standaard: { variant: 'bel', autonoom: false },
@@ -186,7 +187,7 @@ export const SOORTEN = {
     velden: [
       keuze('variant', 'Type', namen(LICHTPUNTEN)),
       ja('wand', 'Wandverlichting'),
-      ja('waterdicht', 'Halfwaterdicht (h)'),
+      ja('waterdicht', 'Half waterdicht'),
       ja('schakelaar', 'Schakelaar ingebouwd'),
       keuze('nood', 'Noodverlichting', { geen: 'Nee', centraal: 'Centraal', decentraal: 'Decentraal' }),
       getalKeuze('buizen', 'Aantal buislampen (TL)', { 1: 'Eén', 2: 'Twee', 3: 'Drie' }),
@@ -215,7 +216,7 @@ export const SOORTEN = {
       ja('signalisatie', 'Signalisatielamp'),
       ja('trek', 'Trekschakelaar'),
       ja('vertraagd', 'Vertraagde opening'),
-      ja('waterdicht', 'Halfwaterdicht (h)'),
+      ja('waterdicht', 'Half waterdicht'),
     ],
   },
   slot: { naam: 'Slot', groep: 'Toegang', standaard: { variant: 'code' }, velden: [keuze('variant', 'Type', { code: 'Codeslot', inschakel: 'Inschakelslot', tijd: 'Tijdslot' })] },
@@ -248,6 +249,7 @@ export const SOORTEN = {
       tekstveld('opschrift', 'Tekst', 'bv. 12V'),
     ],
   },
+  touchscreen: { naam: 'Touchscreen', groep: 'Sturing', standaard: {}, velden: [] },
   trillingsdetector: {
     naam: 'Trillingsdetector', groep: 'Alarm en detectie', standaard: { variant: 'glasbreuk', actief: false },
     velden: [keuze('variant', 'Type', { glasbreuk: 'Glasbreuk', mechanisch: 'Mechanisch' }), ja('actief', 'Actief')],

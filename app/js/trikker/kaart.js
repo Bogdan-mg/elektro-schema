@@ -39,6 +39,7 @@ import * as Smeltveiligheid from './Smeltveiligheid.js';
 import * as Teller from './Teller.js';
 import * as Toestel from './Toestel.js';
 import * as ToestelKlein from './ToestelKlein.js';
+import * as Touchscreen from './Touchscreen.js';
 import * as Transformator from './Transformator.js';
 import * as Trillingsdetector from './Trillingsdetector.js';
 import * as Ventiel from './Ventiel.js';
@@ -55,7 +56,7 @@ export const KLASSEN = {
   Aansluitklem, Aansluitpunt, Aarding, Aardingsstrip, Aftakkast, AutomatischeSchakelaar, Batterij, Beveiliging, Beveiligingscontact,
   Bewegingsdetector, BewegingsdetectorActief, Boiler, Branddetector, Camera, Contactdoos, ContactdoosCommunicatie, Deurslot, DomoticaModule,
   Drukknop, Geluidsbron, Intercom, Ketel, Kiezer, Lichtpunt, Luidspreker, Microfoon, Monitor, Motor, Omvormer, Overspanningsbeveiliging, Pomp,
-  Relais, Schakelaar, Slot, Smeltveiligheid, Teller, Toestel, ToestelKlein, Transformator, Trillingsdetector, Ventiel, Verdeelbord,
+  Relais, Schakelaar, Slot, Smeltveiligheid, Teller, Toestel, ToestelKlein, Touchscreen, Transformator, Trillingsdetector, Ventiel, Verdeelbord,
   Verwarmingstoestel, Voorschakelapparaat, Zonnepaneel,
 };
 
@@ -96,6 +97,8 @@ const KAART = {
     Infrarood: jn(it.infrarood), Radar: jn(it.radar), Ultrasoon: jn(it.ultrasoon), Aantal: aantal(it),
   }],
   bewegingsdetectorActief: (it) => ['BewegingsdetectorActief', { Aantal: aantal(it) }],
+  batterij: (it) => ['Batterij', { Aantal: aantal(it) }],
+  touchscreen: (it) => ['Touchscreen', { Aantal: aantal(it) }],
   boiler: (it) => ['Boiler', { Accumulatie: jn(it.accumulatie) }],
   branddetector: (it) => ['Branddetector', {
     Type: { onbepaald: 'NietGespecifieerd', rook: 'Rookdetector', vlam: 'Vlamdetector', warmte: 'Warmtedetector', gas: 'Gasdetector', manueel: 'Manueel', straal: 'Straaldetector' }[it.variant] || 'NietGespecifieerd',
@@ -206,7 +209,7 @@ export function trikkerSymbool(item) {
     const knoop = trikkerKnoop(item);
     if (knoop) {
       const g = new Graphics();
-      knoop.render(g, 'Grondplan', 0);
+      knoop.render(g, 'Grondplan', 0, null, { meerregelig: true });
       const b = knoop.Width * SCHAAL;
       const h = knoop.Height * SCHAAL;
       const t = knoop.textOffset(0);
@@ -277,4 +280,23 @@ export function trikkerAdresSvg(item, rotatie, plaatsing, tekst) {
   }
   g.tryDrawString(tekst, font, zwart, rect, sf);
   return `<g class="tk-adres" transform="translate(${knoop.Width * SCHAAL / 2} 0) scale(${SCHAAL})">${g.uit.replace(/#000000/g, 'currentColor')}</g>`;
+}
+
+/** Leidinglengte (in Trikker-eenheden) vóór het eigenlijke teken, voor symbolen die Trikker zonder aanvoerleiding tekent. */
+const LEIDING = { touchscreen: 3.15 };
+
+/**
+ * Het symbool zoals Trikker het in het ééndraadschema tekent, in het formaat van symbolen.js: het begint op x = 0 (waar de leiding aankomt)
+ * en loopt over de breedte van het symbool. Voor de soorten waarvoor het ééndraadschema nog niet volledig van Trikker komt.
+ */
+export function trikkerEendraadSymbool(item) {
+  const knoop = trikkerKnoop(item);
+  if (!knoop) return null;
+  const g = new Graphics();
+  knoop.render(g, 'Eendraadschema', null, null, { meerregelig: true });
+  const b = knoop.Width * SCHAAL;
+  const h = knoop.Height * SCHAAL;
+  const leiding = (LEIDING[item.soort] || 0) * SCHAAL;
+  const svg = (leiding ? `<line class="l" x1="0" y1="0" x2="${leiding}" y2="0"/>` : '') + `<g class="tk" transform="translate(${b / 2} 0) scale(${SCHAAL})">${g.uit.replace(/#000000/g, 'currentColor')}</g>`;
+  return { svg, b, boven: -h / 2, onder: h / 2, midden: b / 2, door: b };
 }
