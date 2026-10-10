@@ -316,3 +316,15 @@ dialog.dialoog.breed { width: min(900px, 94vw); }
 .paginarij { display: grid; grid-template-columns: 22px 1.2fr 1.5fr 1fr auto auto auto auto; gap: 6px; align-items: center; }
 .paginarij input[type=text], .paginarij input:not([type]) { width: 100%; }
 .rij.kop.klaar .letter { opacity: .35; }
+
+/* Importvenster voor PDF en DXF */
+dialog.import { width: min(1000px, 96vw); }
+.importrij { display: grid; grid-template-columns: minmax(0, 660px) 1fr; gap: 14px; align-items: start; }
+.importvoorbeeld { position: relative; line-height: 0; }
+.importvoorbeeld canvas { width: 100%; max-width: 640px; border: 1px solid var(--rand); cursor: crosshair; background: #e5e7eb; }
+.imp-kader { position: absolute; border: 2px solid #2563eb; background: rgba(37,99,235,.08); pointer-events: none; }
+.imp-bezig { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.7); font-size: 14px; }
+.imp-bezig[hidden] { display: none; }
+.importopties { display: grid; gap: 8px; align-content: start; font-size: 13px; }
+.importopties h4 { margin: 8px 0 0; font-size: 13px; }
+.imp-lagen { display: grid; gap: 4px; max-height: 240px; overflow: auto; border: 1px solid var(--rand); padding: 6px 8px; border-radius: 6px; }

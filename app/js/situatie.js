@@ -10,6 +10,7 @@ import { icoon, esc } from './symbolen.js';
 import { staat, wijzig, herteken, opWijziging, zetGewijzigd } from './staat.js';
 import { Vlak } from './vlak.js';
 import { vraag, vraagTekst, bevestig, melding } from './dialoog.js';
+import { importeer, leesBeeldBestand } from './import.js';
 
 const $ = (s) => document.querySelector(s);
 const GRID = 20; // de maat van het raster, in tekeneenheden
@@ -993,82 +994,28 @@ async function schaalDialoog(px) {
   }
 }
 
-// ---------- Achtergrond (afbeelding of PDF) ----------
+// ---------- Achtergrond (afbeelding, PDF of DXF) ----------
 
-const laadBeeld = (src) => new Promise((ok, fout) => {
-  const img = new Image();
-  img.onload = () => ok(img);
-  img.onerror = () => fout(new Error('Deze afbeelding kan niet geopend worden.'));
-  img.src = src;
-});
+const isTekening = (bestand) => /\.(pdf|dxf|dwg)$/i.test(bestand.name) || bestand.type === 'application/pdf';
 
-const leesAlsDataUrl = (bestand) => new Promise((ok, fout) => {
-  const r = new FileReader();
-  r.onload = () => ok(r.result);
-  r.onerror = () => fout(r.error);
-  r.readAsDataURL(bestand);
-});
-
-async function afbeeldingInlezen(bestand) {
-  let src = await leesAlsDataUrl(bestand);
-  const img = await laadBeeld(src);
-  let breedte = img.naturalWidth;
-  let hoogte = img.naturalHeight;
-  const max = 4000;
-  if (Math.max(breedte, hoogte) > max) {
-    const f = max / Math.max(breedte, hoogte);
-    breedte = Math.round(breedte * f);
-    hoogte = Math.round(hoogte * f);
-    const c = document.createElement('canvas');
-    c.width = breedte;
-    c.height = hoogte;
-    c.getContext('2d').drawImage(img, 0, 0, breedte, hoogte);
-    src = c.toDataURL('image/jpeg', 0.9);
-  }
-  return { src, breedte, hoogte };
+/** Een bestand inlezen als { src, breedte, hoogte, schaal, bron }: een tekening via het importvenster, een foto direct. */
+async function leesBestand(bestand) {
+  if (isTekening(bestand)) return importeer(bestand);
+  return { ...(await leesBeeldBestand(bestand)), schaal: null, bron: null };
 }
 
-async function pdfInlezen(bestand) {
-  const pdfjs = await import('../vendor/pdfjs/pdf.min.mjs');
-  pdfjs.GlobalWorkerOptions.workerSrc = new URL('../vendor/pdfjs/pdf.worker.min.mjs', import.meta.url).href;
-  const taak = pdfjs.getDocument({ data: new Uint8Array(await bestand.arrayBuffer()) });
-  const doc = await taak.promise;
-  let nummer = 1;
-  if (doc.numPages > 1) {
-    const { knop, waarden } = await vraag({
-      titel: 'Welke pagina?',
-      tekst: `Deze PDF heeft ${doc.numPages} pagina's.`,
-      velden: [{ naam: 'n', label: 'Pagina', type: 'select', waarde: 1, opties: Array.from({ length: doc.numPages }, (_, i) => [i + 1, `Pagina ${i + 1}`]) }],
-    });
-    if (knop !== 'ok') {
-      await taak.destroy();
-      return null;
-    }
-    nummer = Number(waarden.n);
-  }
-  const pagina = await doc.getPage(nummer);
-  const basis = pagina.getViewport({ scale: 1 });
-  const schaal = Math.min(4, 3000 / Math.max(basis.width, basis.height));
-  const zicht = pagina.getViewport({ scale: schaal });
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.round(zicht.width);
-  canvas.height = Math.round(zicht.height);
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  await pagina.render({ canvasContext: ctx, canvas, viewport: zicht }).promise;
-  let src = canvas.toDataURL('image/png');
-  if (src.length > 6_000_000) src = canvas.toDataURL('image/jpeg', 0.88);
-  await taak.destroy();
-  return { src, breedte: canvas.width, hoogte: canvas.height };
+/** Schuif alles wat op het plan staat op, bv. na een nieuwe uitsnede van de achtergrond. */
+function schuifPlanOp(plan, dx, dy) {
+  for (const pl of Object.values(plan.plaatsingen)) { pl.x += dx; pl.y += dy; }
+  for (const m of plan.muren) verschuifElement(m, dx, dy);
+  for (const t of plan.teksten) { t.x += dx; t.y += dy; }
 }
 
 async function laadAchtergrond(bestand) {
-  const isPdf = bestand.type === 'application/pdf' || /\.pdf$/i.test(bestand.name);
-  melding(isPdf ? 'PDF inlezen…' : 'Afbeelding inlezen…');
+  melding(isTekening(bestand) ? 'Tekening inlezen…' : 'Afbeelding inlezen…');
   let beeld;
   try {
-    beeld = isPdf ? await pdfInlezen(bestand) : await afbeeldingInlezen(bestand);
+    beeld = await leesBestand(bestand);
   } catch (e) {
     console.error(e);
     melding(`Kan dit plan niet openen: ${e.message}`, 'fout');
@@ -1077,7 +1024,7 @@ async function laadAchtergrond(bestand) {
   if (!beeld) return;
   const id = nieuwId();
   wijzig((p) => {
-    p.afbeeldingen[id] = { ...beeld, naam: bestand.name };
+    p.afbeeldingen[id] = { src: beeld.src, breedte: beeld.breedte, hoogte: beeld.hoogte, naam: bestand.name, ...(beeld.bron ? { bron: beeld.bron } : {}) };
     const plan = huidigPlan(p);
     const leeg = !Object.keys(plan.plaatsingen).length && !plan.muren.length && !plan.teksten.length;
     if (!leeg && plan.breedte && plan.hoogte) {
@@ -1085,42 +1032,52 @@ async function laadAchtergrond(bestand) {
       const fx = beeld.breedte / plan.breedte;
       const fy = beeld.hoogte / plan.hoogte;
       for (const pl of Object.values(plan.plaatsingen)) { pl.x *= fx; pl.y *= fy; }
-      for (const m of plan.muren) { m.x1 *= fx; m.x2 *= fx; m.y1 *= fy; m.y2 *= fy; }
+      for (const m of plan.muren) {
+        if (ELEMENTEN[m.soort]?.rond) { m.cx *= fx; m.cy *= fy; m.w *= fx; m.h *= fy; } else { m.x1 *= fx; m.x2 *= fx; m.y1 *= fy; m.y2 *= fy; if (m.bx != null) { m.bx *= fx; m.by *= fy; } }
+      }
       for (const t of plan.teksten) { t.x *= fx; t.y *= fy; }
     }
     plan.achtergrond = id;
-    plan.schaal = null; // de schaal van het nieuwe plan is nog niet gekend
+    plan.schaal = beeld.schaal || null; // de schaal van het nieuwe plan is nog niet gekend, tenzij de tekening ze meebrengt
     plan.breedte = beeld.breedte;
     plan.hoogte = beeld.hoogte;
     plan.symbool = Math.round(Math.min(8, Math.max(0.6, (Math.max(beeld.breedte, beeld.hoogte) / 1000) * 1.2)) * 10) / 10;
   });
   vlak.ingesteld = false;
   herteken();
-  zetGereedschap('schaal');
-  melding('Plan geladen. Stel nu de schaal in: klik twee punten waarvan je de afstand kent.');
+  if (beeld.schaal) {
+    zetGereedschap('kies');
+    melding('Plan geladen. De schaal komt uit de tekening; controleer ze met een meetlijn.');
+  } else {
+    zetGereedschap('schaal');
+    melding('Plan geladen. Stel nu de schaal in: klik twee punten waarvan je de afstand kent.');
+  }
 }
 
-
-// Voorlopig: dezelfde inleesfuncties voor afbeeldingen en tekeningen.
-const leesBeeldBestand = afbeeldingInlezen;
-const tekeningAanpassen = async () => {};
-
-// ---------- Afbeeldingen toevoegen aan het plan ----------
-
-/** Een afbeelding uit een bestand toevoegen aan het project (niet als achtergrond). */
-async function afbeeldingKiezen(bestand) {
-  let beeld;
+/** Lagen, kleur en uitsnede van het geladen plan opnieuw instellen. */
+async function tekeningAanpassen() {
+  const plan = huidigPlan();
+  const afb = plan.achtergrond && staat.project.afbeeldingen[plan.achtergrond];
+  if (!afb?.bron) { melding('Dit plan is een gewone afbeelding: er valt niets aan te passen.'); return; }
+  let r;
   try {
-    beeld = await leesBeeldBestand(bestand);
+    r = await importeer(null, afb.bron);
   } catch (e) {
-    melding(`Kan deze afbeelding niet openen: ${e.message}`, 'fout');
+    melding(`Aanpassen mislukt: ${e.message}`, 'fout');
     return;
   }
-  if (!beeld) return;
-  const id = nieuwId();
-  wijzig((p) => { p.afbeeldingen[id] = { ...beeld, naam: bestand.name }; }, { paneel: false });
-  nieuweAfb = { afb: id, verhouding: beeld.hoogte / beeld.breedte };
-  zetGereedschap('afbeelding');
+  if (!r) return;
+  wijzig((p) => {
+    const pl = huidigPlan(p);
+    const a = p.afbeeldingen[pl.achtergrond];
+    Object.assign(a, { src: r.src, breedte: r.breedte, hoogte: r.hoogte, bron: r.bron });
+    schuifPlanOp(pl, -r.opschuiving.x, -r.opschuiving.y);
+    pl.breedte = r.breedte;
+    pl.hoogte = r.hoogte;
+  });
+  achtergrondSleutel = null;
+  vlak.ingesteld = false;
+  herteken();
 }
 
 // ---------- Opstarten ----------
@@ -1574,14 +1531,19 @@ export function herstelZicht() {
   gereedschap = 'kies';
 }
 
-/** Een gekozen bestand op het plan zetten: een afbeelding, of een tekening (PDF, DXF). */
+/** Een gekozen bestand op het plan zetten als afbeelding-element: een foto, of een tekening (PDF, DXF). */
 async function bestandToevoegen(bestand) {
-  if (/\.(pdf|dxf|dwg)$/i.test(bestand.name) || bestand.type === 'application/pdf') {
-    await laadAchtergrond(bestand);
-  } else {
-    await afbeeldingKiezen(bestand);
+  let beeld;
+  try {
+    beeld = await leesBestand(bestand);
+  } catch (e) {
+    melding(`Kan dit bestand niet openen: ${e.message}`, 'fout');
+    return;
   }
+  if (!beeld) return;
+  const id = nieuwId();
+  wijzig((p) => { p.afbeeldingen[id] = { src: beeld.src, breedte: beeld.breedte, hoogte: beeld.hoogte, naam: bestand.name, ...(beeld.bron ? { bron: beeld.bron } : {}) }; }, { paneel: false });
+  nieuweAfb = { afb: id, verhouding: beeld.hoogte / beeld.breedte };
+  zetGereedschap('afbeelding');
 }
 
-/** Voor het import-gedeelte: de huidige staat van het plan. */
-export const _intern = { huidigPlan };
