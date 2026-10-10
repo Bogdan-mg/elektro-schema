@@ -365,3 +365,29 @@ dialog.import { width: min(1000px, 96vw); }
 .dlogovak { width: 300px; height: 110px; border: 1px solid var(--rand); display: flex; align-items: center; justify-content: center; background: #fff; }
 .dlogovak img { max-width: 100%; max-height: 100%; }
 .dveld.btw { flex: 0 0 330px; }
+
+/* Ééndraadschema: werkbalk, bibliotheek en oranje aansluitpunten zoals in Trikker */
+#tab-eendraad.bib { grid-template-columns: 540px minmax(0, 1fr) 330px; }
+.grootbalk { align-items: center; gap: 6px; }
+.tb { width: 82px; height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12px; padding: 2px; }
+.tb.aan { background: #cfe2ff; border-color: #7aa7e6; }
+.tb .doc-ic { font-size: 22px; }
+.tb-dubbel { display: grid; gap: 4px; }
+.tb-dubbel button { width: 82px; height: 27px; font-size: 12px; padding: 0; }
+.tb-ruimte { flex: 1; }
+#eendraad-zoom { width: 150px; }
+.vlak-onder { padding: 4px 12px; border-top: 1px solid var(--rand); background: #eceff3; }
+#eend-links { padding: 0; }
+#eend-links #boomkop, #eend-links #boom { margin: 0; padding: 0 12px; }
+#bib { display: grid; grid-template-columns: 62px 1fr 1fr; height: 100%; }
+.bib-cats { background: #dfe3e8; display: flex; flex-direction: column; gap: 4px; padding: 6px 0 6px 5px; overflow: auto; }
+.bib-cats button { height: 46px; border-radius: 6px 0 0 6px; padding: 0; display: flex; align-items: center; justify-content: center; border-right: 0; }
+.bib-cats button.aan { background: #fff; }
+.bib-lijst { overflow: auto; background: #fff; border-right: 1px solid var(--rand); }
+.bib-lijst.tweede { background: #ececec; }
+.bib-item { display: flex; align-items: center; justify-content: center; min-height: 48px; padding: 4px 6px; border-bottom: 1px dotted #bbb; cursor: pointer; text-align: center; font-size: 11px; gap: 6px; flex-direction: column; background: transparent; border-radius: 0; border-left: 0; border-right: 0; border-top: 0; width: 100%; }
+.bib-item:hover { background: #eef4ff; }
+.bib-item.aan { background: #ffc980; }
+.bib-item .pijl { align-self: flex-end; color: #666; font-size: 10px; }
+.punt { fill: #fff; fill-opacity: .6; stroke: #f59e0b; stroke-width: 1.8; cursor: pointer; }
+.punt:hover { fill: #f59e0b; fill-opacity: .8; }

@@ -359,6 +359,7 @@ function sneltoetsen(e) {
   if (desktop && ctrl && ['c', 'v', 'a'].includes(toets)) return;
 
   if (staat.tab === 'eendraad') {
+    if (editor.eendraadToets(e)) { e.preventDefault(); return; }
     if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); editor.verwijderGekozen(); }
     else if (ctrl && toets === 'd') { e.preventDefault(); editor.dupliceerGekozen(); }
     else if (e.altKey && e.key === 'ArrowUp') { e.preventDefault(); editor.verschuifGekozen(-1); }

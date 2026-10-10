@@ -9,7 +9,7 @@ import {
 } from './model.js';
 import { vraag, melding } from './dialoog.js';
 import { tekenEendraad, SCHEMA_STIJL } from './eendraad.js';
-import { icoon, esc } from './symbolen.js';
+import { icoon, esc, automaatSymbool } from './symbolen.js';
 import { staat, wijzig, kies, opWijziging } from './staat.js';
 import { Vlak } from './vlak.js';
 
@@ -234,6 +234,9 @@ function tekenSchema() {
   vlak.g.innerHTML = r.inhoud;
   vlak.laatste = r;
   if (!vlak.ingesteld) leesbaar();
+  tekenPunten();
+  $('#eendraad-zoom').value = vlak.s;
+  $('#naam-op-schema').checked = staat.project.opties?.naamOpSchema !== false;
 }
 
 /** Bij het openen: groot genoeg om te lezen; is het schema breder dan het scherm, dan begint het links. */
@@ -594,6 +597,234 @@ function tekenEigenschappen() {
   );
 }
 
+// ---------- Tekenen met de bibliotheek en de oranje aansluitpunten (zoals in Trikker) ----------
+
+let modus = 'selecteren'; // 'tekenen' | 'selecteren' | 'verplaats'
+let bibCat = 'beveiliging';
+let bibGekozen = null; // { sleutel, soort: 'item'|'kring'|'groep'|'kabel', maak: () => ... }
+let verplaatsId = null;
+
+const STROMEN = [2, 4, 6, 10, 16, 20, 25, 32, 40, 50, 63];
+const kringIcoon = (polen, curve, stroom) =>
+  `<svg viewBox="0 0 90 44" width="86" height="42" class="icoon"><g transform="translate(0 7)"><line class="l" x1="2" y1="22" x2="30" y2="22"/><g transform="rotate(90 31 22) translate(9 -9)">${automaatSymbool(22, 0)}</g><line class="l" x1="38" y1="22" x2="88" y2="22"/></g><text class="k" x="52" y="14" text-anchor="middle">${polen}P - ${curve}${stroom}A</text></svg>`;
+const kabelIcoon = (t) => `<svg viewBox="0 0 90 28" width="86" height="26" class="icoon"><line class="l" x1="6" y1="8" x2="84" y2="8"/><text class="k" x="45" y="22" text-anchor="middle">${esc(t)}</text></svg>`;
+
+/** De bibliotheek: categorieën met symbolen en eventueel een tweede kolom met varianten. */
+function bibliotheek() {
+  const sec = (soort, waarden = {}) => ({ type: 'item', maak: () => nieuwItem(soort, structuredClone(waarden)), icoon: icoon(nieuwItem(soort, structuredClone(waarden)), 30), naam: itemNaam(nieuwItem(soort, waarden)) });
+  const kringMet = (soort, waarden = {}, kabel = {}) => ({
+    type: 'kring', naam: `Kring met ${itemNaam(nieuwItem(soort, waarden)).toLowerCase()}`,
+    icoon: `<span class="combo">${kringIcoon(2, 'C', 20)}${icoon(nieuwItem(soort, waarden), 24)}</span>`,
+    maak: () => { const k = nieuweKring({ kabel: { type: 'XVB', aders: 3, sectie: 2.5, lengte: 0, ...kabel } }); k.items.push(nieuwItem(soort, structuredClone(waarden))); return k; },
+  });
+  const cats = [];
+  const bev = [
+    { type: 'kring', naam: 'Automaat 2P', icoon: kringIcoon(2, 'C', 16), maak: (a) => nieuweKring({ automaat: { stroom: a || 16, curve: 'C', polen: 2, onderbreking: 3000 } }), tweede: STROMEN.map((a) => ({ type: 'kring', naam: `2P - C${a}A`, icoon: kringIcoon(2, 'C', a), maak: () => nieuweKring({ automaat: { stroom: a, curve: 'C', polen: 2, onderbreking: 3000 } }) })) },
+    { type: 'kring', naam: 'Automaat 4P', icoon: kringIcoon(4, 'C', 16), maak: () => nieuweKring({ automaat: { stroom: 16, curve: 'C', polen: 4, onderbreking: 3000 } }), tweede: STROMEN.map((a) => ({ type: 'kring', naam: `4P - C${a}A`, icoon: kringIcoon(4, 'C', a), maak: () => nieuweKring({ automaat: { stroom: a, curve: 'C', polen: 4, onderbreking: 3000 } }) })) },
+  ];
+  const diff = (g) => ({ type: 'groep', naam: `Differentieel ${g} mA`, icoon: `<span class="k">Δ${g}mA</span>`, maak: () => nieuwDifferentieel({ gevoeligheid: g, polen: 2, stroom: 40 }),
+    tweede: [2, 4].flatMap((polen) => [25, 40, 63].map((stroom) => ({ type: 'groep', naam: `Type A - Δ${g}mA ${polen}P - ${stroom}A`, icoon: `<span class="k">Δ${g}mA ${polen}P - ${stroom}A</span>`, maak: () => nieuwDifferentieel({ gevoeligheid: g, polen, stroom }) }))) });
+  bev.push(diff(30), diff(300),
+    { type: 'groep', naam: 'Generaal zekering', icoon: `<span class="k">Automaat als groep</span>`, maak: () => nieuwDifferentieel({ beveiliging: 'automaat', polen: 4, stroom: 40, curve: 'C', gevoeligheid: 0 }) },
+    { type: 'groep', naam: 'Verdeellijn (rij)', icoon: '<svg viewBox="0 0 80 30" width="80" height="26" class="icoon"><line class="l bus" x1="6" y1="8" x2="74" y2="8"/><line class="l" x1="40" y1="8" x2="40" y2="24"/></svg>', maak: () => nieuwDifferentieel({ beveiliging: 'geen' }) },
+    { type: 'kabel', naam: 'Kabel 3G', icoon: kabelIcoon('3G2,5'), maak: () => ({ aders: 3, sectie: 2.5 }), tweede: [1.5, 2.5, 4, 6, 10, 16].map((x) => ({ type: 'kabel', naam: `3G${x}`, icoon: kabelIcoon(`3G${String(x).replace('.', ',')}`), maak: () => ({ aders: 3, sectie: x }) })) },
+    { type: 'kabel', naam: 'Kabel 5G', icoon: kabelIcoon('5G2,5'), maak: () => ({ aders: 5, sectie: 2.5 }), tweede: [1.5, 2.5, 4, 6, 10, 16].map((x) => ({ type: 'kabel', naam: `5G${x}`, icoon: kabelIcoon(`5G${String(x).replace('.', ',')}`), maak: () => ({ aders: 5, sectie: x }) })) },
+    { type: 'kabel', naam: 'Kabeltype', icoon: kabelIcoon('XVB / XGB / VOB'), maak: () => ({ type: 'XVB' }), tweede: Object.keys(KABELTYPES).map((t) => ({ type: 'kabel', naam: t, icoon: kabelIcoon(t), maak: () => ({ type: t }) })) },
+    { ...sec('aarding') }, { ...sec('teller') }, { ...sec('nota', { opschrift: 'Tekst' }), naam: 'Tekst' },
+  );
+  cats.push({ id: 'beveiliging', naam: 'Beveiliging', icoon: icoon(nieuwItem('automaat'), 34), items: bev });
+
+  for (const g of SOORT_GROEPEN.filter((x) => x !== 'Beveiliging' && x !== 'Eigen symbolen')) {
+    const soorten = Object.entries(SOORTEN).filter(([, d]) => d.groep === g && !['nota', 'aarding', 'teller'].includes(d.naam ? Object.keys(SOORTEN).find((k) => SOORTEN[k] === d) : ''));
+    const items = [];
+    for (const [k, d] of soorten) {
+      const variant = d.velden?.find((v) => v.pad === 'variant');
+      const palet = PALET.filter((x) => x.soort === k);
+      const basis = palet[0] ? sec(k, palet[0].waarden) : sec(k);
+      if (['stopcontact', 'lichtpunt', 'schakelaar', 'toestel'].includes(k)) items.push(kringMet(k, palet[0]?.waarden || {}));
+      const tweede = [
+        ...palet.slice(1).map((x) => ({ ...sec(k, x.waarden), naam: x.naam })),
+        ...(variant ? variant.opties.map(([w, l]) => ({ ...sec(k, { ...(palet[0]?.waarden || {}), variant: w }), naam: l })) : []),
+      ];
+      items.push({ ...basis, tweede: tweede.length ? tweede : undefined });
+    }
+    if (items.length) cats.push({ id: g, naam: g, icoon: icoon(nieuwItem(soorten[0][0], PALET.find((x) => x.soort === soorten[0][0])?.waarden || {}), 30), items });
+  }
+  cats.push({ id: 'gekopieerd', naam: 'Gekopieerd', icoon: '⧉', items: gekopieerd.map((node, i) => ({ type: node.soort === 'kring' ? 'kring' : node.soort === 'differentieel' ? 'groep' : 'item', naam: node.naam || itemNaam(node), icoon: node.soort === 'kring' || node.soort === 'differentieel' ? `<span class="k">${esc(node.naam || node.soort)}</span>` : icoon(node, 30), maak: () => plakKopie(node) })) });
+  cats.push({ id: 'favorieten', naam: 'Favorieten', icoon: '☆', items: leesFavorieten().map((f) => ({ type: 'item', naam: f.naam, icoon: icoon(nieuwItem(f.item.soort, f.item), 30), maak: () => { const { id, ...rest } = structuredClone(f.item); return nieuwItem(f.item.soort, rest); } })) });
+  return cats;
+}
+
+function plakKopie(node) {
+  const k = structuredClone(node);
+  const herid = (x) => { x.id = Math.random().toString(36).slice(2, 10); x.kinderen?.forEach(herid); x.items?.forEach(herid); };
+  herid(k);
+  return k;
+}
+
+function tekenBibliotheek() {
+  const cats = bibliotheek();
+  if (!cats.some((c) => c.id === bibCat)) bibCat = cats[0].id;
+  $('#bib-cats').innerHTML = cats.map((c) => `<button class="${c.id === bibCat ? 'aan' : ''}" data-cat="${esc(c.id)}" title="${esc(c.naam)}">${c.icoon.startsWith('<') ? c.icoon : `<span style="font-size:22px">${c.icoon}</span>`}</button>`).join('');
+  const cat = cats.find((c) => c.id === bibCat);
+  const lijst = cat.items;
+  const sleutel = (i, j = '') => `${cat.id}:${i}${j === '' ? '' : `.${j}`}`;
+  $('#bib-lijst').innerHTML = lijst.map((it, i) => `<button class="bib-item${bibGekozen?.sleutel === sleutel(i) ? ' aan' : ''}" data-i="${i}"><span>${it.icoon}</span><span class="naam">${esc(it.naam)}</span>${it.tweede ? '<span class="pijl">▶</span>' : ''}</button>`).join('') || '<p class="hint">Hier staat nog niets.</p>';
+  const open = lijst[bibGekozen?.i ?? -1];
+  $('#bib-lijst2').innerHTML = open?.tweede && bibGekozen?.cat === cat.id ? open.tweede.map((it, j) => `<button class="bib-item${bibGekozen?.sleutel === sleutel(bibGekozen.i, j) ? ' aan' : ''}" data-i="${bibGekozen.i}" data-j="${j}">${it.icoon}</button>`).join('') : '';
+  cat.lijst = lijst;
+  bibliotheek.laatste = cat;
+}
+
+/** Waar mag het gekozen symbool komen? */
+function geldigePunten(punten) {
+  const vrij = $('#vrij-tekenen').checked;
+  const soort = modus === 'verplaats' ? (() => { const d = zoek(staat.project, verplaatsId)?.ding; return d ? (d.soort === 'kring' || d.soort === 'differentieel' ? 'knoop' : 'item') : null; })() : bibGekozen ? ({ kring: 'knoop', groep: 'knoop', item: 'item', kabel: 'kabel' })[bibGekozen.soort] : null;
+  if (!soort) return [];
+  return punten.filter((p) => {
+    if (vrij) return true;
+    if (p.soort !== soort) return false;
+    if (modus === 'verplaats') {
+      const d = zoek(staat.project, verplaatsId)?.ding;
+      if (p.ouder === verplaatsId) return false;
+      if (d?.soort === 'differentieel') { const probeer = (x) => x.kinderen.some((c) => c.id === p.ouder || (c.soort === 'differentieel' && probeer(c))); if (probeer(d)) return false; }
+    }
+    return true;
+  });
+}
+
+function tekenPunten() {
+  vlak.g.querySelector('.punten')?.remove();
+  if (modus === 'selecteren' || !vlak.laatste) return;
+  const lijst = geldigePunten(vlak.laatste.punten || []);
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  g.setAttribute('class', 'punten');
+  g.innerHTML = lijst.map((p, i) => `<circle class="punt" data-punt="${(vlak.laatste.punten).indexOf(p)}" cx="${p.x}" cy="${p.y}" r="6"/>`).join('');
+  vlak.g.append(g);
+}
+
+/** Een nieuw ding op een aansluitpunt zetten. */
+function plaatsBijPunt(p, ding, soort) {
+  if (soort === 'kabel') { Object.assign(zoek(p, ding.ouder).ding.kabel, ding.waarden); return null; }
+  return null;
+}
+
+function voegBijPunt(punt, nieuw) {
+  return wijzig((p) => {
+    if (punt.soort === 'knoop') {
+      const lijst = punt.ouder === 'hoofd' ? p.kinderen : zoek(p, punt.ouder)?.ding.kinderen;
+      if (lijst) lijst.push(nieuw);
+    } else if (punt.soort === 'item') {
+      const k = zoek(p, punt.ouder)?.ding;
+      if (k?.items) {
+        const i = punt.na ? k.items.findIndex((x) => x.id === punt.na) + 1 : k.items.length;
+        k.items.splice(i, 0, nieuw);
+      }
+    }
+  });
+}
+
+function klikPunt(punt) {
+  if (modus === 'verplaats') {
+    const id = verplaatsId;
+    const node = kopieerNode(staat.project, id);
+    if (!node) return;
+    wijzig((p) => {
+      const plek = zoek(p, id);
+      if (!plek) return;
+      plek.lijst.splice(plek.index, 1);
+      if (punt.soort === 'knoop') (punt.ouder === 'hoofd' ? p.kinderen : zoek(p, punt.ouder).ding.kinderen).push(plek.ding);
+      else { const k = zoek(p, punt.ouder).ding; const i = punt.na ? k.items.findIndex((x) => x.id === punt.na) + 1 : k.items.length; k.items.splice(i, 0, plek.ding); }
+    });
+    zetModus('selecteren');
+    kies(id);
+    return;
+  }
+  if (!bibGekozen) return;
+  if (bibGekozen.soort === 'kabel') {
+    wijzig((p) => { const k = zoek(p, punt.ouder)?.ding; if (k?.kabel) Object.assign(k.kabel, bibGekozen.maak()); });
+    return;
+  }
+  const nieuw = bibGekozen.maak();
+  voegBijPunt(punt, nieuw);
+  kies(nieuw.id);
+}
+
+export function zetModus(m) {
+  modus = m;
+  verplaatsId = m === 'verplaats' ? staat.selectie : null;
+  const tekenen = m !== 'selecteren';
+  $('#tab-eendraad').classList.toggle('bib', m === 'tekenen');
+  $('#bib').hidden = m !== 'tekenen';
+  $('#boom').hidden = m === 'tekenen';
+  $('#boomkop').hidden = m === 'tekenen';
+  for (const b of document.querySelectorAll('[data-eend=tekenen],[data-eend=selecteren],[data-eend=verplaatsen]')) {
+    b.classList.toggle('aan', b.dataset.eend === (m === 'verplaats' ? 'verplaatsen' : m));
+  }
+  void tekenen;
+  if (m === 'tekenen') tekenBibliotheek();
+  tekenPunten();
+}
+
+function koppelBibliotheek() {
+  $('#bib-cats').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-cat]');
+    if (!b) return;
+    bibCat = b.dataset.cat;
+    bibGekozen = null;
+    tekenBibliotheek();
+    tekenPunten();
+  });
+  const kies2 = (e) => {
+    const b = e.target.closest('[data-i]');
+    if (!b) return;
+    const cat = bibliotheek.laatste;
+    const i = Number(b.dataset.i);
+    const j = b.dataset.j != null ? Number(b.dataset.j) : null;
+    const it = j == null ? cat.items[i] : cat.items[i].tweede[j];
+    bibGekozen = { cat: cat.id, i, sleutel: `${cat.id}:${i}${j == null ? '' : `.${j}`}`, soort: it.type, maak: it.maak };
+    tekenBibliotheek();
+    tekenPunten();
+  };
+  $('#bib-lijst').addEventListener('click', kies2);
+  $('#bib-lijst2').addEventListener('click', kies2);
+  vlak.svg.addEventListener('click', (e) => {
+    const c = e.target.closest('[data-punt]');
+    if (c && !vlak.gesleept) klikPunt(vlak.laatste.punten[Number(c.dataset.punt)]);
+  });
+  $('#vrij-tekenen').addEventListener('change', tekenPunten);
+  $('#naam-op-schema').addEventListener('change', (e) => wijzig((p) => { p.opties = { ...p.opties, naamOpSchema: e.target.checked }; }, { paneel: false }));
+  $('#eendraad-zoom').addEventListener('input', (e) => { vlak.zoom(Number(e.target.value) / vlak.s); });
+  for (const b of document.querySelectorAll('[data-eend]')) {
+    b.addEventListener('click', () => {
+      const a = b.dataset.eend;
+      if (a === 'tekenen') zetModus('tekenen');
+      else if (a === 'selecteren') zetModus('selecteren');
+      else if (a === 'wissen') verwijderGekozen();
+      else if (a === 'kopieren') kopieerGekozen();
+      else if (a === 'verplaatsen') { if (!staat.selectie || staat.selectie === 'hoofd') melding('Kies eerst iets om te verplaatsen.'); else zetModus('verplaats'); }
+      else if (a === 'favoriet') favorietToevoegen();
+      else if (a === 'verder') verschuifGekozen(1);
+      else if (a === 'terug') verschuifGekozen(-1);
+      else if (a === 'zoekss') window.dispatchEvent(new CustomEvent('actie', { detail: 'zoekSS' }));
+    });
+  }
+}
+
+/** Sneltoetsen van de tekenmodus (Ctrl+D tekenen, Ctrl+E selecteren, Ctrl+X verplaatsen, Ctrl+pijlen verder of terug). */
+export function eendraadToets(e) {
+  const ctrl = e.ctrlKey || e.metaKey;
+  const t = e.key.toLowerCase();
+  if (ctrl && t === 'd') { zetModus('tekenen'); return true; }
+  if (ctrl && t === 'e') { zetModus('selecteren'); return true; }
+  if (ctrl && t === 'x') { if (staat.selectie && staat.selectie !== 'hoofd') zetModus('verplaats'); return true; }
+  if (ctrl && t === 'f') { window.dispatchEvent(new CustomEvent('actie', { detail: 'zoekSS' })); return true; }
+  if (ctrl && e.key === 'ArrowRight') { verschuifGekozen(1); return true; }
+  if (ctrl && e.key === 'ArrowLeft') { verschuifGekozen(-1); return true; }
+  if (e.key === 'Escape' && modus !== 'selecteren') { bibGekozen = null; if (modus === 'verplaats') zetModus('selecteren'); else { tekenBibliotheek(); tekenPunten(); } return true; }
+  return false;
+}
+
 // ---------- Opstarten ----------
 
 export function startEditor() {
@@ -604,7 +835,7 @@ export function startEditor() {
   vlak = new Vlak(svg);
 
   svg.addEventListener('click', (e) => {
-    if (vlak.gesleept) return;
+    if (vlak.gesleept || e.target.closest('[data-punt]')) return;
     const el = e.target.closest('[data-id]');
     if (el) kies(el.dataset.id);
   });
@@ -626,12 +857,14 @@ export function startEditor() {
   $('#eendraad-zoom-in').addEventListener('click', () => vlak.zoom(1.25));
   $('#eendraad-zoom-uit').addEventListener('click', () => vlak.zoom(0.8));
   $('#eendraad-passend').addEventListener('click', passend);
+  koppelBibliotheek();
 
   let vorigeSelectie = null;
   opWijziging(({ paneel }) => {
     if (staat.tab !== 'eendraad') return;
     tekenBoom();
     tekenSchema();
+    if (modus === 'tekenen') tekenBibliotheek();
     if (paneel || vorigeSelectie !== staat.selectie) tekenEigenschappen();
     vorigeSelectie = staat.selectie;
   });

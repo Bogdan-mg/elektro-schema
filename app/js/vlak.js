@@ -22,7 +22,7 @@ export class Vlak {
     }, { passive: false });
 
     svg.addEventListener('pointerdown', (e) => {
-      const leeg = !e.target.closest('[data-id], [data-plaats], [data-muur], [data-tekst]');
+      const leeg = !e.target.closest('[data-id], [data-plaats], [data-muur], [data-tekst], [data-punt], [data-handvat], [data-verb]');
       const pannen = e.button === 1 || (e.button === 0 && (this.spatie || (leeg && leegSlepen())));
       this.gesleept = false;
       if (!pannen) return;

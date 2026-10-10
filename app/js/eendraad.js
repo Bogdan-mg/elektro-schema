@@ -92,6 +92,7 @@ export function tekenEendraad(project, { selectie = null } = {}) {
   const doelen = [];
   const lijnen = [];
   const snijpunten = [];
+  const punten = []; // de plaatsen waar je iets kan toevoegen (de oranje bolletjes in de tekenmodus)
   let hoogste = -120; // kleinste y (de hoofdverdeellijn ligt op y = 0, naar boven is negatief)
   const doel = (x, y, b, h, id) => doelen.push(
     `<rect class="doel${id === selectie ? ' gekozen' : ''}" data-id="${esc(id)}" x="${r1(x)}" y="${r1(y)}" width="${r1(b)}" height="${r1(h)}" rx="4"/>`,
@@ -221,6 +222,8 @@ export function tekenEendraad(project, { selectie = null } = {}) {
 
     let kolX = lx;
     let top = yb - kop + 20;
+    let hoogsteRij = yb - kop + 44;
+    punten.push({ x: lx, y: kabelY - 4, soort: 'kabel', ouder: k.id });
     kolommen.forEach((kol, ki) => {
       // Eerst de onderdelen, zodat we weten tot waar de kringlijn moet lopen.
       let lijnTop = yb - kop + 20;
@@ -229,6 +232,8 @@ export function tekenEendraad(project, { selectie = null } = {}) {
         const items = r.echt || r.rij;
         doel(kolX - LINKS + 4, y - r.boven - 2, kol.breedte - 6, r.boven + r.onder + 4, items[0].id);
         lijnTop = Math.min(lijnTop, y);
+        hoogsteRij = Math.min(hoogsteRij, y - 24);
+        punten.push({ x: kolX, y, soort: 'item', ouder: k.id, na: items.at(-1).id });
         if (r.inline) {
           tekenInline(r.inline, r.rij[0], kolX, y, r.nr);
           top = Math.min(top, y - r.inline.hoogte);
@@ -252,8 +257,10 @@ export function tekenEendraad(project, { selectie = null } = {}) {
       kolX += kol.breedte;
     });
 
+    punten.push({ x: kolX - kolommen.at(-1).breedte + 0, y: hoogsteRij, soort: 'item', ouder: k.id, na: null, nieuw: true });
+
     // Bovenaan: de naam van de kring.
-    if (k.naam) {
+    if (k.naam && project.opties?.naamOpSchema !== false) {
       lijnen.push(draai(lx + 4, top - 8, k.naam, 'b'));
       hoogste = Math.min(hoogste, top - 8 - breedte(k.naam, 6));
     }
@@ -292,6 +299,7 @@ export function tekenEendraad(project, { selectie = null } = {}) {
 
     if (!g.kinderen.length) {
       lijnen.push(lijn(lx - 8, sb, lx + 30, sb, 'l bus'));
+      punten.push({ x: lx + 30, y: sb, soort: 'knoop', ouder: g.id });
       hoogste = Math.min(hoogste, sb - 16);
       const b = Math.max(MIN_KOLOM, LINKS + 10 + label.length * 10.5 + 14);
       snijpunten.push({ x0: x, x1: x + b, id: g.id, nieuw: false });
@@ -308,6 +316,7 @@ export function tekenEendraad(project, { selectie = null } = {}) {
       cx += teken(kind, cx, sb).breedte;
     }
     lijnen.push(lijn(lx - 8, sb, laatste + 14, sb, 'l bus'));
+    punten.push({ x: laatste + 14, y: sb, soort: 'knoop', ouder: g.id });
     return { breedte: Math.max(MIN_KOLOM, cx - x) };
   }
 
@@ -368,6 +377,7 @@ export function tekenEendraad(project, { selectie = null } = {}) {
 
   const eindeBus = Math.max(laatsteLijn + 30, aansluitX + 20);
   lijnen.push(lijn(10, 0, eindeBus, 0, 'l bus'));
+  punten.push({ x: eindeBus, y: 0, soort: 'knoop', ouder: 'hoofd' });
 
   const boven = -hoogste + 16;
   // Rode lijnen waar een nieuwe pagina begint (enkel op het scherm).
@@ -378,6 +388,7 @@ export function tekenEendraad(project, { selectie = null } = {}) {
     breedte: Math.max(x, eindeBus) + 20,
     hoogte: boven + Y + 30 + Math.max(hoofdLabels.length, 2) * 12,
     kolommen: snijpunten.sort((a, b) => a.x0 - b.x0),
+    punten: punten.map((p) => ({ ...p, y: p.y + boven })),
   };
 }
 

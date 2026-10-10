@@ -36,8 +36,8 @@
     <section id="tab-document" class="tab pagina" hidden></section>
 
     <section id="tab-eendraad" class="tab drie">
-      <aside class="paneel">
-        <div class="paneel-kop">
+      <aside class="paneel" id="eend-links">
+        <div id="boomkop" class="paneel-kop">
           <h3>Bord</h3>
           <div class="knoppenrij klein">
             <button id="knop-diff" title="Groep toevoegen: differentieel, generaal zekering of een rij">+ Groep</button>
@@ -45,14 +45,30 @@
           </div>
         </div>
         <div id="boom" class="lijst boom"></div>
+        <div id="bib" hidden><div class="bib-cats" id="bib-cats"></div><div class="bib-lijst" id="bib-lijst"></div><div class="bib-lijst tweede" id="bib-lijst2"></div></div>
       </aside>
-      <div class="vlak">
-        <svg id="eendraad-svg" class="tekening"><g class="inhoud"></g></svg>
-        <div class="zoomknoppen">
-          <button id="eendraad-zoom-uit" title="Uitzoomen">−</button>
+      <div class="vlak-wrap">
+        <div class="werkbalk grootbalk">
+          <button data-eend="tekenen" class="tb" title="Tekenen: kies links een symbool en klik op een oranje bolletje (Ctrl+D)"><span class="doc-ic">✏️</span>Tekenen</button>
+          <button data-eend="selecteren" class="tb aan" title="Selecteren (Ctrl+E)"><span class="doc-ic">⬉</span>Selecteren</button>
+          <span class="doc-scheiding"></span>
+          <button data-eend="wissen" class="tb" title="Wissen (Delete)"><span class="doc-ic">✖</span>Wissen</button>
+          <button data-eend="kopieren" class="tb" title="Kopiëren (Ctrl+C)"><span class="doc-ic">⧉</span>Kopiëren</button>
+          <button data-eend="verplaatsen" class="tb" title="Verplaatsen (Ctrl+X): klik daarna op het nieuwe oranje bolletje"><span class="doc-ic">⬚</span>Verplaatsen</button>
+          <button data-eend="favoriet" class="tb" title="Aan de favorieten toevoegen"><span class="doc-ic">☆</span>Favoriet</button>
+          <div class="tb-dubbel"><button data-eend="verder" title="Eén plaats verder (Ctrl+→)">↗ Verder</button><button data-eend="terug" title="Eén plaats terug (Ctrl+←)">↙ Terug</button></div>
+          <button data-eend="zoekss" class="tb" title="Dit symbool zoeken op het situatieschema (Ctrl+F)"><span class="doc-ic">🔍</span>Zoek op SS</button>
+          <label class="schuif vink-rij"><input type="checkbox" id="vrij-tekenen"> Vrij tekenen</label>
+          <span class="tb-ruimte"></span>
+          <button id="eendraad-zoom-uit" title="Uitzoomen">🔍−</button>
+          <input type="range" id="eendraad-zoom" min="0.2" max="2.5" step="0.05" value="1">
+          <button id="eendraad-zoom-in" title="Inzoomen">🔍+</button>
           <button id="eendraad-passend" title="Alles in beeld">⤢</button>
-          <button id="eendraad-zoom-in" title="Inzoomen">+</button>
         </div>
+        <div class="vlak">
+          <svg id="eendraad-svg" class="tekening"><g class="inhoud"></g></svg>
+        </div>
+        <div class="vlak-onder"><label class="schuif vink-rij"><input type="checkbox" id="naam-op-schema" checked> Naam kring op schema</label></div>
       </div>
       <aside id="eigenschappen" class="paneel eigenschappen"></aside>
     </section>
