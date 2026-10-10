@@ -600,13 +600,15 @@ function tekenEigenschappen() {
 // ---------- Tekenen met de bibliotheek en de oranje aansluitpunten (zoals in Trikker) ----------
 
 let modus = 'selecteren'; // 'tekenen' | 'selecteren' | 'verplaats'
-let bibCat = 'beveiliging';
+let bibCat = 'kringen';
 let bibGekozen = null; // { sleutel, soort: 'item'|'kring'|'groep'|'kabel', maak: () => ... }
 let verplaatsId = null;
 
 const STROMEN = [2, 4, 6, 10, 16, 20, 25, 32, 40, 50, 63];
 const kringIcoon = (polen, curve, stroom) =>
-  `<svg viewBox="0 0 90 44" width="86" height="42" class="icoon"><g transform="translate(0 7)"><line class="l" x1="2" y1="22" x2="30" y2="22"/><g transform="rotate(90 31 22) translate(9 -9)">${automaatSymbool(22, 0)}</g><line class="l" x1="38" y1="22" x2="88" y2="22"/></g><text class="k" x="52" y="14" text-anchor="middle">${polen}P - ${curve}${stroom}A</text></svg>`;
+  `<svg viewBox="0 0 90 50" width="86" height="48" class="icoon"><g transform="translate(0 -3)"><line class="l" x1="2" y1="22" x2="30" y2="22"/><g transform="rotate(90 31 22) translate(9 -9)">${automaatSymbool(22, 0)}</g><line class="l" x1="38" y1="22" x2="88" y2="22"/></g><rect x="34" y="23" width="22" height="9" fill="none" stroke="#000" stroke-width="0.6"/><text class="k" x="45" y="31" text-anchor="middle">3000</text><text class="k" x="45" y="43" text-anchor="middle">${polen}P - ${curve}${stroom}A</text></svg>`;
+const diffIcoon = (polen, stroom, g) =>
+  `<svg viewBox="0 0 100 60" width="96" height="58" class="icoon"><g transform="translate(0 -7)"><line class="l" x1="2" y1="22" x2="30" y2="22"/><g transform="rotate(90 31 22) translate(9 -9)">${automaatSymbool(22, 0)}</g><line class="l" x1="38" y1="22" x2="92" y2="22"/></g><line x1="92" y1="2" x2="92" y2="38" stroke="#000" stroke-width="1.6"/><text class="k" x="45" y="27" text-anchor="middle">Type A - Δ${g}mA</text><rect x="34" y="30" width="22" height="9" fill="none" stroke="#000" stroke-width="0.6"/><text class="k" x="45" y="38" text-anchor="middle">3000</text><text class="k" x="45" y="50" text-anchor="middle">${polen}P - ${stroom}A</text></svg>`;
 const kabelIcoon = (t) => `<svg viewBox="0 0 90 28" width="86" height="26" class="icoon"><line class="l" x1="6" y1="8" x2="84" y2="8"/><text class="k" x="45" y="22" text-anchor="middle">${esc(t)}</text></svg>`;
 
 /**
@@ -681,7 +683,7 @@ function bibliotheek() {
   const poolKeuzes = (polen) => ({ type: 'kring', naam: `Automaat ${polen}P`, icoon: kringIcoon(polen, 'C', 16), maak: () => nieuweKring({ automaat: automaatWaarden(polen, 2) }),
     tweede: STROMEN.map((a) => ({ type: 'kring', naam: `${polen}P - C${a}A`, icoon: kringIcoon(polen, 'C', a), maak: () => nieuweKring({ automaat: automaatWaarden(polen, a) }) })) });
   const diffs = [2, 4].flatMap((polen) => [40, 63].flatMap((stroom) => [30, 300].map((g) => ({ polen, stroom, g }))));
-  const diffItem = ({ polen, stroom, g }) => ({ type: 'groep', naam: `Type A - Δ${g}mA ${polen}P - ${stroom}A`, icoon: `<span class="k">Δ${g}mA ${polen}P - ${stroom}A</span>`, maak: () => nieuwDifferentieel({ gevoeligheid: g, polen, stroom }) });
+  const diffItem = ({ polen, stroom, g }) => ({ type: 'groep', naam: `Type A - Δ${g}mA ${polen}P - ${stroom}A`, icoon: diffIcoon(polen, stroom, g), maak: () => nieuwDifferentieel({ gevoeligheid: g, polen, stroom }) });
   const kabelRij = (aders) => ({ type: 'kabel', naam: `Leiding ${aders}G`, icoon: kabelIcoon(`${aders}G1,5`), maak: () => ({ aders, sectie: 1.5 }),
     tweede: [1.5, 2.5, 4, 6, 10, 16].map((x) => ({ type: 'kabel', naam: `${aders}G${x}`, icoon: kabelIcoon(`${aders}G${komma(x)}`), maak: () => ({ aders, sectie: x }) })) });
   const meter = (sectie) => kring({ polen: 4, stroom: 40, kabel: { type: 'EXVB', aders: 4, sectie, plaatsing: 'ondergronds' }, items: [['teller', { opschrift: 'kWh' }]], naam: `Teller met EXVB 4G${sectie}` });
@@ -846,6 +848,8 @@ function bibliotheek() {
     ],
   });
 
+  const VOLGORDE = ['kringen', 'stopcontacten', 'verlichting', 'impuls', 'relais', 'toestellen', 'laagspanning', 'alarm', 'domotica', 'varia'];
+  cats.sort((a, b) => VOLGORDE.indexOf(a.id) - VOLGORDE.indexOf(b.id));
   cats.push({ id: 'gekopieerd', naam: 'Gekopieerd', icoon: '⧉', items: gekopieerd.map((node) => ({ type: node.soort === 'kring' ? 'kring' : node.soort === 'differentieel' ? 'groep' : 'item', naam: node.naam || itemNaam(node), icoon: node.soort === 'kring' || node.soort === 'differentieel' ? `<span class="k">${esc(node.naam || node.soort)}</span>` : icoon(node, 30), maak: () => plakKopie(node) })) });
   cats.push({ id: 'favorieten', naam: 'Favorieten', icoon: '☆', items: leesFavorieten().map((f) => ({ type: 'item', naam: f.naam, icoon: icoon(nieuwItem(f.item.soort, f.item), 30), maak: () => { const { id, ...rest } = structuredClone(f.item); return nieuwItem(f.item.soort, rest); } })) });
   return cats;
@@ -865,9 +869,9 @@ function tekenBibliotheek() {
   const cat = cats.find((c) => c.id === bibCat);
   const lijst = cat.items;
   const sleutel = (i, j = '') => `${cat.id}:${i}${j === '' ? '' : `.${j}`}`;
-  $('#bib-lijst').innerHTML = lijst.map((it, i) => `<button class="bib-item${bibGekozen?.sleutel === sleutel(i) ? ' aan' : ''}" data-i="${i}"><span>${it.icoon}</span><span class="naam">${esc(it.naam)}</span>${it.tweede ? '<span class="pijl">▶</span>' : ''}</button>`).join('') || '<p class="hint">Hier staat nog niets.</p>';
+  $('#bib-lijst').innerHTML = lijst.map((it, i) => `<button class="bib-item${bibGekozen?.sleutel === sleutel(i) ? ' aan' : ''}" data-i="${i}" title="${esc(it.naam)}"><span>${it.icoon}</span>${it.tweede ? '<span class="pijl">▶</span>' : ''}</button>`).join('') || '<p class="hint">Hier staat nog niets.</p>';
   const open = lijst[bibGekozen?.i ?? -1];
-  $('#bib-lijst2').innerHTML = open?.tweede && bibGekozen?.cat === cat.id ? open.tweede.map((it, j) => `<button class="bib-item${bibGekozen?.sleutel === sleutel(bibGekozen.i, j) ? ' aan' : ''}" data-i="${bibGekozen.i}" data-j="${j}">${it.icoon}</button>`).join('') : '';
+  $('#bib-lijst2').innerHTML = open?.tweede && bibGekozen?.cat === cat.id ? open.tweede.map((it, j) => `<button class="bib-item${bibGekozen?.sleutel === sleutel(bibGekozen.i, j) ? ' aan' : ''}" data-i="${bibGekozen.i}" data-j="${j}" title="${esc(it.naam)}">${it.icoon}</button>`).join('') : '';
   cat.lijst = lijst;
   bibliotheek.laatste = cat;
 }
