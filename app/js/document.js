@@ -2,7 +2,8 @@
 import { staat, wijzig, opWijziging } from './staat.js';
 import { esc } from './symbolen.js';
 import { leesInstellingen } from './instellingen.js';
-import { melding } from './dialoog.js';
+import { melding, vraag } from './dialoog.js';
+import { CONTROLEORGANISMEN } from './controleorganismen.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -18,7 +19,7 @@ function blok(sleutel, titel, { ean = false, gelijk = false, logo = false, zoek 
     ${ean ? `<label class="dveld breed"><span>EAN:</span><input data-pad="${sleutel}.ean" placeholder="EAN van de aansluiting"></label>
       <label class="dvink"><input type="checkbox" data-pad="${sleutel}.gelijk"> Hetzelfde als het adres van de klant</label>` : `
     <div class="drij"><label class="dveld breed"><span>Naam:</span><input data-pad="${sleutel}.naam" autocomplete="off"></label>
-      ${zoek ? '<button type="button" class="dknop" data-doc="controle-standaard" title="Mijn standaard controleorganisme invullen">🔍</button><button type="button" class="dknop" data-doc="controle-leeg" title="Alles leegmaken">✖</button>' : ''}
+      ${zoek ? '<button type="button" class="dknop" data-doc="controle-standaard" title="Een controleorganisme kiezen uit de lijst">🔍</button><button type="button" class="dknop" data-doc="controle-leeg" title="Alles leegmaken">✖</button>' : ''}
       ${veld('btw', 'Ondernemingsnummer', 'btw')}</div>`}
     <div class="adresgroep${gelijk ? ' gelijk' : ''}">
       <div class="drij">${veld('straat', 'Straat', 'breed')}${veld('nummer', 'Nummer', 'kort')}${veld('bus', 'Bus', 'kort')}</div>
@@ -57,9 +58,13 @@ export function startDocument() {
   sectie.addEventListener('click', async (e) => {
     const a = e.target.closest('[data-doc]')?.dataset.doc;
     if (a === 'controle-standaard') {
-      const t = leesInstellingen().controle;
-      if (!t) { melding('Stel eerst een standaard controleorganisme in bij Instellingen.'); return; }
-      wijzig((p) => { p.document.controle.naam = t; });
+      const { knop, waarden } = await vraag({
+        titel: 'Selecteer controleorganisme',
+        velden: [{ naam: 'i', label: 'Controleorganisme', type: 'select', waarde: '0', opties: CONTROLEORGANISMEN.map((o, i) => [String(i), o.naam]) }],
+      });
+      if (knop !== 'ok') return;
+      const o = CONTROLEORGANISMEN[Number(waarden.i)];
+      wijzig((p) => { p.document.controle = { ...p.document.controle, naam: o.naam, straat: o.straat, nummer: o.nummer, bus: '', postcode: o.postcode, gemeente: o.gemeente, land: o.land || 'België', tel: o.tel, email: o.email }; });
     }
     if (a === 'controle-leeg') wijzig((p) => { p.document.controle = { naam: '', btw: '', straat: '', nummer: '', bus: '', postcode: '', gemeente: '', land: 'België', tel: '', gsm: '', email: '' }; });
     if (a === 'logo') {
