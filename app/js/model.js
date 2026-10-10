@@ -516,3 +516,87 @@ export function voorbeeldProject() {
   );
   return p;
 }
+
+// ---------- Woning-werkwijze: symbolen op het plan aan kringen hangen ----------
+
+/** De kasten (verdeelborden) van het project; de eerste is het hoofdbord. */
+export const kastNamen = (project) => (project.kasten?.length ? project.kasten : ['Verdeelbord']);
+
+/** De kring waarin dit onderdeel zit, of null. */
+export function kringVanItem(project, itemId) {
+  for (const { knoop } of alleKringen(project)) if (knoop.items.some((i) => i.id === itemId)) return knoop;
+  return null;
+}
+
+const plaatsingVan = (project, id) => project.plannen.map((pl) => pl.plaatsingen[id]).find(Boolean) || null;
+
+/** Een onderdeel uit zijn kring halen: het blijft als los symbool op het plan staan. */
+export function maakLos(project, itemId) {
+  const kring = kringVanItem(project, itemId);
+  const x = plaatsingVan(project, itemId);
+  if (!kring || !x) return false;
+  const [item] = kring.items.splice(kring.items.findIndex((i) => i.id === itemId), 1);
+  x.los = true;
+  x.item = item;
+  return true;
+}
+
+/** Alle onderdelen van een kring worden weer los (bv. als de kring verwijderd wordt). */
+export function maakKringLeeg(project, kring) {
+  for (const item of [...kring.items]) maakLos(project, item.id);
+}
+
+/**
+ * Eén symbool uit het plan aan een kring hangen (of van de ene kring naar de andere). Een schakelaar neemt de lampen mee die hij
+ * bedient; een lamp komt achter zijn schakelaar te staan als die al in de kring zit, zodat ze samen één rij vormen.
+ * Geeft het aantal verplaatste onderdelen terug.
+ */
+export function wijsToeEen(project, itemId, kringId, { volgorde = true } = {}) {
+  const doel = zoek(project, kringId)?.ding;
+  const x = plaatsingVan(project, itemId);
+  if (doel?.soort !== 'kring' || !x) return 0;
+  const bronKring = x.los ? null : kringVanItem(project, itemId);
+  if (!x.los && !bronKring) return 0;
+  const item = x.los ? x.item : bronKring.items.find((i) => i.id === itemId);
+  const verb = project.plannen.flatMap((pl) => pl.verbindingen || []);
+  const neem = (id) => {
+    const p = plaatsingVan(project, id);
+    if (!p) return null;
+    if (p.los) {
+      const it = p.item;
+      delete p.los;
+      delete p.item;
+      return it;
+    }
+    const k = kringVanItem(project, id);
+    return k ? k.items.splice(k.items.findIndex((i) => i.id === id), 1)[0] : null;
+  };
+  const mee = [];
+  if (item.soort === 'schakelaar' || item.soort === 'drukknop') {
+    let lampen = verb.filter((v) => v.van === itemId).map((v) => v.naar);
+    if (!volgorde) {
+      lampen = [...lampen].sort((a, b) => (plaatsingVan(project, a)?.x ?? 0) - (plaatsingVan(project, b)?.x ?? 0));
+    }
+    for (const id of lampen) {
+      const p = plaatsingVan(project, id);
+      if (!p) continue;
+      const k = p.los ? null : kringVanItem(project, id);
+      const it = p.los ? p.item : k?.items.find((i) => i.id === id);
+      if (it?.soort === 'lichtpunt' && (p.los || k === bronKring) && k !== doel) mee.push(id);
+    }
+  }
+  const lijst = [itemId, ...mee];
+  const verplaatst = lijst.map(neem).filter(Boolean);
+  // Een lamp achter zijn schakelaar in deze kring zetten.
+  let plek = doel.items.length;
+  if (item.soort === 'lichtpunt') {
+    const bedient = verb.find((v) => v.naar === itemId);
+    const i = bedient ? doel.items.findIndex((it) => it.id === bedient.van) : -1;
+    if (i >= 0) {
+      plek = i + 1;
+      while (doel.items[plek]?.soort === 'lichtpunt') plek += 1;
+    }
+  }
+  doel.items.splice(plek, 0, ...verplaatst);
+  return verplaatst.length;
+}

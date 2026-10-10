@@ -1,6 +1,6 @@
 // Een plan van het situatieschema tekenen: achtergrond, het grondplan (muren, deuren, trappen, vlakken, …),
 // teksten en de geplaatste symbolen.
-import { symbool, bordSymbool, esc, tekst } from './symbolen.js';
+import { planSymbool, bordSymbool, esc, tekst } from './symbolen.js';
 import { alleItems, codes } from './model.js';
 import { itemNaam } from './catalogus.js';
 
@@ -410,7 +410,7 @@ export const ketenLengte = (plan, i) => muurKeten(plan, i).reduce((som, j) => so
 // ---------- Symbolen op het plan ----------
 
 /** De breedte van het symbool van een onderdeel (zie symbolen.js). */
-export const symboolBreedte = (deel) => (deel.item === 'bord' ? bordSymbool() : symbool(deel.item)).b;
+export const symboolBreedte = (deel) => (deel.item === 'bord' ? bordSymbool() : planSymbool(deel.item)).b;
 
 /**
  * Een symbool tegen de dichtstbijzijnde muur zetten. Het symbool staat dan met zijn leiding op de muur en wijst de ruimte in,
@@ -461,7 +461,7 @@ const tekstBreedte = (t, s) => String(t).length * 6.2 * s;
  * het minst een muur of een ander symbool in de weg staat.
  */
 function tekstPlek(pl, deel, s, plan, positie, tekstje, anderen) {
-  const { b, boven = -13, onder = 13 } = deel.item === 'bord' ? bordSymbool() : symbool(deel.item);
+  const { b, boven = -13, onder = 13 } = deel.item === 'bord' ? bordSymbool() : planSymbool(deel.item);
   const hoek = rad(pl.rot || 0);
   const half = Math.max(-boven, onder);
   const ex = (Math.abs(Math.cos(hoek)) * (b / 2) + Math.abs(Math.sin(hoek)) * half) * s;
@@ -507,12 +507,28 @@ function tekstPlek(pl, deel, s, plan, positie, tekstje, anderen) {
   return beste;
 }
 
+/** Een verbinding als gebogen stippellijn met een pijl naar de lamp, zoals in de iPad-versie. */
+export function boogVerbinding(v, a, b, gekozen = false) {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const l = Math.hypot(dx, dy) || 1;
+  const cx = (a.x + b.x) / 2 - dy * 0.18;
+  const cy = (a.y + b.y) / 2 + dx * 0.18;
+  const hl = Math.hypot(b.x - cx, b.y - cy) || 1;
+  const ux = (b.x - cx) / hl;
+  const uy = (b.y - cy) / hl;
+  const pijl = (hoek) => `${r1(b.x - 9 * (ux * Math.cos(hoek) - uy * Math.sin(hoek)))} ${r1(b.y - 9 * (ux * Math.sin(hoek) + uy * Math.cos(hoek)))}`;
+  const d = `M${r1(a.x)} ${r1(a.y)}Q${r1(cx)} ${r1(cy)} ${r1(b.x)} ${r1(b.y)}`;
+  return `<g class="verbinding-boog${gekozen ? ' gekozen' : ''}" data-verb="${esc(v.id)}"><path class="verb-raak" d="${d}"/><path class="verbinding" d="${d}"/>`
+    + `<path class="verb-pijl" d="M${pijl(0.5)}L${r1(b.x)} ${r1(b.y)}L${pijl(-0.5)}"/></g>`;
+}
+
 /**
  * Eén geplaatst onderdeel: het symbool met zijn letter/nummer of adres, op de plaats en onder de hoek die bij pl hoort.
  * @param {object} opties plan: het plan (voor beletteren/nummeren en het ontwijken van muren), anderen: de punten van andere symbolen
  */
-export function plaatsingSvg(deel, pl, s, gekozen = false, id = '', { plan = null, anderen = [] } = {}) {
-  const { svg, b, boven = -13, onder = 13 } = deel.item === 'bord' ? bordSymbool() : symbool(deel.item);
+export function plaatsingSvg(deel, pl, s, gekozen = false, id = '', { plan = null, anderen = [], stijl = '' } = {}) {
+  const { svg, b, boven = -13, onder = 13 } = deel.item === 'bord' ? bordSymbool() : planSymbool(deel.item);
   const titel = deel.item === 'bord' ? 'Verdeelbord' : `${deel.code} ${itemNaam(deel.item)}`.trim();
   const kleur = pl.kleur ? ` style="--kleur:${esc(pl.kleur)}"` : '';
   const labels = [];
@@ -520,7 +536,8 @@ export function plaatsingSvg(deel, pl, s, gekozen = false, id = '', { plan = nul
     const adres = deel.item.adres?.trim();
     const toonAdres = adres && pl.adresPlaats !== 'verbergen';
     const { letter, nummer } = codeDelen(deel.code);
-    const kringTekst = `${plan.beletteren === false ? '' : letter}${plan.nummeren === false ? '' : nummer}`;
+    const punt = stijl === 'woning' && letter && nummer ? '.' : '';
+    const kringTekst = `${plan.beletteren === false ? '' : letter}${punt}${plan.nummeren === false ? '' : nummer}`;
     // Zoals in Trikker: de kring staat er bij "automatisch" enkel als er geen adres is.
     const toonKring = kringTekst && (pl.tekstPlaats === 'verbergen' ? false : pl.tekstPlaats && pl.tekstPlaats !== 'auto' ? true : !toonAdres);
     if (toonKring) labels.push({ t: kringTekst, klasse: 'b plan-code', positie: pl.tekstPlaats });
@@ -533,7 +550,10 @@ export function plaatsingSvg(deel, pl, s, gekozen = false, id = '', { plan = nul
   const eigen = plan ? [] : [];
   let uit = '';
   for (const lb of labels) {
-    const k = plan ? tekstPlek(pl, deel, s, plan, lb.positie, lb.t, anderen) : { x: pl.x + (b / 2 + 4) * s, y: pl.y - 10 * s, anker: 'start' };
+    const woning = stijl === 'woning';
+    const k = woning ? { x: pl.x + (b / 2 + 9) * s, y: pl.y - 11 * s, anker: 'start' }
+      : plan ? tekstPlek(pl, deel, s, plan, lb.positie, lb.t, anderen) : { x: pl.x + (b / 2 + 4) * s, y: pl.y - 10 * s, anker: 'start' };
+    if (woning) uit += `<line class="plan-leider" x1="0" y1="0" x2="${r1(k.x - pl.x)}" y2="${r1(k.y - pl.y + 2 * s)}"/>`;
     // De tekst staat los van de draaiing van het symbool, in de tekening zelf.
     uit += `<text class="${lb.klasse}" x="${r1(k.x - pl.x)}" y="${r1(k.y - pl.y)}" text-anchor="${k.anker}" style="font-size:${r1(8.6 * s)}px">${esc(lb.t)}</text>`;
     eigen.push(k);
@@ -562,7 +582,7 @@ export const deelVan = (delen, id, pl) => (pl.los ? { item: pl.item, kring: null
  * @param {object} opties selectie: lijst van { soort: 'el' | 'item' | 'tekst', id }, raster: rasterlijnen tonen (enkel op het scherm)
  * @returns {string} SVG zonder het <svg>-element
  */
-export function tekenPlan(project, plan, { selectie = [], raster = false, delen = onderdelen(project) } = {}) {
+export function tekenPlan(project, plan, { selectie = [], raster = false, delen = onderdelen(project), stijl = '' } = {}) {
   const s = plan.symbool || 1;
   const gekozen = (soort, id) => (Array.isArray(selectie) ? selectie : selectie ? [selectie] : []).some((k) => k.soort === soort && k.id === id);
   const uit = [];
@@ -605,13 +625,14 @@ export function tekenPlan(project, plan, { selectie = [], raster = false, delen 
     const a = plan.plaatsingen[v.van];
     const b = plan.plaatsingen[v.naar];
     const g = gekozen('verb', v.id);
-    uit.push(`<line class="verbinding${g ? ' gekozen' : ''}" data-verb="${esc(v.id)}" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"/>`);
+    if (stijl === 'woning') uit.push(boogVerbinding(v, a, b, g));
+    else uit.push(`<line class="verbinding${g ? ' gekozen' : ''}" data-verb="${esc(v.id)}" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}"/>`);
   }
 
   const geplaatst = Object.entries(plan.plaatsingen).map(([id, pl]) => [id, pl, deelVan(delen, id, pl)]).filter(([, , d]) => d);
   for (const [id, pl, deel] of geplaatst) {
     const anderen = geplaatst.filter(([x]) => x !== id).map(([, p]) => p);
-    uit.push(plaatsingSvg(deel, pl, s, gekozen('item', id), id, { plan, anderen }));
+    uit.push(plaatsingSvg(deel, pl, s, gekozen('item', id), id, { plan, anderen, stijl }));
   }
   return uit.join('');
 }

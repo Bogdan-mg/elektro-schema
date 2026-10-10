@@ -8,6 +8,7 @@ import { startLijsten, csvTekst } from './lijsten.js';
 import { bouwAfdruk, ruimAfdrukOp } from './afdruk.js';
 import { startAfdrukTab, afdrukParameters, toonVoorbeeld } from './afdruktab.js';
 import { startExtra } from './extra.js';
+import { startWoning } from './woning.js';
 import { vraag, bevestig, melding } from './dialoog.js';
 import { symbolenProject } from './overzicht.js';
 import { leesInstellingen, instellingenDialoog } from './instellingen.js';
@@ -24,6 +25,7 @@ const HERSTEL = 'elektro-schema-herstel';
 function naarTab(tab) {
   staat.tab = tab;
   if (tab === 'afdrukken') setTimeout(() => window.dispatchEvent(new Event('afdruktab-open')), 0);
+  if (tab === 'woning') setTimeout(() => window.dispatchEvent(new Event('woning-open')), 0);
   for (const b of document.querySelectorAll('[data-tab]')) b.classList.toggle('aan', b.dataset.tab === tab);
   for (const s of document.querySelectorAll('.tab')) s.hidden = s.id !== `tab-${tab}`;
   herteken();
@@ -381,6 +383,7 @@ function startBackups() {
 async function start() {
   startDocument();
   startAfdrukTab({ afdrukken });
+  startWoning({ acties: { tab: naarTab } });
   startExtra({ acties: () => acties });
   editor.startEditor();
   situatie.startSituatie();
@@ -420,7 +423,7 @@ async function start() {
     });
   }
 
-  naarTab('eendraad');
+  naarTab('woning');
   zetTitel();
   startBackups();
 

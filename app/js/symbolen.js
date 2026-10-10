@@ -746,6 +746,23 @@ export function zonderLeiding(s) {
   return m ? { ...s, svg: s.svg.slice(m[0].length), begin: Number(m[1]) } : { ...s, begin: 0 };
 }
 
+/** Soorten die op het plan hun korte steeltje houden (de contactdoos, zoals in Trikker). */
+const MET_STEEL = new Set(['stopcontact', 'communicatie']);
+
+/**
+ * Het symbool zoals Trikker het op het situatieschema tekent: zonder de aanvoerleiding van het ééndraadschema.
+ * Een lamp is enkel het kruisje, een schakelaar het rondje met de hefboom; een contactdoos houdt een kort steeltje.
+ */
+export function planSymbool(item) {
+  const s = symbool(item);
+  const z = zonderLeiding(s);
+  if (!z.begin) return s;
+  const steel = MET_STEEL.has(item.soort) ? Math.min(3.5, z.begin) : 0;
+  const verschil = z.begin - steel;
+  const svg = `${steel ? `<line class="l" x1="0" y1="0" x2="${steel}" y2="0"/>` : ''}<g transform="translate(${-verschil} 0)">${z.svg}</g>`;
+  return { ...s, svg, b: s.b - verschil, midden: (s.midden ?? 0) - verschil, door: (s.door ?? s.b) - verschil };
+}
+
 /**
  * Plaatsing van een leiding (AREI C), zoals Trikker het tekent. De leiding loopt liggend langs y, de tekens staan erboven:
  * op een wand een "Ш" (de balk tegen de leiding), in een wand een "m" (de balk aan de buitenkant), een luchtleiding een cirkel

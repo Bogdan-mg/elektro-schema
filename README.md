@@ -138,6 +138,17 @@ rest uit.
 - **Ctrl+S** slaat het project op als `.eschema` (standaard in *Documenten*).
 - Loopt er iets mis voor je opgeslagen hebt, dan vraagt het programma bij de volgende start of het je werk mag terugzetten, en er worden automatisch backups bewaard (zie Instellingen).
 
+## Woning-werkwijze (zoals de iPad-versie)
+
+Het eerste tabblad, **Woning**, werkt in vier stappen. Je kan er altijd naar het gewone programma uit terug via de pijl rechtsboven.
+
+1. **Componenten** – kies onderaan een categorie en een symbool en tik op het plan. Het symbool kleeft aan de muur. Tik zonder gekozen symbool op een symbool om het te verslepen, te draaien (R), te kopiëren of te wissen. Het huis zelf teken je met de knop ▢ (het tabblad Situatieschema).
+2. **Verbindingen** – sleep een lijn van een schakelaar naar de lampen die hij bedient. Twee keer tikken op een verbinding wist ze.
+3. **Verdeelbord** – maak differentiëlen en kringen met naam, stroom en polen. Sleep ze (✥) of schuif ze met ▲▼. Met “Voeg kastmodule toe” maak je extra kasten (bv. Garage). Een oranje of rode waarde betekent dat de controle iets vindt.
+4. **Kringen** – kies onderaan een kring en tik de symbolen die erop staan. Elk symbool krijgt zijn kring en nummer (bv. T.5). Een schakelaar neemt de lampen mee die je verbond. Nogmaals tikken haalt het symbool weer uit de kring.
+
+Het ééndraadschema, de materiaallijst en het afdrukken volgen daaruit; het projectbestand is hetzelfde als in de rest van het programma.
+
 ## Wat het niet doet
 
 Dit programma is geen kopie van Trikker maar een eigen programma met dezelfde werkwijze. Een paar dingen zijn er bewust niet in:

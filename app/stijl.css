@@ -412,3 +412,99 @@ dialog.import { width: min(1000px, 96vw); }
 .extra-knop { display: flex; align-items: center; gap: 8px; width: 233px; height: 62px; background: #fff; border: 1px solid #999; font-size: 14px; cursor: pointer; }
 .extra-knop span { font-size: 26px; color: #1b1b6e; }
 .extra-knop:hover { background: #eef3ff; }
+
+/* ---------- Woning-werkwijze (zoals de iPad-versie) ---------- */
+.tab.woning:not([hidden]) { display: flex; flex-direction: column; height: 100%; background: #fff; position: relative; }
+.woning .w-balk { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #fff; position: relative; flex: 0 0 auto; }
+.woning .w-rond { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #aab; background: #fff; font-size: 18px; color: #111; cursor: pointer; padding: 0; }
+.woning .w-rond.uit { opacity: .45; }
+.woning .w-stappen { display: flex; gap: 2px; background: #34455c; border-radius: 22px; padding: 4px; margin: 0 auto; }
+.woning .w-stappen button { background: transparent; border: 0; color: #fff; padding: 8px 16px; border-radius: 18px; font-size: 15px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.woning .w-stappen button.aan { background: #5d6f86; }
+.woning .w-ic { font-size: 17px; }
+.woning .w-ic-componenten { color: #4fc38a; }
+.woning .w-ic-verbindingen { color: #f08a1c; }
+.woning .w-ic-verdeelbord { color: #5aa7e8; }
+.woning .w-ic-kringen { color: #ef6a4a; }
+.woning .w-menu { position: absolute; right: 14px; top: 56px; background: #34455c; border-radius: 10px; padding: 6px; z-index: 20; display: flex; flex-direction: column; box-shadow: 0 6px 20px #0004; }
+.woning .w-menu button { background: transparent; border: 0; color: #fff; padding: 10px 16px; text-align: left; cursor: pointer; border-radius: 6px; }
+.woning .w-menu button:hover { background: #46597a; }
+.woning .w-plannen { display: flex; gap: 6px; padding: 0 14px 6px; flex: 0 0 auto; }
+.woning .w-plannen button { border: 1px solid #aab; background: #fff; border-radius: 14px; padding: 4px 12px; cursor: pointer; }
+.woning .w-plannen button.aan { background: #34455c; color: #fff; }
+.woning .w-hoofd { flex: 1 1 auto; position: relative; min-height: 0; }
+.woning .w-plan, .woning .w-verdeel { position: absolute; inset: 0; }
+.woning #woning-svg { width: 100%; height: 100%; background: #fff; touch-action: none; }
+.woning .w-acties { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; background: #34455c; border-radius: 22px; padding: 4px 8px; }
+.woning .w-acties button { background: transparent; border: 0; color: #fff; font-size: 20px; cursor: pointer; padding: 4px 10px; }
+.woning .w-zoom { position: absolute; right: 12px; bottom: 12px; display: flex; flex-direction: column; gap: 4px; }
+.woning .w-zoom button { width: 34px; height: 34px; border-radius: 8px; border: 1px solid #aab; background: #fff; font-size: 18px; cursor: pointer; }
+.woning #woning-svg .plan-vlak { fill: transparent; stroke: none; }
+.woning #woning-svg .geplaatst { cursor: pointer; }
+.woning #woning-svg .geplaatst.gekozen .l, .woning #woning-svg .geplaatst.gekozen path, .woning #woning-svg .geplaatst.gekozen line { stroke: #0b8bd3; }
+.woning #woning-svg .verbinding { stroke: #f08a1c; stroke-width: 2; stroke-dasharray: 8 6; fill: none; }
+.woning #woning-svg .verb-pijl { stroke: #f08a1c; stroke-width: 2; fill: none; }
+.woning #woning-svg .verb-raak { stroke: transparent; stroke-width: 16; fill: none; cursor: pointer; }
+.woning #woning-svg .verbinding-boog.gekozen .verbinding { stroke: #d96a00; stroke-width: 3; }
+.woning #woning-svg.zonder-verbindingen .verbinding-boog { display: none; }
+.woning #woning-svg .plan-code { fill: #0b8bd3; font-weight: 600; paint-order: stroke; stroke: #fff; stroke-width: 2px; }
+.woning #woning-svg .plan-leider { stroke: #0b8bd3; stroke-width: .8; stroke-dasharray: 2 2; }
+
+.woning .w-paneel { flex: 0 0 auto; background: #34455c; color: #fff; padding: 14px 18px; min-height: 150px; max-height: 38%; overflow: hidden; }
+.woning .w-pal { display: flex; gap: 14px; align-items: stretch; height: 150px; }
+.woning .w-cats { display: flex; flex-direction: column; gap: 2px; min-width: 200px; overflow-y: auto; scrollbar-width: none; }
+.woning .w-cats button { background: transparent; border: 0; color: #6f819b; font-size: 18px; text-align: left; padding: 6px 4px; cursor: pointer; }
+.woning .w-cats button.aan { color: #4fc38a; }
+.woning .w-items { flex: 1; display: grid; grid-template-rows: repeat(2, 1fr); grid-auto-flow: column; grid-auto-columns: 88px; overflow-x: auto; border-top: 1px solid #5d6f86; }
+.woning .w-item { background: transparent; border: 0; border-right: 1px solid #5d6f86; border-bottom: 1px solid #5d6f86; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; }
+.woning .w-item:hover { background: #3f5270; }
+.woning .w-item.aan { background: #4fc38a33; outline: 2px solid #4fc38a; outline-offset: -2px; }
+.woning .w-item svg { filter: invert(1); max-width: 76px; max-height: 60px; }
+.woning .w-item b { font-size: 22px; }
+.woning .w-leeg { color: #aab4c4; padding: 16px; }
+.woning .w-uitleg h3 { color: #4fc38a; text-align: center; font-size: 26px; margin: 0 0 10px; font-weight: 600; }
+.woning .w-uitleg p { color: #c5cedb; font-size: 17px; line-height: 1.35; margin: 0 0 14px; }
+.woning .w-schakel { display: flex; align-items: center; gap: 14px; color: #c5cedb; font-size: 17px; }
+.woning .w-schakel input { width: 44px; height: 24px; }
+.woning .w-kast { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 12px; }
+.woning .w-kast button { background: #3f5270; border: 0; color: #8a9bb4; font-size: 19px; padding: 6px 20px; border-radius: 18px; cursor: pointer; }
+.woning .w-kast button.aan { background: #6b7d96; color: #fff; }
+.woning .w-teller { color: #aab4c4; margin-left: 16px; font-size: 14px; }
+.woning .w-kaarten { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px; }
+.woning .w-kaart { flex: 0 0 300px; background: #34455c; border: 1px solid #6b7d96; color: #fff; border-radius: 8px; padding: 10px 12px; text-align: center; cursor: pointer; display: flex; flex-direction: column; gap: 6px; }
+.woning .w-kaart.diff { opacity: .6; cursor: default; }
+.woning .w-kaart.aan { background: #4a6a88; border-color: #4fc38a; box-shadow: 0 0 0 2px #4fc38a55; }
+.woning .w-kaart b { font-weight: 500; font-size: 18px; }
+.woning .w-kaart small { color: #aab4c4; }
+.woning .groen { color: #4fc38a; }
+.woning .oranje { color: #f0a050; }
+.woning .rood { color: #e8604a; }
+.woning .w-kaart span { font-size: 18px; }
+
+.woning .w-verdeel { background: #34455c; overflow: auto; padding: 18px; color: #fff; }
+.woning .w-kolommen { display: flex; gap: 40px; align-items: flex-start; min-width: min-content; }
+.woning .w-kolom { width: 440px; flex: 0 0 440px; display: flex; flex-direction: column; gap: 10px; }
+.woning .w-pil { align-self: flex-start; background: #8a95a6; border: 0; border-radius: 22px; padding: 8px 20px; font-size: 24px; color: #111; cursor: pointer; display: inline-flex; gap: 10px; align-items: center; }
+.woning .w-pil.kop { background: #a9b2c0; }
+.woning .w-pil.klein { font-size: 15px; padding: 4px 14px; margin-left: 34px; background: #5d6f86; color: #fff; }
+.woning .w-pil.groot { font-size: 22px; background: #a9b2c0; }
+.woning .w-x { background: transparent; border: 0; cursor: pointer; font-size: 16px; }
+.woning .w-rij { position: relative; }
+.woning .w-rij.diep { margin-left: 34px; }
+.woning .w-kaartje { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: #2a394d; border-radius: 6px; padding: 10px 14px; cursor: pointer; border-left: 2px dotted #3b9ad9; }
+.woning .w-kaartje.diff { background: #4a5b73; }
+.woning .w-titel { font-size: 19px; }
+.woning .w-sub { font-size: 18px; }
+.woning .w-knoppen { display: flex; align-items: center; gap: 4px; }
+.woning .w-knoppen button { background: transparent; border: 0; color: #aab4c4; cursor: pointer; font-size: 12px; padding: 2px 4px; }
+.woning .w-greep { font-size: 26px; cursor: grab; padding: 0 6px; }
+
+.woning #woning-svg .muur { stroke: #b4b9c2; stroke-width: 2.4px; }
+.woning #woning-svg .raam-buiten { stroke: #b4b9c2; }
+.woning #woning-svg .deurblad, .woning #woning-svg .deurboog { stroke: #b4b9c2; }
+.woning #woning-svg .geplaatst, .woning #woning-svg .geplaatst.los { color: #111; }
+.woning #woning-svg .geplaatst.gekozen { color: #0b8bd3; }
+.woning #woning-svg .geplaatst .plaats-doel { fill: transparent; }
+.woning #woning-svg .geplaatst.gekozen .plaats-doel { fill: rgba(11,139,211,.12); stroke: #0b8bd3; stroke-width: .8; }
+
+.woning .w-hint { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); max-width: 460px; text-align: center; color: #5d6f86; font-size: 18px; line-height: 1.4; pointer-events: none; }
