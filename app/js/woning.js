@@ -4,7 +4,7 @@ import {
   nieuwId, nieuwItem, nieuweKring, nieuwDifferentieel, codes, zoek, kastNamen, kringVanItem, wijsToeEen, maakLos, maakKringLeeg,
 } from './model.js';
 import { itemNaam, TOESTELLEN, AUTOMAAT_STROMEN, CURVES, SECTIES, komma } from './catalogus.js';
-import { tekenPlan, onderdelen, kleefAanMuur, symboolBreedte, plaatsingSvg } from './plan.js';
+import { tekenPlan, onderdelen, kleefAanMuur, kleeftAanMuur, draaiStap, symboolBreedte, plaatsingSvg } from './plan.js';
 import { icoon, esc } from './symbolen.js';
 import { staat, wijzig, opWijziging } from './staat.js';
 import { Vlak } from './vlak.js';
@@ -24,6 +24,7 @@ let vlak = null;
 let acties = {};
 let categorie = 'verlichting';
 let gewapend = null; // het symbool uit het palet dat je op het plan wil zetten
+let gewapendRot = 0; // de hoek waaronder het volgende symbool komt (rechtermuisknop draait)
 let gekozenId = null; // het geplaatste symbool dat gekozen is
 let gekozenKring = null; // de kring waaraan je symbolen hangt
 let kast = null; // het gekozen tabblad in de stap kringen
@@ -103,10 +104,17 @@ function tekenPlanLaag() {
   $('#woning-svg').classList.toggle('zonder-verbindingen', stap === 'componenten' || stap === 'verdeelbord');
 }
 
-function bepaalPlaats(punt, item, alt = false) {
+/**
+ * Waar een symbool terechtkomt, zoals in Trikker: contactdozen kleven met hun steeltje tegen de dichtstbijzijnde muur en
+ * kijken de kamer in; al het andere komt vrij of op het raster te staan, onder de hoek die je met de rechtermuisknop koos.
+ */
+function bepaalPlaats(punt, item, alt = false, rot = 0) {
   const plan = huidigPlan();
-  const kleef = !alt && plan.kleefMuur !== false ? kleefAanMuur(plan, punt, symboolBreedte({ item, code: '' })) : null;
-  return kleef ? { x: kleef.x, y: kleef.y, rot: kleef.rot } : { x: afger(punt.x), y: afger(punt.y), rot: 0 };
+  const kleef = !alt && plan.kleefMuur !== false && kleeftAanMuur(item) ? kleefAanMuur(plan, punt, symboolBreedte({ item, code: '' })) : null;
+  if (kleef) return { x: kleef.x, y: kleef.y, rot: kleef.rot };
+  const raster = !alt && plan.kleefGrid !== false ? 10 : 0;
+  const v = (n) => (raster ? Math.round(n / raster) * raster : afger(n));
+  return { x: v(punt.x), y: v(punt.y), rot };
 }
 
 async function plaatsGewapend(punt, alt) {
@@ -118,7 +126,7 @@ async function plaatsGewapend(punt, alt) {
     return;
   }
   const item = nieuwItem(gewapend.soort, gewapend.waarden);
-  const plek = bepaalPlaats(punt, item, alt);
+  const plek = bepaalPlaats(punt, item, alt, gewapendRot);
   wijzig((p) => { huidigPlan(p).plaatsingen[item.id] = { ...plek, los: true, item }; });
   gekozenId = item.id;
   teken();
@@ -126,9 +134,14 @@ async function plaatsGewapend(punt, alt) {
 
 // ---------- Acties op een gekozen symbool ----------
 
-function draaiGekozen() {
+function draaiGekozen(alt = false) {
   if (!gekozenId) return;
-  wijzig((p) => { for (const pl of p.plannen) if (pl.plaatsingen[gekozenId]) pl.plaatsingen[gekozenId].rot = (((pl.plaatsingen[gekozenId].rot || 0) + 90) % 360); });
+  wijzig((p) => {
+    for (const pl of p.plannen) {
+      const x = pl.plaatsingen[gekozenId];
+      if (x) x.rot = (((x.rot || 0) + draaiStap(x.los ? x.item : kringVanItem(p, gekozenId)?.items.find((i) => i.id === gekozenId), alt)) % 360);
+    }
+  });
 }
 
 function wisGekozen() {
@@ -220,7 +233,7 @@ function koppelPlan() {
     if (s.soort === 'zet' && s.bewogen && s.nu) {
       const x = huidigPlan().plaatsingen[s.id];
       const deel = x?.los ? x.item : kringVanItem(staat.project, s.id)?.items.find((i) => i.id === s.id);
-      const plek = bepaalPlaats(s.nu, deel || 'bord', e.altKey);
+      const plek = bepaalPlaats(s.nu, deel || 'bord', e.altKey, x?.rot || 0);
       wijzig((p) => { Object.assign(huidigPlan(p).plaatsingen[s.id], plek); });
     } else if (s.soort === 'verbind') {
       const doel = document.elementFromPoint(e.clientX, e.clientY)?.closest?.('[data-plaats]')?.dataset.plaats;
@@ -231,6 +244,18 @@ function koppelPlan() {
   });
   svg.addEventListener('pointerleave', () => { if (!sleep) $('#woning-svg .voorbeeld-laag').innerHTML = ''; });
   svg.addEventListener('pointercancel', () => { sleep = null; verbindVan = null; teken(); });
+
+  svg.addEventListener('contextmenu', (e) => {
+    if (stap !== 'componenten') return;
+    e.preventDefault();
+    if (gewapend && !gewapend.tekst) {
+      gewapendRot = (gewapendRot + draaiStap({ soort: gewapend.soort }, e.altKey)) % 360;
+      toonSpook(e);
+    } else {
+      const g = symboolOp(e);
+      if (g) { gekozenId = g.dataset.plaats; draaiGekozen(e.altKey); }
+    }
+  });
 
   svg.addEventListener('click', (e) => {
     if (vlak.gesleept || (e.detail > 1 && false)) return;
@@ -259,7 +284,7 @@ function toonSpook(e) {
   const laag = $('#woning-svg .voorbeeld-laag');
   if (stap !== 'componenten' || !gewapend || gewapend.tekst) { laag.innerHTML = ''; return; }
   const item = nieuwItem(gewapend.soort, gewapend.waarden);
-  const plek = bepaalPlaats(vlak.naarTekening(e.clientX, e.clientY), item, e.altKey);
+  const plek = bepaalPlaats(vlak.naarTekening(e.clientX, e.clientY), item, e.altKey, gewapendRot);
   const plan = huidigPlan();
   laag.innerHTML = `<g opacity=".55" pointer-events="none">${plaatsingSvg({ item, code: '' }, { ...plek, los: true }, plan.symbool || 1, false, '', { plan: { ...plan, beletteren: false, nummeren: false }, stijl: 'woning' })}</g>`;
 }
@@ -602,7 +627,7 @@ function koppelBalk() {
     $('#w-menu').hidden = true;
     acties.tab?.(b.dataset.naar);
   });
-  $('#w-draai').addEventListener('click', draaiGekozen);
+  $('#w-draai').addEventListener('click', () => draaiGekozen());
   $('#w-kopie').addEventListener('click', kopieerGekozen);
   $('#w-wis').addEventListener('click', wisGekozen);
   $('#w-passend').addEventListener('click', () => { vlak.ingesteld = false; teken(); });
@@ -618,6 +643,7 @@ function koppelBalk() {
       const gekozen = palet().find((c) => c.id === categorie).items[Number(it.dataset.i)];
       gewapend = gewapend && gewapend.naam === gekozen.naam && JSON.stringify(gewapend.waarden) === JSON.stringify(gekozen.waarden) ? null : gekozen;
       gekozenId = null;
+      gewapendRot = 0;
       teken();
       return;
     }

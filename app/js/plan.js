@@ -413,6 +413,16 @@ export const ketenLengte = (plan, i) => muurKeten(plan, i).reduce((som, j) => so
 export const symboolBreedte = (deel) => (deel.item === 'bord' ? bordSymbool() : planSymbool(deel.item)).b;
 
 /**
+ * Zoals in Trikker kleven enkel deze onderdelen aan een muur: de contactdozen, het aansluitpunt en de geluidsbron.
+ * Al het andere (lampen, schakelaars, toestellen, …) staat vrij of op het raster.
+ */
+export const KLEEFT_AAN_MUUR = new Set(['stopcontact', 'communicatie', 'aansluitpunt', 'geluidsbron']);
+export const kleeftAanMuur = (item) => Boolean(item && item !== 'bord' && KLEEFT_AAN_MUUR.has(item.soort));
+
+/** De stap van een draaiing met de rechtermuisknop: 90°, met Alt 22,5° en bij een bewegingsdetector 45°. */
+export const draaiStap = (item, alt = false) => (alt ? 22.5 : item?.soort === 'bewegingsdetector' || item?.soort === 'bewegingsdetectorActief' ? 45 : 90);
+
+/**
  * Een symbool tegen de dichtstbijzijnde muur zetten. Het symbool staat dan met zijn leiding op de muur en wijst de ruimte in,
  * aan de kant waar het punt ligt. Geeft { x, y, rot, muur } terug, of null als er geen muur dichtbij genoeg is.
  * @param {number} breedte de breedte van het symbool, in symboolruimte (voor de schaal van het plan)

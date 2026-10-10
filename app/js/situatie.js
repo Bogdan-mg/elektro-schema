@@ -3,7 +3,7 @@ import { nieuwPlan, nieuwId, nieuwElement, nieuwItem, nieuweKring, voegKnoopToe,
 import { itemNaam, PALET } from './catalogus.js';
 import {
   tekenPlan, onderdelen, PLAN_STIJL, segmentSvg, afstand, lengteTekst, ketenLengte, muurKeten, ELEMENTEN,
-  kleefAanMuur, plaatsingSvg, symboolBreedte, handvatten, omhulsel, verschuifElement, draaiPunt, deelVan, rechthoekVan,
+  kleefAanMuur, kleeftAanMuur, draaiStap, plaatsingSvg, symboolBreedte, handvatten, omhulsel, verschuifElement, draaiPunt, deelVan, rechthoekVan,
 } from './plan.js';
 import { SCHEMA_STIJL } from './eendraad.js';
 import { icoon, esc } from './symbolen.js';
@@ -284,7 +284,7 @@ function startPlaatsen(id) {
  */
 function vastePlaats(punt, deel, alt, rot = 0) {
   const plan = huidigPlan();
-  const kleef = !alt && plan.kleefMuur !== false && deel ? kleefAanMuur(plan, punt, symboolBreedte(deel)) : null;
+  const kleef = !alt && plan.kleefMuur !== false && deel && kleeftAanMuur(deel.item) ? kleefAanMuur(plan, punt, symboolBreedte(deel)) : null;
   if (kleef) return { x: kleef.x, y: kleef.y, rot: kleef.rot };
   const v = vastPunt(punt, { alt });
   return { x: v.x, y: v.y, rot };
@@ -1455,7 +1455,8 @@ export function startSituatie() {
   svg.addEventListener('contextmenu', (e) => {
     if (plaatsen || (gereedschap === 'los' && losKeuze != null)) {
       e.preventDefault();
-      plaatsRot = (plaatsRot + (e.altKey ? 15 : 90)) % 360;
+      const huidig = plaatsen ? onderdelen(staat.project).get(plaatsen)?.item : PALET[losKeuze] && { soort: PALET[losKeuze].soort };
+      plaatsRot = (plaatsRot + draaiStap(huidig, e.altKey)) % 360;
       svg.dispatchEvent(new PointerEvent('pointermove', { clientX: e.clientX, clientY: e.clientY, altKey: e.altKey }));
     } else if (gereedschap === 'deur') {
       e.preventDefault();

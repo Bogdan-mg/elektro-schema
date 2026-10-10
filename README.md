@@ -142,7 +142,7 @@ rest uit.
 
 Het eerste tabblad, **Woning**, werkt in vier stappen. Je kan er altijd naar het gewone programma uit terug via de pijl rechtsboven.
 
-1. **Componenten** – kies onderaan een categorie en een symbool en tik op het plan. Het symbool kleeft aan de muur. Tik zonder gekozen symbool op een symbool om het te verslepen, te draaien (R), te kopiëren of te wissen. Het huis zelf teken je met de knop ▢ (het tabblad Situatieschema).
+1. **Componenten** – kies onderaan een categorie en een symbool en tik op het plan. Contactdozen kleven aan de muur (zoals in Trikker), al het andere staat vrij of op het raster; de rechtermuisknop draait (90°, met Alt 22,5°, bewegingsdetector 45°), Alt zet het kleven uit. Tik zonder gekozen symbool op een symbool om het te verslepen, te draaien (R), te kopiëren of te wissen. Het huis zelf teken je met de knop ▢ (het tabblad Situatieschema).
 2. **Verbindingen** – sleep een lijn van een schakelaar naar de lampen die hij bedient. Twee keer tikken op een verbinding wist ze.
 3. **Verdeelbord** – maak differentiëlen en kringen met naam, stroom en polen. Sleep ze (✥) of schuif ze met ▲▼. Met “Voeg kastmodule toe” maak je extra kasten (bv. Garage). Een oranje of rode waarde betekent dat de controle iets vindt.
 4. **Kringen** – kies onderaan een kring en tik de symbolen die erop staan. Elk symbool krijgt zijn kring en nummer (bv. T.5). Een schakelaar neemt de lampen mee die je verbond. Nogmaals tikken haalt het symbool weer uit de kring.
