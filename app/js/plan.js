@@ -455,7 +455,8 @@ export function kleefAanMuur(plan, punt, breedte) {
     const dy = m.y2 - m.y1;
     const l2 = dx * dx + dy * dy;
     if (!l2) return;
-    const t = Math.max(0, Math.min(1, ((punt.x - m.x1) * dx + (punt.y - m.y1) * dy) / l2));
+    const tRuw = ((punt.x - m.x1) * dx + (punt.y - m.y1) * dy) / l2;
+    const t = Math.max(0, Math.min(1, tRuw));
     const cx = m.x1 + t * dx;
     const cy = m.y1 + t * dy;
     const d = Math.hypot(punt.x - cx, punt.y - cy);
@@ -463,7 +464,12 @@ export function kleefAanMuur(plan, punt, breedte) {
     const l = Math.sqrt(l2);
     let nx = -dy / l;
     let ny = dx / l;
-    if ((punt.x - cx) * nx + (punt.y - cy) * ny < 0) [nx, ny] = [-nx, -ny];
+    if (tRuw < 0 || tRuw > 1) {
+      // voorbij het uiteinde: zoals in Trikker rond de hoek van de muur heen, in de richting van de muis
+      if (d < 0.001) return;
+      nx = (punt.x - cx) / d;
+      ny = (punt.y - cy) / d;
+    } else if ((punt.x - cx) * nx + (punt.y - cy) * ny < 0) [nx, ny] = [-nx, -ny];
     beste = { d, x: cx + nx * afstandTotMidden, y: cy + ny * afstandTotMidden, nx, ny, muur: i };
   });
   if (!beste) return null;

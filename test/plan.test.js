@@ -110,8 +110,12 @@ test('een symbool kleeft aan de muur en wijst de ruimte in', () => {
   assert.equal(kleefAanMuur(plan, { x: 300, y: -25 }, 20).rot, 270);
   // Te ver weg: vrij.
   assert.equal(kleefAanMuur(plan, { x: 300, y: 400 }, 20), null);
-  // Langs het einde van de muur blijft het binnen het stuk.
-  assert.equal(kleefAanMuur(plan, { x: 1010, y: 20 }, 20).x, 1000);
+  // Voorbij het einde van de muur gaat het symbool zoals in Trikker rond de hoek, naar de muis toe.
+  const hoek = kleefAanMuur(plan, { x: 1010, y: 20 }, 20);
+  assert.ok(Math.abs(hoek.x - (1000 + (10 / Math.hypot(10, 20)) * 13)) < 0.1);
+  assert.ok(Math.abs(hoek.y - (20 / Math.hypot(10, 20)) * 13) < 0.1);
+  // Recht voor het uiteinde staat het symbool tegen de kop van de muur en wijst het langs de muur.
+  assert.equal(kleefAanMuur(plan, { x: 1030, y: 0 }, 20).rot, 0);
 });
 
 test('kleven werkt op elke muur en negeert deuren, ramen en meetlijnen', () => {
