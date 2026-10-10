@@ -74,6 +74,7 @@ function maakMenu() {
         { label: 'Materiaallijst naar Excel (CSV)…', click: () => stuur('csv') },
         { type: 'separator' },
         { label: 'Voorbeeldproject openen', click: () => stuur('voorbeeld') },
+        { label: 'Alle symbolen bekijken', click: () => stuur('symbolen') },
         { type: 'separator' },
         { label: 'Afsluiten', role: 'quit' },
       ],

@@ -8,9 +8,9 @@ Windows-programma om voor een elektrische installatie (België, AREI) te tekenen
 
 Alles werkt **offline** en staat in één projectbestand (`.eschema`) op je pc.
 
-De symbolen volgen het AREI (Boek 1, hoofdstuk 2.13, tabel 2.23 "Grafische symbolen"): contactdozen met
-aarding en kinderbescherming, schakelaars (enkel- en tweepolig, wissel, kruis, omschakelaar, dimmer, drukknop),
-lichtpunten, toestellen, automaten ("C20") en differentiëlen ("40/0,3A type A").
+De symbolen en de opbouw van het schema volgen **Trikker** en het **AREI** (Boek 1, hoofdstuk 2.13, tabel 2.23):
+de verdeellijn onderaan, de kringen naar boven met hun letter, naam, automaat en kabel, en alle onderdelen
+genummerd van onder naar boven.
 
 ## Installeren
 
@@ -25,13 +25,20 @@ Het installatiebestand wordt automatisch gemaakt bij elke wijziging op `main` (z
 
 ### Ééndraadschema
 
-- Links staat het **bord**: hoofdbord, differentiëlen en kringen. Klik iets aan om het rechts aan te passen.
-- **+ Differentieel** en **+ Kring** voegen toe op de gekozen plaats. Kringen krijgen automatisch een letter (A, B, C, …),
-  onderdelen een nummer (A1, A2, …), net als op een gewoon schema.
-- Bij een kring of onderdeel staat rechts een **palet**: één klik op *Stopcontact*, *Lichtpunt*, *Wasmachine*, … voegt het toe.
-- Per kring: automaat (stroom, curve, polen), kabel (type, aders, doorsnede, lengte) en of het een badkamer/natte ruimte is.
+- Links staat het **bord**: het hoofdbord, **groepen** (generaal zekering, differentieel, differentieelautomaat of een gewone rij)
+  en **kringen**. Klik iets aan om het rechts aan te passen.
+- **+ Groep** en **+ Kring** voegen toe op de gekozen plaats. Groepen en kringen krijgen automatisch een letter
+  (A, B, …, AA, AB, …) of een **vaste letter** die je zelf kiest (bv. XYZ). De **naam** komt bovenaan de kring te staan.
+- Een kring heeft een automaat (stroom, curve, polen, onderbrekingsvermogen, eventueel differentieelautomaat) en een kabel
+  (type, aders, doorsnede, lengte en plaatsing: in/op een wand, lucht, ondergronds, in een buis).
+- Onderdelen worden per rij genummerd: een schakelaar met de lampen erna is één rij. Rechts staat een **palet** voor de
+  meest gebruikte onderdelen en een keuzelijst met **alle 43 soorten**: contactdoos, schakelaar, drukknop, lichtpunt,
+  toestellen, ketel, boiler, motor, pomp, transformator, beveiligingen, alarm en detectie, camera, intercom, slot,
+  domotica, zonnepaneel en meer. Elk onderdeel heeft zijn eigen eigenschappen (zoals in Trikker).
+- Per onderdeel kan je ook een **adres** (de tekst langs het symbool), een **tekst rechts**, een **aantal** (x3) en de
+  **plaatsing** instellen: automatisch, op de kringlijn (evenwijdig) of op een eigen rij.
 - Sneltoetsen: **Delete** verwijdert, **Ctrl+D** dupliceert, **Alt+↑/↓** verschuift, **Ctrl+Z / Ctrl+Y** ongedaan maken / opnieuw.
-- Zoomen met het muiswiel, verschuiven door te slepen.
+- Zoomen met het muiswiel, verschuiven door te slepen. **Bestand → Alle symbolen bekijken** toont alle onderdelen met hun varianten.
 
 ### Situatieschema
 
@@ -66,7 +73,8 @@ Een controle op de belangrijkste AREI-regels voor woningen, o.a.:
 
 **Afdrukken / PDF** (Ctrl+P): kies A4 of A3 liggend en wat er op moet. Elk blad krijgt een titelhoek met project, klant,
 adres, installateur, datum en bladnummer (die vul je in via de projectnaam bovenaan). Een lang ééndraadschema wordt
-over meerdere bladen verdeeld, tussen twee kringen. Het situatieschema krijgt een legende.
+over meerdere bladen verdeeld, tussen twee kringen. Het situatieschema krijgt een legende, en er is een bladzijde
+**Lijst kringen** met de letter en de naam van elke kring, zoals in Trikker.
 
 ### Opslaan en veiligheid
 

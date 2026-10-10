@@ -6,6 +6,7 @@ import * as situatie from './situatie.js';
 import { startLijsten, csvTekst } from './lijsten.js';
 import { bouwAfdruk, ruimAfdrukOp } from './afdruk.js';
 import { vraag, bevestig, melding } from './dialoog.js';
+import { symbolenProject } from './overzicht.js';
 
 const desktop = window.elektro?.desktop ? window.elektro : null;
 const $ = (s) => document.querySelector(s);
@@ -151,6 +152,13 @@ async function projectgegevens() {
   wijzig((p) => { p.info = { ...p.info, ...waarden, titel: waarden.titel.trim() || 'Nieuw project' }; });
 }
 
+async function symbolen() {
+  if (!await magVerder()) return;
+  openProject(symbolenProject(), null);
+  naarTab('eendraad');
+  melding('Alle onderdelen met hun varianten. Sla dit project niet op over je eigen werk.');
+}
+
 async function voorbeeld() {
   if (!await magVerder()) return;
   openProject(voorbeeldProject(), null);
@@ -167,6 +175,7 @@ async function afdrukken() {
       { naam: 'formaat', label: 'Papier', type: 'select', waarde: 'A4', opties: [['A4', 'A4 liggend'], ['A3', 'A3 liggend']] },
       { naam: 'eendraad', label: 'Ééndraadschema', type: 'checkbox', waarde: true },
       { naam: 'situatie', label: 'Situatieschema', type: 'checkbox', waarde: true },
+      { naam: 'lijst', label: 'Lijst kringen', type: 'checkbox', waarde: true },
       { naam: 'materiaal', label: 'Materiaallijst', type: 'checkbox', waarde: true },
     ],
     knoppen: [
@@ -227,6 +236,7 @@ const acties = {
   afdrukken,
   csv,
   voorbeeld,
+  symbolen,
   ongedaan: () => { if (!ongedaan()) melding('Niets meer om ongedaan te maken.'); },
   opnieuw: () => { if (!opnieuw()) melding('Niets om opnieuw te doen.'); },
   tab: (t) => naarTab(t),

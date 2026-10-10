@@ -3,6 +3,7 @@ import { tekenEendraad, SCHEMA_STIJL } from './eendraad.js';
 import { tekenPlan, legende, onderdelen, PLAN_STIJL } from './plan.js';
 import { icoon, esc } from './symbolen.js';
 import { materiaalTabel } from './lijsten.js';
+import { alleKnopen, codes } from './model.js';
 import { staat } from './staat.js';
 
 export const FORMATEN = { A4: { b: 297, h: 210 }, A3: { b: 420, h: 297 } };
@@ -78,6 +79,26 @@ function situatieBladen(formaat) {
     });
 }
 
+/** "Lijst kringen" zoals in Trikker: de letter en de naam van elke groep en kring, in twee kolommen. */
+function lijstBladen(formaat) {
+  const p = staat.project;
+  const code = codes(p);
+  const regels = alleKnopen(p).map(({ knoop }) => ({ letter: code.get(knoop.id), naam: knoop.naam || '' }));
+  if (!regels.length) return [];
+  const perKolom = Math.max(5, Math.floor((formaat.h - 2 * MARGE - TITELHOEK - 10) / 7));
+  const perBlad = perKolom * 2;
+  const bladen = [];
+  for (let i = 0; i < regels.length; i += perBlad) {
+    const stuk = regels.slice(i, i + perBlad);
+    const kolom = (lijst) => `<div class="kringkolom">${lijst.map((r) => `<div class="lrij"><b>${esc(r.letter)}</b><span>${esc(r.naam)}</span></div>`).join('')}</div>`;
+    bladen.push({
+      soort: 'Lijst kringen',
+      inhoud: `<div class="kringlijst">${kolom(stuk.slice(0, perKolom))}${kolom(stuk.slice(perKolom))}</div>`,
+    });
+  }
+  return bladen;
+}
+
 function materiaalBlad() {
   return {
     soort: 'Materiaallijst',
@@ -87,11 +108,12 @@ function materiaalBlad() {
 }
 
 /** Bouw de bladen op in #afdruk. */
-export function bouwAfdruk({ formaat = 'A4', eendraad = true, situatie = true, materiaal = true }) {
+export function bouwAfdruk({ formaat = 'A4', eendraad = true, situatie = true, lijst = true, materiaal = true }) {
   const f = FORMATEN[formaat];
   const bladen = [
     ...(eendraad ? eendraadBladen(f) : []),
     ...(situatie ? situatieBladen(f) : []),
+    ...(lijst ? lijstBladen(f) : []),
     ...(materiaal ? [materiaalBlad()] : []),
   ];
   const doel = document.getElementById('afdruk');

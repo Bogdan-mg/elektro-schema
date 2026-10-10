@@ -21,11 +21,36 @@ test('codes volgen de tekenvolgorde', () => {
   const i2 = voegItemToe(p, k1.id, nieuwItem('lichtpunt'));
   const i3 = voegItemToe(p, k2.id, nieuwItem('schakelaar'));
   const c = codes(p);
-  assert.equal(c.get(k1.id), 'A');
-  assert.equal(c.get(k2.id), 'B');
-  assert.equal(c.get(i1.id), 'A1');
-  assert.equal(c.get(i2.id), 'A2');
-  assert.equal(c.get(i3.id), 'B1');
+  // Zoals in Trikker krijgt ook de differentieel een letter.
+  assert.equal(c.get(d.id), 'A');
+  assert.equal(c.get(k1.id), 'B');
+  assert.equal(c.get(k2.id), 'C');
+  assert.equal(c.get(i1.id), 'B1');
+  assert.equal(c.get(i2.id), 'B2');
+  assert.equal(c.get(i3.id), 'C1');
+});
+
+test('een schakelaar en zijn lampen staan op één rij met één nummer', () => {
+  const p = nieuwProject();
+  const k = voegKnoopToe(p, null, nieuweKring());
+  const s1 = voegItemToe(p, k.id, nieuwItem('schakelaar'));
+  const l1 = voegItemToe(p, s1.id, nieuwItem('lichtpunt'));
+  const l2 = voegItemToe(p, l1.id, nieuwItem('lichtpunt'));
+  const s2 = voegItemToe(p, l2.id, nieuwItem('stopcontact'));
+  const l3 = voegItemToe(p, s2.id, nieuwItem('lichtpunt'));
+  const c = codes(p);
+  assert.deepEqual([s1, l1, l2, s2, l3].map((i) => c.get(i.id)), ['A1', 'A1', 'A1', 'A2', 'A3']);
+  l2.eigenRij = true;
+  assert.equal(codes(p).get(l2.id), 'A2');
+});
+
+test('een vaste letter telt niet mee', () => {
+  const p = nieuwProject();
+  const k1 = voegKnoopToe(p, null, nieuweKring());
+  const k2 = voegKnoopToe(p, null, nieuweKring({ letter: 'XYZ' }));
+  const k3 = voegKnoopToe(p, null, nieuweKring());
+  const c = codes(p);
+  assert.deepEqual([k1, k2, k3].map((k) => c.get(k.id)), ['A', 'XYZ', 'B']);
 });
 
 test('toevoegen na een gekozen kring of onderdeel', () => {
@@ -59,7 +84,7 @@ test('verschuiven, dupliceren en verplaatsen', () => {
   const k1 = voegKnoopToe(p, null, nieuweKring({ naam: 'een' }));
   const k2 = voegKnoopToe(p, null, nieuweKring({ naam: 'twee' }));
   assert.ok(verschuif(p, k2.id, -1));
-  assert.deepEqual(p.kinderen.map((k) => k.naam ?? 'diff'), ['diff', 'twee', 'een']);
+  assert.deepEqual(p.kinderen.map((k) => (k.soort === 'differentieel' ? 'diff' : k.naam)), ['diff', 'twee', 'een']);
   assert.ok(!verschuif(p, d.id, -1));
   const kopie = dupliceer(p, k1.id);
   assert.notEqual(kopie.id, k1.id);

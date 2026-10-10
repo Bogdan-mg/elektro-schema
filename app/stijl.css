@@ -149,6 +149,9 @@ main { flex: 1; min-height: 0; display: flex; }
 svg .l.half { stroke-width: 2; }
 svg .l.stippel { stroke-dasharray: 1.6 1.2; stroke-linecap: butt; }
 svg .l.blok { stroke-width: 3.4; stroke-linecap: butt; }
+svg .l.vol { fill: currentColor; }
+svg .l.dun { stroke-width: 0.8; }
+.icoon .groot { font: 14px Arial, sans-serif; fill: currentColor; }
 svg .l.w { fill: #fff; }
 
 /* Formulieren */
@@ -264,6 +267,11 @@ body.afdrukken #afdruk { display: block; }
 .legende div { display: flex; align-items: center; gap: 2mm; margin: 0.8mm 0; }
 .legende .icoon { color: #c2410c; }
 .blad h2 { font-size: 14pt; margin: 0 0 4mm; }
+.kringlijst { display: grid; grid-template-columns: 1fr 1fr; gap: 12mm; }
+.kringkolom { border-top: 0.2mm solid #bbb; }
+.lrij { display: flex; align-items: center; gap: 8mm; height: 7mm; padding: 0 3mm; border-bottom: 0.2mm solid #d5d8de; font-size: 8pt; }
+.lrij:nth-child(odd) { background: #eef0f4; }
+.lrij b { width: 14mm; font-size: 11pt; flex: none; }
 .blad table.materiaal { font-size: 9pt; border-radius: 0; }
 .blad table.materiaal th, .blad table.materiaal td { padding: 1.2mm 2.5mm; }
 

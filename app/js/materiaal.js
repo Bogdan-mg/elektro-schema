@@ -1,8 +1,9 @@
 // De materiaallijst, rechtstreeks uit het ééndraadschema.
-import { LICHTPUNTEN, SCHAKELAARS, TOESTELLEN, KABELTYPES, kabelTekst, komma } from './catalogus.js';
+import { TOESTELLEN, KABELTYPES, SOORTEN, kabelTekst, komma, itemNaam } from './catalogus.js';
 import { alleKnopen } from './model.js';
 
-export const GROEPEN = ['Verdeelbord', 'Kabels en draad', 'Stopcontacten', 'Schakelaars', 'Verlichting', 'Toestellen', 'Dozen'];
+export const GROEPEN = ['Verdeelbord', 'Kabels en draad', 'Stopcontacten', 'Schakelaars', 'Verlichting', 'Toestellen', 'Beveiliging',
+  'Alarm en detectie', 'Toegang', 'Communicatie', 'Sturing', 'Algemeen', 'Contactdozen', 'Dozen'];
 
 const MEERVOUD = ['enkel', 'dubbel', 'drievoudig', 'viervoudig'];
 const voudig = (n) => MEERVOUD[n - 1] || `${n}-voudig`;
@@ -16,6 +17,16 @@ function stopcontactNaam({ aantal, aarding, kinderveilig, waterdicht }) {
 }
 
 const diffNaam = (d) => `Differentieel ${d.polen}P ${d.stroom} A ${d.gevoeligheid} mA type ${d.type}`;
+
+/** De beveiliging van een groep of het hoofdbord, zoals die in het schema gekozen is. Geeft niets terug bij een rij. */
+function beveiligingNaam(b) {
+  switch (b.beveiliging) {
+    case 'geen': return null;
+    case 'automaat': return `Automaat ${b.polen}P ${b.curve || ''}${b.stroom}`.replace('  ', ' ');
+    case 'diffautomaat': return `Differentieelautomaat ${b.polen}P ${b.curve || ''}${b.stroom} A ${b.gevoeligheid} mA type ${b.type}`.replace('  ', ' ');
+    default: return diffNaam(b);
+  }
+}
 const automaatNaam = (a) => `Automaat ${a.polen === 2 ? '1P+N' : `${a.polen}P`} ${a.curve}${a.stroom}`;
 
 /** Modules op de DIN-rail: een 1P+N-automaat telt als 1 module. */
@@ -34,18 +45,23 @@ export function materiaallijst(project, { marge = 10 } = {}) {
     regels.set(sleutel, r);
   };
   const kabels = new Map();
-  let modules = project.hoofd.polen;
+  let modules = project.hoofd.beveiliging === 'geen' ? 0 : project.hoofd.polen;
 
-  tel('Verdeelbord', diffNaam(project.hoofd) + ' (hoofdschakelaar)');
+  const hoofdNaam = beveiligingNaam(project.hoofd);
+  if (hoofdNaam) tel('Verdeelbord', `${hoofdNaam} (hoofdschakelaar)`);
+  if (project.hoofd.teller !== false) tel('Verdeelbord', 'kWh-teller');
 
   for (const { knoop } of alleKnopen(project)) {
     if (knoop.soort === 'differentieel') {
-      tel('Verdeelbord', diffNaam(knoop));
-      modules += knoop.polen;
+      const naam = beveiligingNaam(knoop);
+      if (naam) {
+        tel('Verdeelbord', naam);
+        modules += knoop.polen;
+      }
       continue;
     }
     const kring = knoop;
-    tel('Verdeelbord', automaatNaam(kring.automaat));
+    tel('Verdeelbord', Number(kring.automaat.gevoeligheid) ? beveiligingNaam({ ...kring.automaat, beveiliging: 'diffautomaat' }) : automaatNaam(kring.automaat));
     modules += automaatModules(kring.automaat.polen);
 
     const lengte = Number(kring.kabel.lengte) || 0;
@@ -67,12 +83,18 @@ export function materiaallijst(project, { marge = 10 } = {}) {
           if (!item.waterdicht) tel('Dozen', `Inbouwdoos ${item.aantal}-voudig`);
           break;
         case 'schakelaar':
-          tel('Schakelaars', SCHAKELAARS[item.variant]?.naam + (item.waterdicht ? ', waterdicht opbouw' : ''), item.aantal);
+          tel('Schakelaars', itemNaam({ ...item, aantal: 1 }) + (item.waterdicht ? ', halfwaterdicht' : ''), item.aantal);
           if (!item.waterdicht) tel('Dozen', `Inbouwdoos ${item.aantal}-voudig`);
           break;
+        case 'drukknop':
+          tel('Schakelaars', `Drukknop${item.knoppen > 1 ? ` ${item.knoppen}-voudig` : ''}${item.verklikker ? ' met verklikkerlamp' : ''}${item.waterdicht ? ', halfwaterdicht' : ''}`, item.aantal);
+          if (!item.waterdicht) tel('Dozen', 'Inbouwdoos 1-voudig', item.aantal);
+          break;
         case 'lichtpunt':
-          tel('Verlichting', LICHTPUNTEN[item.variant]?.naam, item.aantal);
-          if (item.variant === 'plafond' || item.variant === 'wand') tel('Dozen', 'Centraaldoos (lichtpunt)');
+          tel('Verlichting', itemNaam({ ...item, aantal: 1 }) + (item.waterdicht ? ', halfwaterdicht' : ''), item.aantal);
+          if (item.variant === 'plafond' && (!item.nood || item.nood === 'geen')) tel('Dozen', 'Centraaldoos (lichtpunt)');
+          break;
+        case 'nota':
           break;
         case 'toestel': {
           const t = TOESTELLEN[item.variant] || TOESTELLEN.ander;
@@ -88,6 +110,9 @@ export function materiaallijst(project, { marge = 10 } = {}) {
         case 'aftakdoos':
           tel('Dozen', 'Aftakdoos');
           break;
+        default:
+          // Alle andere onderdelen uit de catalogus: per soort en variant.
+          tel(SOORTEN[item.soort]?.groep || 'Algemeen', itemNaam(item), item.aantal || 1);
       }
     }
   }

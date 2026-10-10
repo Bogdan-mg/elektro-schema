@@ -1,5 +1,5 @@
 // Het project: het bord met differentiëlen, kringen en onderdelen, plus de plannen van het situatieschema.
-import { TOESTELLEN, NETTEN } from './catalogus.js';
+import { TOESTELLEN, NETTEN, SOORTEN } from './catalogus.js';
 
 export const VERSIE = 1;
 export const EXTENSIE = 'eschema';
@@ -26,8 +26,8 @@ export function nieuwProject() {
   return {
     versie: VERSIE,
     info: { titel: 'Nieuw project', klant: '', adres: '', installateur: '', datum: vandaag(), opmerking: '' },
-    aansluiting: { net: '1F230', hoofdzekering: 40, aardingsweerstand: 0 },
-    hoofd: { gevoeligheid: 300, type: 'A', stroom: 40, polen: 2 },
+    aansluiting: { net: '1F230', hoofdzekering: 40, aardingsweerstand: 0, kabelNet: '', kabelBord: '' },
+    hoofd: { beveiliging: 'differentieel', gevoeligheid: 300, type: 'A', stroom: 40, polen: 2, curve: 'C', onderbreking: 0, teller: true },
     kinderen: [],
     plannen: [nieuwPlan()],
     afbeeldingen: {},
@@ -35,36 +35,58 @@ export function nieuwProject() {
   };
 }
 
+/**
+ * Een groep op een verdeellijn, met zijn beveiliging: differentieel, automaat (bv. generaal zekering),
+ * differentieelautomaat, of geen (een "rij"). Zoals in Trikker krijgt ook een groep een letter en een naam.
+ */
 export function nieuwDifferentieel(waarden = {}) {
-  return { id: nieuwId(), soort: 'differentieel', gevoeligheid: 30, type: 'A', stroom: 40, polen: 2, kinderen: [], ...waarden };
+  return {
+    id: nieuwId(), soort: 'differentieel', beveiliging: 'differentieel', naam: '', letter: '',
+    gevoeligheid: 30, type: 'A', stroom: 40, polen: 2, curve: 'C', onderbreking: 3000, kinderen: [], ...waarden,
+  };
 }
 
 export function nieuweKring(waarden = {}) {
+  const { automaat, kabel, ...rest } = waarden;
   return {
     id: nieuwId(),
     soort: 'kring',
     naam: '',
-    automaat: { stroom: 20, curve: 'C', polen: 2 },
-    kabel: { type: 'XVB', aders: 3, sectie: 2.5, lengte: 0 },
+    letter: '', // vaste kringletter; leeg = automatisch (A, B, C, …)
+    automaat: { stroom: 20, curve: 'C', polen: 2, onderbreking: 3000, gevoeligheid: 0, type: 'A', ...automaat },
+    kabel: { type: 'XVB', aders: 3, sectie: 2.5, lengte: 0, plaatsing: 'inWand', ...kabel },
     badkamer: false,
     items: [],
-    ...waarden,
+    ...rest,
   };
 }
 
 export function nieuwItem(soort, waarden = {}) {
-  const basis = { id: nieuwId(), soort, tekst: '' };
-  switch (soort) {
-    case 'stopcontact': return { ...basis, aantal: 1, aarding: true, kinderveilig: true, waterdicht: false, ...waarden };
-    case 'lichtpunt': return { ...basis, variant: 'plafond', aantal: 1, ...waarden };
-    case 'schakelaar': return { ...basis, variant: 'enkelpolig', aantal: 1, waterdicht: false, ...waarden };
-    case 'toestel': {
-      const variant = waarden.variant || 'ander';
-      const t = TOESTELLEN[variant] || TOESTELLEN.ander;
-      return { ...basis, variant, aansluiting: t.aansluiting, vermogen: t.vermogen, ...waarden };
-    }
-    default: return { ...basis, ...waarden };
+  const def = SOORTEN[soort];
+  const basis = { id: nieuwId(), soort, tekst: '', adres: '', aantal: 1, ...structuredClone(def?.standaard || {}) };
+  if (soort === 'toestel') {
+    const variant = waarden.variant || 'ander';
+    const t = TOESTELLEN[variant] || TOESTELLEN.ander;
+    return { ...basis, variant, aansluiting: t.aansluiting, vermogen: t.vermogen, ...waarden };
   }
+  return { ...basis, ...waarden };
+}
+
+/** Onderdelen uit oudere versies omzetten naar de soorten en eigenschappen van nu. */
+function zetOm(item) {
+  const it = { ...item };
+  if (it.soort === 'lichtpunt') {
+    if (it.variant === 'wand') Object.assign(it, { variant: 'plafond', wand: true });
+    if (it.variant === 'buiten') Object.assign(it, { variant: 'plafond', waterdicht: true });
+    if (it.variant === 'nood') Object.assign(it, { variant: 'plafond', nood: 'decentraal' });
+  }
+  if (it.soort === 'schakelaar') {
+    if (it.variant === 'dimmer') Object.assign(it, { variant: 'enkelpolig', dimmer: true });
+    if (it.variant === 'rolluik') Object.assign(it, { variant: 'enkelpolig', rolluik: true });
+    if (it.variant === 'drukknop') { it.soort = 'drukknop'; delete it.variant; }
+    if (it.variant === 'bewegingsmelder') { it.soort = 'bewegingsdetector'; it.variant = 'basis'; it.infrarood = true; }
+  }
+  return it;
 }
 
 // ---------- Zoeken in de boom ----------
@@ -122,12 +144,33 @@ export function letter(i) {
 /** De codes zoals op het schema: kringen krijgen een letter, onderdelen letter + nummer (A1, A2, …). */
 export function codes(project) {
   const map = new Map();
-  alleKringen(project).forEach(({ knoop }, i) => {
-    const l = letter(i);
+  // Zoals in Trikker krijgt elke kring en elke groep een letter, in tekenvolgorde.
+  // Een vaste letter (zoals "XYZ") telt niet mee voor de automatische letters.
+  let i = 0;
+  for (const { knoop } of alleKnopen(project)) {
+    const l = knoop.letter?.trim() || letter(i++);
     map.set(knoop.id, l);
-    knoop.items.forEach((item, j) => map.set(item.id, `${l}${j + 1}`));
-  });
+    if (knoop.soort === 'kring') rijen(knoop).forEach((rij, j) => rij.forEach((item) => map.set(item.id, `${l}${j + 1}`)));
+  }
   return map;
+}
+
+/** Soorten die een schakelaar mee op zijn rij neemt (de lampen die hij bedient). */
+const OP_RIJ = new Set(['lichtpunt']);
+const BEDIENING = new Set(['schakelaar', 'drukknop']);
+
+/**
+ * De onderdelen van een kring per rij, zoals in Trikker: een schakelaar staat samen met de lampen erna op één rij
+ * en heeft één nummer. Met "eigenRij" begint een lamp toch een nieuwe rij.
+ */
+export function rijen(kring) {
+  const uit = [];
+  for (const item of kring.items) {
+    const rij = uit.at(-1);
+    if (rij && OP_RIJ.has(item.soort) && !item.eigenRij && item.plaatsing !== 'eigenRij' && item.plaatsing !== 'evenwijdig' && BEDIENING.has(rij[0].soort)) rij.push(item);
+    else uit.push([item]);
+  }
+  return uit;
 }
 
 // ---------- Wijzigen ----------
@@ -259,12 +302,12 @@ export function leesProject(tekst) {
     .map((p) => ({ ...nieuwPlan(), ...p, plaatsingen: p.plaatsingen || {}, muren: p.muren || [], teksten: p.teksten || [] }));
   const vul = (k) => {
     if (k.soort === 'differentieel') {
-      Object.assign(k, { ...nieuwDifferentieel(), ...k, kinderen: k.kinderen || [] });
+      Object.assign(k, { ...nieuwDifferentieel(), onderbreking: 0, ...k, kinderen: k.kinderen || [] });
       k.kinderen.forEach(vul);
     } else if (k.soort === 'kring') {
       const n = nieuweKring();
       Object.assign(k, { ...n, ...k, automaat: { ...n.automaat, ...k.automaat }, kabel: { ...n.kabel, ...k.kabel }, items: k.items || [] });
-      k.items = k.items.map((it) => ({ ...nieuwItem(it.soort, it.variant ? { variant: it.variant } : {}), ...it }));
+      k.items = k.items.map(zetOm).map((it) => ({ ...nieuwItem(it.soort, it.variant ? { variant: it.variant } : {}), ...it }));
     }
   };
   project.kinderen.forEach(vul);
@@ -291,7 +334,7 @@ export function voorbeeldProject() {
   const dertig = nieuwDifferentieel({ gevoeligheid: 30, stroom: 40 });
   dertig.kinderen.push(
     nieuweKring({ naam: 'Badkamer', badkamer: true, kabel: { type: 'XVB', aders: 3, sectie: 2.5, lengte: 14 }, items: [
-      sch('enkelpolig'), l('plafond'), l('wand', { tekst: 'spiegel' }), s({ aantal: 2 }), s(),
+      sch('enkelpolig'), l('plafond'), l('plafond', { wand: true, tekst: 'spiegel' }), s({ aantal: 2 }), s(),
     ] }),
     nieuweKring({ naam: 'Wasmachine', kabel: { type: 'XVB', aders: 3, sectie: 2.5, lengte: 9 }, items: [t('wasmachine')] }),
     nieuweKring({ naam: 'Droogkast', kabel: { type: 'XVB', aders: 3, sectie: 2.5, lengte: 9 }, items: [t('droogkast')] }),
@@ -306,7 +349,7 @@ export function voorbeeldProject() {
     nieuweKring({ naam: 'Oven', kabel: { type: 'XVB', aders: 3, sectie: 2.5, lengte: 8 }, items: [t('oven')] }),
     nieuweKring({ naam: 'Verlichting gelijkvloers', automaat: { stroom: 16, curve: 'C', polen: 2 }, kabel: { type: 'XVB', aders: 3, sectie: 1.5, lengte: 32 }, items: [
       sch('wissel'), sch('wissel'), l('plafond', { tekst: 'hal' }), sch('serie'), l('plafond', { tekst: 'living' }), l('spot', { aantal: 4, tekst: 'living' }),
-      sch('enkelpolig'), l('plafond', { tekst: 'keuken' }), l('buiten', { tekst: 'voordeur' }),
+      sch('enkelpolig'), l('plafond', { tekst: 'keuken' }), l('plafond', { waterdicht: true, tekst: 'voordeur' }),
     ] }),
     nieuweKring({ naam: 'Living', kabel: { type: 'XVB', aders: 3, sectie: 2.5, lengte: 22 }, items: [
       s({ aantal: 2 }), s(), s(), s({ aantal: 3, tekst: 'tv' }), s(),

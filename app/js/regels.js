@@ -12,16 +12,20 @@ export const MAX_AARDING_ABSOLUUT = 100;
 /** Telt als contactdoos: een (meervoudig) stopcontact, of een toestel dat via een stopcontact aangesloten is. */
 const isContactdoos = (item) => item.soort === 'stopcontact' || (item.soort === 'toestel' && item.aansluiting === 'stopcontact');
 
+/** Is dit een beveiliging met een differentieel van hoogstens 30 mA? Een gewone automaat telt niet. */
+const isDertig = (b) => (b.beveiliging === 'differentieel' || b.beveiliging === 'diffautomaat') && Number(b.gevoeligheid) > 0 && Number(b.gevoeligheid) <= 30;
+
 export function controleer(project) {
   const meldingen = [];
   const code = codes(project);
   const meld = (niveau, id, tekst) => meldingen.push({ niveau, id, tekst });
   const { aansluiting, hoofd } = project;
 
-  if (hoofd.gevoeligheid > 300) {
+  const hoofdDiff = hoofd.beveiliging === 'differentieel' || hoofd.beveiliging === 'diffautomaat';
+  if (hoofdDiff && hoofd.gevoeligheid > 300) {
     meld('fout', 'hoofd', `De hoofddifferentieel is ${hoofd.gevoeligheid} mA; dat mag hoogstens 300 mA zijn.`);
   }
-  if (hoofd.stroom < aansluiting.hoofdzekering) {
+  if (hoofdDiff && hoofd.stroom < aansluiting.hoofdzekering) {
     meld('waarschuwing', 'hoofd', `De hoofddifferentieel (${hoofd.stroom} A) is kleiner dan de hoofdzekering (${aansluiting.hoofdzekering} A).`);
   }
   const r = Number(aansluiting.aardingsweerstand) || 0;
@@ -38,7 +42,7 @@ export function controleer(project) {
 
   for (const { knoop: kring, ouders } of kringen) {
     const naam = `Kring ${code.get(kring.id)}${kring.naam ? ` (${kring.naam})` : ''}`;
-    const dertig = ouders.some((d) => d.gevoeligheid <= 30);
+    const dertig = ouders.some(isDertig) || isDertig({ ...kring.automaat, beveiliging: Number(kring.automaat.gevoeligheid) ? 'diffautomaat' : 'automaat' });
 
     if (!kring.items.length) meld('waarschuwing', kring.id, `${naam} heeft nog geen onderdelen.`);
 

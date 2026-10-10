@@ -1,7 +1,7 @@
 // Het tabblad Ééndraadschema: de boom links, de tekening in het midden, de eigenschappen rechts.
 import {
-  NETTEN, AUTOMAAT_STROMEN, CURVES, POLEN, DIFF_GEVOELIGHEDEN, DIFF_STROMEN, DIFF_TYPES, SECTIES, ADERS, KABELTYPES,
-  LICHTPUNTEN, SCHAKELAARS, TOESTELLEN, AANSLUITINGEN, PALET, itemNaam, kabelTekst, automaatTekst, komma,
+  NETTEN, AUTOMAAT_STROMEN, CURVES, DIFF_GEVOELIGHEDEN, DIFF_TYPES, SECTIES, ADERS, KABELTYPES,
+  SOORTEN, SOORT_GROEPEN, PALET, itemNaam, kabelTekst, automaatLabel, komma,
 } from './catalogus.js';
 import {
   nieuwDifferentieel, nieuweKring, nieuwItem, voegKnoopToe, voegItemToe, verwijder, verschuif, dupliceer, verplaatsNaar,
@@ -54,25 +54,36 @@ export function verschuifGekozen(richting) {
 
 // ---------- Boom ----------
 
+/** Korte omschrijving van een beveiliging, voor in de boom. */
+function beveiligingKort(b) {
+  const polen = `${b.polen}P`;
+  switch (b.beveiliging) {
+    case 'geen': return 'rij';
+    case 'automaat': return `${polen} ${b.curve || ''}${b.stroom}A`.replace('  ', ' ');
+    case 'diffautomaat': return `Δ${b.gevoeligheid}mA ${polen} M${b.stroom}A`;
+    default: return `Δ${b.gevoeligheid}mA ${polen} ${b.stroom}A`;
+  }
+}
+
 function tekenBoom() {
   const p = staat.project;
   const code = codes(p);
   const rij = (id, diepte, inhoud, extra = '') =>
     `<div class="rij${id === staat.selectie ? ' gekozen' : ''}${extra}" data-id="${esc(id)}" style="--diepte:${diepte}">${inhoud}</div>`;
-  const html = [rij('hoofd', 0, `<span class="ic hoofd-ic">⚡</span><b>Hoofdbord</b><small>${p.hoofd.gevoeligheid} mA</small>`)];
+  const html = [rij('hoofd', 0, `<span class="ic hoofd-ic">⚡</span><b>Hoofdbord</b><small>${esc(beveiligingKort(p.hoofd))}</small>`)];
   const loop = (kinderen, diepte) => {
     for (const k of kinderen) {
       if (k.soort === 'differentieel') {
-        html.push(rij(k.id, diepte, `<span class="ic diff-ic">ΔI</span><b>Differentieel</b><small>${k.gevoeligheid} mA</small>`));
+        html.push(rij(k.id, diepte, `<span class="ic letter groep">${esc(code.get(k.id))}</span><b>${esc(k.naam || 'Groep')}</b><small>${esc(beveiligingKort(k))}</small>`));
         loop(k.kinderen, diepte + 1);
       } else {
         const dicht = staat.dicht.has(k.id);
         html.push(rij(k.id, diepte,
           `<button class="klap" data-klap="${esc(k.id)}" title="${dicht ? 'Openklappen' : 'Dichtklappen'}">${k.items.length ? (dicht ? '▸' : '▾') : ''}</button>`
-          + `<span class="ic letter">${code.get(k.id)}</span><b>${esc(k.naam || 'Kring')}</b><small>${automaatTekst(k.automaat)} · ${esc(kabelTekst(k.kabel))}</small>`));
+          + `<span class="ic letter">${esc(code.get(k.id))}</span><b>${esc(k.naam || 'Kring')}</b><small title="${esc(kabelTekst(k.kabel))}">${esc(automaatLabel(k.automaat))}</small>`));
         if (!dicht) {
           for (const item of k.items) {
-            html.push(rij(item.id, diepte + 1, `${icoon(item, 22)}<span class="code">${code.get(item.id)}</span><span>${esc(itemNaam(item))}</span>${item.tekst ? `<small>${esc(item.tekst)}</small>` : ''}`, ' item'));
+            html.push(rij(item.id, diepte + 1, `${icoon(item, 22)}<span class="code">${esc(code.get(item.id))}</span><span>${esc(itemNaam(item))}</span>${item.tekst ? `<small>${esc(item.tekst)}</small>` : ''}`, ' item'));
           }
         }
       }
@@ -224,8 +235,8 @@ function verplaatsKeuze(id, isItem) {
   const plek = zoek(p, id);
   const keuzes = isItem
     ? alleKringen(p).filter(({ knoop }) => knoop.id !== plek.ouder.id).map(({ knoop }) => [knoop.id, `Kring ${code.get(knoop.id)} ${knoop.naam || ''}`])
-    : [['hoofd', 'Hoofdbord (300 mA)'], ...alleKnopen(p).filter(({ knoop }) => knoop.soort === 'differentieel' && knoop.id !== id)
-      .map(({ knoop, ouders }) => [knoop.id, `${'  '.repeat(ouders.length)}Differentieel ${knoop.gevoeligheid} mA`])];
+    : [['hoofd', 'Hoofdbord'], ...alleKnopen(p).filter(({ knoop }) => knoop.soort === 'differentieel' && knoop.id !== id)
+      .map(({ knoop, ouders }) => [knoop.id, `${'  '.repeat(ouders.length)}Groep ${code.get(knoop.id)} ${knoop.naam || ''}`])];
   if (!keuzes.length) return document.createDocumentFragment();
   const label = document.createElement('label');
   label.className = 'veld';
@@ -253,6 +264,74 @@ function palet() {
   return wrap;
 }
 
+/** Alle soorten onderdelen uit de catalogus, per groep, in een keuzelijst. */
+function alleSoorten() {
+  const label = document.createElement('label');
+  label.className = 'veld';
+  const span = document.createElement('span');
+  span.textContent = 'Alle onderdelen';
+  const sel = document.createElement('select');
+  const groepen = SOORT_GROEPEN.map((g) => {
+    const lijst = Object.entries(SOORTEN).filter(([, d]) => d.groep === g);
+    return lijst.length ? `<optgroup label="${esc(g)}">${lijst.map(([k, d]) => `<option value="${esc(k)}">${esc(d.naam)}</option>`).join('')}</optgroup>` : '';
+  });
+  sel.innerHTML = `<option value="">Kies een onderdeel…</option>${groepen.join('')}`;
+  sel.addEventListener('change', () => {
+    if (sel.value) voegOnderdeelToe(sel.value, {});
+  });
+  label.append(span, sel);
+  return label;
+}
+
+const BEVEILIGINGEN = {
+  differentieel: 'Differentieel',
+  diffautomaat: 'Differentieelautomaat',
+  automaat: 'Automatische schakelaar (bv. generaal zekering)',
+  geen: 'Geen (enkel een rij)',
+};
+const PLAATSINGEN = {
+  inWand: 'In een wand', opWand: 'Op een wand', lucht: 'Luchtleiding', buis: 'In een buis', ondergronds: 'Ondergronds', '': 'Niet tonen',
+};
+const stroomKeuzes = (huidig) => [...new Set([...AUTOMAAT_STROMEN, 100, 125, 160, 200, 250, Number(huidig)].filter(Boolean))].sort((a, b) => a - b);
+
+/** De velden van een beveiliging (hoofdbord of groep): welke er getoond worden hangt af van het soort. */
+function beveiligingVelden(pre, b, herbouw = true) {
+  const v = (naam) => `${pre}${naam}`;
+  const soort = b.beveiliging || 'differentieel';
+  const velden = [
+    { label: 'Soort', pad: v('beveiliging'), type: 'select', opties: Object.entries(BEVEILIGINGEN), herbouw },
+  ];
+  if (soort === 'geen') return velden;
+  velden.push(
+    { label: 'Aantal polen', pad: v('polen'), type: 'select', opties: [[1, '1P'], [2, '2P'], [3, '3P'], [4, '4P']], getal: true },
+    { label: 'Nominale stroom', pad: v('stroom'), type: 'select', opties: stroomKeuzes(b.stroom).map((n) => [n, `${n} A`]), getal: true },
+  );
+  if (soort !== 'differentieel') velden.push({ label: 'Uitschakelcurve', pad: v('curve'), type: 'select', opties: [['', 'Niet tonen'], ...CURVES.map((c) => [c, c])] });
+  if (soort !== 'automaat') {
+    velden.push(
+      { label: 'Gevoeligheid', pad: v('gevoeligheid'), type: 'select', opties: DIFF_GEVOELIGHEDEN.map((n) => [n, `${n} mA`]), getal: true },
+      { label: 'Type', pad: v('type'), type: 'select', opties: DIFF_TYPES.map((t) => [t, `Type ${t}`]) },
+    );
+  }
+  velden.push({ label: 'Onderbrekingsvermogen (A)', pad: v('onderbreking'), type: 'number', getal: true, min: 0, placeholder: '0 = niet tonen' });
+  return velden;
+}
+
+/** Velden die bij elk onderdeel horen, naast de velden van zijn soort. */
+function algemeneVelden(def, ding) {
+  const velden = [];
+  if (!def?.eigenAantal) velden.push({ label: 'Aantal (x3, x5, …)', pad: 'aantal', type: 'number', getal: true, min: 1, max: 99 });
+  velden.push(
+    { label: 'Adres (langs het symbool)', pad: 'adres', placeholder: 'bv. ZONE.01' },
+    { label: 'Tekst rechts', pad: 'tekst', placeholder: 'bv. hal, spiegel, tv' },
+    {
+      label: 'Plaatsing', pad: 'plaatsing', type: 'select',
+      opties: [['auto', 'Automatisch'], ['evenwijdig', 'Op de kringlijn (evenwijdig)'], ['eigenRij', 'Op een eigen rij']],
+    },
+  );
+  return velden;
+}
+
 function tekenEigenschappen() {
   const paneel = $('#eigenschappen');
   paneel.replaceChildren();
@@ -264,20 +343,17 @@ function tekenEigenschappen() {
     paneel.append(
       kop('Hoofdbord'),
       formulier([
-        { label: 'Net', pad: 'aansluiting.net', type: 'select', opties: Object.entries(NETTEN).map(([k, v]) => [k, v.naam]),
-          daarna: (o, w) => { o.hoofd.polen = NETTEN[w].polen; } },
+        { label: 'Net', pad: 'aansluiting.net', type: 'select', opties: Object.entries(NETTEN).map(([k, v]) => [k, v.naam]) },
         { label: 'Hoofdzekering (A)', pad: 'aansluiting.hoofdzekering', type: 'number', getal: true, min: 0 },
         { label: 'Aardingsweerstand (Ω)', pad: 'aansluiting.aardingsweerstand', type: 'number', getal: true, min: 0, stap: 0.1 },
+        { label: 'Kabel van het net', pad: 'aansluiting.kabelNet', placeholder: 'bv. EXVB 4x70' },
+        { label: 'Kabel naar het bord', pad: 'aansluiting.kabelBord', placeholder: 'bv. XVB 5G10' },
+        { label: 'Met teller (kWh)', pad: 'hoofd.teller', type: 'checkbox' },
       ], (pr) => pr, 'hoofd'),
-      kop('Hoofddifferentieel'),
-      formulier([
-        { label: 'Gevoeligheid', pad: 'hoofd.gevoeligheid', type: 'select', opties: opties(DIFF_GEVOELIGHEDEN, ' mA'), getal: true },
-        { label: 'Stroom', pad: 'hoofd.stroom', type: 'select', opties: opties(DIFF_STROMEN, ' A'), getal: true },
-        { label: 'Polen', pad: 'hoofd.polen', type: 'select', opties: opties([2, 3, 4], 'P'), getal: true },
-        { label: 'Type', pad: 'hoofd.type', type: 'select', opties: DIFF_TYPES.map((t) => [t, `type ${t}`]) },
-      ], (pr) => pr, 'hoofd'),
+      kop('Hoofdbeveiliging'),
+      formulier(beveiligingVelden('hoofd.', p.hoofd), (pr) => pr, 'hoofd'),
       kop('Toevoegen op het hoofdbord'),
-      knoppenrij(knop('+ Differentieel', voegDifferentieelToe), knop('+ Kring', voegKringToe)),
+      knoppenrij(knop('+ Groep', voegDifferentieelToe), knop('+ Kring', voegKringToe)),
     );
     if (!p.kinderen.length) {
       paneel.append(
@@ -299,15 +375,15 @@ function tekenEigenschappen() {
 
   if (ding.soort === 'differentieel') {
     paneel.append(
-      kop('Differentieel', `${ding.gevoeligheid} mA`),
+      kop(`Groep ${code.get(id)}`, ding.naam),
       formulier([
-        { label: 'Gevoeligheid', pad: 'gevoeligheid', type: 'select', opties: opties(DIFF_GEVOELIGHEDEN, ' mA'), getal: true },
-        { label: 'Stroom', pad: 'stroom', type: 'select', opties: opties(DIFF_STROMEN, ' A'), getal: true },
-        { label: 'Polen', pad: 'polen', type: 'select', opties: opties([2, 3, 4], 'P'), getal: true },
-        { label: 'Type', pad: 'type', type: 'select', opties: DIFF_TYPES.map((t) => [t, `type ${t}`]) },
+        { label: 'Naam', pad: 'naam', placeholder: 'bv. diff 30mA wassalon' },
+        { label: 'Vaste letter', pad: 'letter', placeholder: 'leeg = automatisch' },
       ], doel, id),
-      kop('Toevoegen onder deze differentieel'),
-      knoppenrij(knop('+ Kring', voegKringToe), knop('+ Differentieel', voegDifferentieelToe)),
+      kop('Beveiliging'),
+      formulier(beveiligingVelden('', ding), doel, id),
+      kop('Toevoegen op de verdeellijn van deze groep'),
+      knoppenrij(knop('+ Kring', voegKringToe), knop('+ Groep', voegDifferentieelToe)),
       kop('Ordenen'),
       verplaatsKeuze(id, false),
       basisActies(),
@@ -319,24 +395,29 @@ function tekenEigenschappen() {
     paneel.append(
       kop(`Kring ${code.get(id)}`, ding.naam),
       formulier([
-        { label: 'Naam / ruimte', pad: 'naam', placeholder: 'bv. Keuken stopcontacten' },
+        { label: 'Naam (bovenaan)', pad: 'naam', placeholder: 'bv. keuken stopcontacten' },
+        { label: 'Vaste letter', pad: 'letter', placeholder: 'leeg = automatisch' },
         { label: 'Badkamer of natte ruimte', pad: 'badkamer', type: 'checkbox' },
       ], doel, id),
       kop('Automaat'),
       formulier([
-        { label: 'Stroom', pad: 'automaat.stroom', type: 'select', opties: opties(AUTOMAAT_STROMEN, ' A'), getal: true },
-        { label: 'Curve', pad: 'automaat.curve', type: 'select', opties: CURVES.map((c) => [c, `curve ${c}`]) },
-        { label: 'Polen', pad: 'automaat.polen', type: 'select', opties: POLEN.map((n) => [n, n === 2 ? '2P (1P+N)' : `${n}P`]), getal: true },
+        { label: 'Stroom', pad: 'automaat.stroom', type: 'select', opties: stroomKeuzes(ding.automaat.stroom).map((n) => [n, `${n} A`]), getal: true },
+        { label: 'Curve', pad: 'automaat.curve', type: 'select', opties: [['', 'Niet tonen'], ...CURVES.map((c) => [c, `curve ${c}`])] },
+        { label: 'Aantal polen', pad: 'automaat.polen', type: 'select', opties: [[1, '1P'], [2, '2P'], [3, '3P'], [4, '4P']], getal: true },
+        { label: 'Onderbrekingsvermogen (A)', pad: 'automaat.onderbreking', type: 'number', getal: true, min: 0, placeholder: '0 = niet tonen' },
+        { label: 'Differentieelautomaat (mA)', pad: 'automaat.gevoeligheid', type: 'select', getal: true, opties: [[0, 'Nee'], ...DIFF_GEVOELIGHEDEN.map((n) => [n, `${n} mA`])] },
       ], doel, id),
       kop('Kabel'),
       formulier([
         { label: 'Type', pad: 'kabel.type', type: 'select', opties: Object.entries(KABELTYPES).map(([k, v]) => [k, v.naam]) },
-        { label: 'Aders', pad: 'kabel.aders', type: 'select', opties: opties(ADERS), getal: true },
-        { label: 'Doorsnede', pad: 'kabel.sectie', type: 'select', opties: opties(SECTIES, ' mm²'), getal: true },
+        { label: 'Aders', pad: 'kabel.aders', type: 'select', opties: ADERS.map((n) => [n, String(n)]), getal: true },
+        { label: 'Doorsnede', pad: 'kabel.sectie', type: 'select', opties: SECTIES.map((n) => [n, `${komma(n)} mm²`]), getal: true },
         { label: 'Lengte (m)', pad: 'kabel.lengte', type: 'number', getal: true, min: 0 },
+        { label: 'Plaatsing', pad: 'kabel.plaatsing', type: 'select', opties: Object.entries(PLAATSINGEN) },
       ], doel, id),
       kop('Onderdeel toevoegen'),
       palet(),
+      alleSoorten(),
       knoppenrij(knop('+ Kring hierna', voegKringToe)),
       kop('Ordenen'),
       verplaatsKeuze(id, false),
@@ -345,45 +426,14 @@ function tekenEigenschappen() {
     return;
   }
 
-  // Een onderdeel.
-  const velden = [];
-  switch (ding.soort) {
-    case 'stopcontact':
-      velden.push(
-        { label: 'Soort', pad: 'aantal', type: 'select', getal: true, herbouw: true, opties: [[1, 'Enkel'], [2, 'Dubbel'], [3, 'Drievoudig'], [4, 'Viervoudig']] },
-        { label: 'Met aarding', pad: 'aarding', type: 'checkbox' },
-        { label: 'Kinderveilig', pad: 'kinderveilig', type: 'checkbox' },
-        { label: 'Waterdicht (IP44)', pad: 'waterdicht', type: 'checkbox' },
-      );
-      break;
-    case 'lichtpunt':
-      velden.push(
-        { label: 'Soort', pad: 'variant', type: 'select', herbouw: true, opties: Object.entries(LICHTPUNTEN).map(([k, v]) => [k, v.naam]) },
-        { label: 'Aantal', pad: 'aantal', type: 'number', getal: true, min: 1, max: 50 },
-      );
-      break;
-    case 'schakelaar':
-      velden.push(
-        { label: 'Soort', pad: 'variant', type: 'select', herbouw: true, opties: Object.entries(SCHAKELAARS).map(([k, v]) => [k, v.naam]) },
-        { label: 'Aantal op deze plaats', pad: 'aantal', type: 'number', getal: true, min: 1, max: 4 },
-        { label: 'Waterdicht (IP44)', pad: 'waterdicht', type: 'checkbox' },
-      );
-      break;
-    case 'toestel':
-      velden.push(
-        { label: 'Toestel', pad: 'variant', type: 'select', herbouw: true, opties: Object.entries(TOESTELLEN).map(([k, v]) => [k, v.naam]),
-          daarna: (o, w) => { o.aansluiting = TOESTELLEN[w].aansluiting; o.vermogen = TOESTELLEN[w].vermogen; } },
-        { label: 'Aansluiting', pad: 'aansluiting', type: 'select', opties: Object.entries(AANSLUITINGEN) },
-        { label: 'Vermogen (W)', pad: 'vermogen', type: 'number', getal: true, min: 0 },
-      );
-      break;
-  }
-  velden.push({ label: 'Omschrijving / ruimte', pad: 'tekst', placeholder: 'bv. hal, tv, spiegel' });
+  // Een onderdeel: de velden van zijn soort, dan de algemene velden.
+  const def = SOORTEN[ding.soort];
   paneel.append(
     kop(`${code.get(id)} ${itemNaam(ding)}`, `in kring ${code.get(plek.ouder.id)}`),
-    formulier(velden, doel, id),
+    formulier([...(def?.velden || []).map((v) => ({ herbouw: v.type === 'select' || v.type === 'checkbox', ...v })), ...algemeneVelden(def, ding)], doel, id),
     kop('Onderdeel toevoegen na dit'),
     palet(),
+    alleSoorten(),
     kop('Ordenen'),
     verplaatsKeuze(id, true),
     basisActies(),
