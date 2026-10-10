@@ -76,5 +76,7 @@ test('symbolen op het plan hebben geen aanvoerleiding, een contactdoos wel een k
   assert.ok(!/^<line class="l" x1="0" y1="0" x2="[\d.]+" y2="0"\/>/.test(lamp.svg));
   assert.ok(lamp.b < symbool(nieuwItem('lichtpunt')).b);
   const sc = planSymbool(nieuwItem('stopcontact'));
-  assert.match(sc.svg, /^<line class="l" x1="0" y1="0" x2="3.5" y2="0"\/>/);
+  // zoals in Trikker: een steeltje van 3 eenheden (35 mm) tot aan de muur, links van het midden
+  assert.match(sc.svg, /<line x1="-3" y1="0" x2="0" y2="0"/);
+  assert.ok(sc.svg.includes('class="tk"'));
 });

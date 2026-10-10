@@ -2,6 +2,8 @@
 // Elk onderdeel begint op x = 0, waar de leiding van de kring aankomt, op hoogte y = 0.
 // Een symbool geeft terug: svg, b (breedte), boven/onder (hoe ver het boven en onder de leiding komt)
 // en midden (het midden van het eigenlijke teken, voor "x3", het adres en dergelijke).
+import { trikkerSymbool } from './trikker/kaart.js';
+
 export const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const r1 = (n) => Math.round(n * 10) / 10;
 
@@ -754,6 +756,8 @@ const MET_STEEL = new Set(['stopcontact', 'communicatie']);
  * Een lamp is enkel het kruisje, een schakelaar het rondje met de hefboom; een contactdoos houdt een kort steeltje.
  */
 export function planSymbool(item) {
+  const trikker = trikkerSymbool(item);
+  if (trikker) return trikker;
   const s = symbool(item);
   const z = zonderLeiding(s);
   if (!z.begin) return s;
