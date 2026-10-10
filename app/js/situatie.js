@@ -1,7 +1,7 @@
 // Het tabblad Situatieschema: plannen per verdieping, muren en teksten, en de onderdelen op hun plaats zetten.
 import { nieuwPlan, nieuwId, alleKringen, codes } from './model.js';
 import { itemNaam } from './catalogus.js';
-import { tekenPlan, onderdelen, PLAN_STIJL } from './plan.js';
+import { tekenPlan, onderdelen, PLAN_STIJL, segmentSvg, afstand, lengteTekst, SEGMENTEN } from './plan.js';
 import { SCHEMA_STIJL } from './eendraad.js';
 import { icoon, esc } from './symbolen.js';
 import { staat, wijzig, herteken, opWijziging } from './staat.js';
@@ -10,7 +10,8 @@ import { vraag, vraagTekst, bevestig, melding } from './dialoog.js';
 
 const $ = (s) => document.querySelector(s);
 let vlak;
-let gereedschap = 'kies'; // 'kies' | 'muur' | 'tekst'
+let gereedschap = 'kies'; // 'kies' | 'muur' | 'deur' | 'raam' | 'meet' | 'tekst' | 'schaal'
+const LIJNSTUKKEN = ['muur', 'deur', 'raam', 'meet'];
 let plaatsen = null; // id van het onderdeel dat geplaatst wordt
 let muurStart = null;
 let achtergrondSleutel = null;
@@ -91,8 +92,16 @@ function tekenVlak() {
   $('#plan-zicht').disabled = !afb;
   $('#plan-weg').disabled = !afb;
   const iets = staat.planSelectie;
-  $('#plan-draai').disabled = iets?.soort !== 'item';
+  const lijnstuk = iets?.soort === 'muur' ? plan.muren[iets.id] : null;
+  $('#plan-draai').disabled = !(iets?.soort === 'item' || lijnstuk?.soort === 'deur');
   $('#plan-verwijder').disabled = !iets;
+  const lengte = $('#plan-lengte');
+  lengte.disabled = !(lijnstuk && plan.schaal);
+  if (document.activeElement !== lengte) lengte.value = lijnstuk && plan.schaal ? (afstand(lijnstuk) / plan.schaal).toFixed(2) : '';
+  $('#plan-maten').checked = plan.afmetingen !== false;
+  const info = $('#plan-schaal-info');
+  info.textContent = plan.schaal ? `Schaal: 1 m = ${Math.round(plan.schaal * 10) / 10} punten` : 'Schaal nog niet ingesteld: kies Schaal…';
+  info.classList.toggle('mist', !plan.schaal);
   for (const b of document.querySelectorAll('[data-gereedschap]')) b.classList.toggle('aan', b.dataset.gereedschap === gereedschap && !plaatsen);
   tekenStatus();
 }
@@ -105,6 +114,10 @@ function tekenStatus() {
     t = `Klik op het plan om ${d?.item === 'bord' ? 'het verdeelbord' : `${d?.code} ${itemNaam(d.item)}`} te plaatsen · Esc om te stoppen`;
   } else if (gereedschap === 'muur') {
     t = 'Klik om een muur te beginnen en klik voor elke hoek · rechtsklik of Esc om te stoppen · Alt voor een schuine muur';
+  } else if (gereedschap === 'deur' || gereedschap === 'raam' || gereedschap === 'meet') {
+    t = `${SEGMENTEN[gereedschap].naam}: klik het begin en daarna het einde · Esc om te stoppen · Alt voor een schuine lijn`;
+  } else if (gereedschap === 'schaal') {
+    t = 'Schaal instellen: klik twee punten op het plan waarvan je de afstand kent (bv. de breedte van een deur of een muur) · Esc om te stoppen';
   } else if (gereedschap === 'tekst') {
     t = 'Klik waar de tekst moet komen (bv. de naam van een ruimte)';
   } else {
@@ -164,6 +177,12 @@ export function verwijderGekozen() {
 
 export function draaiGekozen() {
   const iets = staat.planSelectie;
+  if (iets?.soort === 'muur') {
+    // Een deur: de draairichting omkeren.
+    const stuk = huidigPlan().muren[iets.id];
+    if (stuk?.soort === 'deur') wijzig((p) => { const d = huidigPlan(p).muren[iets.id]; d.spiegel = !d.spiegel; }, { paneel: false });
+    return;
+  }
   if (iets?.soort !== 'item') return;
   wijzig((p) => {
     const pl = huidigPlan(p).plaatsingen[iets.id];
@@ -172,7 +191,7 @@ export function draaiGekozen() {
 }
 
 export function annuleer() {
-  if (gereedschap === 'muur' && muurStart) {
+  if (muurStart) {
     muurStart = null;
     $('#situatie-svg .voorbeeld-laag').innerHTML = '';
   } else if (plaatsen || gereedschap !== 'kies') {
@@ -325,13 +344,15 @@ async function laadAchtergrond(bestand) {
       for (const t of plan.teksten) { t.x *= fx; t.y *= fy; }
     }
     plan.achtergrond = id;
+    plan.schaal = null; // de schaal van het nieuwe plan is nog niet gekend
     plan.breedte = beeld.breedte;
     plan.hoogte = beeld.hoogte;
     plan.symbool = Math.round(Math.min(8, Math.max(0.6, (Math.max(beeld.breedte, beeld.hoogte) / 1000) * 1.2)) * 10) / 10;
   });
   vlak.ingesteld = false;
   herteken();
-  melding('Plan geladen. Klik links op een onderdeel om het te plaatsen.');
+  zetGereedschap('schaal');
+  melding('Plan geladen. Stel nu de schaal in: klik twee punten waarvan je de afstand kent.');
 }
 
 // ---------- Opstarten ----------
@@ -351,13 +372,41 @@ export function startSituatie() {
       plaatsOp(punt);
       return;
     }
-    if (gereedschap === 'muur') {
+    if (LIJNSTUKKEN.includes(gereedschap)) {
       const p = kleef(punt, muurStart, e.altKey);
       if (muurStart && (p.x !== muurStart.x || p.y !== muurStart.y)) {
         const van = muurStart;
-        wijzig((pr) => huidigPlan(pr).muren.push({ x1: van.x, y1: van.y, x2: p.x, y2: p.y }), { paneel: false });
+        const soort = gereedschap;
+        wijzig((pr) => huidigPlan(pr).muren.push({ soort, x1: van.x, y1: van.y, x2: p.x, y2: p.y }), { paneel: false });
+        // Een muur loopt door naar de volgende hoek; deur, raam en meetlijn zijn telkens één stuk.
+        muurStart = soort === 'muur' ? p : null;
+        if (!muurStart) $('#situatie-svg .voorbeeld-laag').innerHTML = '';
+        return;
       }
       muurStart = p;
+      return;
+    }
+    if (gereedschap === 'schaal') {
+      if (!muurStart) {
+        muurStart = { x: punt.x, y: punt.y };
+        return;
+      }
+      const van = muurStart;
+      const px = Math.hypot(punt.x - van.x, punt.y - van.y);
+      muurStart = null;
+      $('#situatie-svg .voorbeeld-laag').innerHTML = '';
+      if (px < 5) return;
+      const { knop, waarden } = await vraag({
+        titel: 'Schaal instellen',
+        tekst: 'Hoeveel meter is de afstand tussen de twee punten die je aanklikte?',
+        velden: [{ naam: 'm', label: 'Afstand (m)', type: 'number', waarde: '', min: 0 }],
+      });
+      const meter = Number(waarden.m);
+      if (knop === 'ok' && meter > 0) {
+        wijzig((pr) => { huidigPlan(pr).schaal = px / meter; }, { paneel: false });
+        zetGereedschap('kies');
+        melding(`Schaal ingesteld: de afmetingen kloppen nu in meter.`);
+      }
       return;
     }
     if (gereedschap === 'tekst') {
@@ -427,14 +476,17 @@ export function startSituatie() {
 
   svg.addEventListener('pointermove', (e) => {
     const laag = $('#situatie-svg .voorbeeld-laag');
-    if (gereedschap !== 'muur' || !muurStart) return;
-    const p = kleef(vlak.naarTekening(e.clientX, e.clientY), muurStart, e.altKey);
-    const dikte = Math.max(4, 6 * (huidigPlan().symbool || 1));
-    laag.innerHTML = `<line class="muur voorbeeld" x1="${muurStart.x}" y1="${muurStart.y}" x2="${p.x}" y2="${p.y}" stroke-width="${dikte}" opacity=".5"/>`;
+    if (!muurStart || !(LIJNSTUKKEN.includes(gereedschap) || gereedschap === 'schaal')) return;
+    const plan = huidigPlan();
+    const eind = gereedschap === 'schaal' ? vlak.naarTekening(e.clientX, e.clientY) : kleef(vlak.naarTekening(e.clientX, e.clientY), muurStart, e.altKey);
+    const stuk = { soort: gereedschap === 'schaal' ? 'meet' : gereedschap, x1: muurStart.x, y1: muurStart.y, x2: eind.x, y2: eind.y };
+    // Tijdens het tekenen zie je meteen de lengte (bij het instellen van de schaal in punten, want die is dan nog niet gekend).
+    const { svg, maat } = segmentSvg(stuk, null, gereedschap === 'schaal' ? { ...plan, schaal: 1 } : plan, { voorbeeld: true });
+    laag.innerHTML = `<g opacity=".6">${svg}</g>${gereedschap === 'schaal' ? '' : maat}`;
   });
 
   svg.addEventListener('contextmenu', (e) => {
-    if (gereedschap === 'muur' && muurStart) {
+    if (muurStart) {
       e.preventDefault();
       muurStart = null;
       $('#situatie-svg .voorbeeld-laag').innerHTML = '';
@@ -488,6 +540,24 @@ export function startSituatie() {
     wijzig((p) => { huidigPlan(p).achtergrond = null; });
   });
   $('#plan-draai').addEventListener('click', draaiGekozen);
+  $('#plan-lengte').addEventListener('change', (e) => {
+    const iets = staat.planSelectie;
+    const meter = Number(String(e.target.value).replace(',', '.'));
+    if (iets?.soort !== 'muur' || !(meter > 0)) return;
+    wijzig((p) => {
+      const plan = huidigPlan(p);
+      const m = plan.muren[iets.id];
+      if (!m || !plan.schaal) return;
+      const nu = afstand(m);
+      if (!nu) return;
+      const f = (meter * plan.schaal) / nu;
+      m.x2 = Math.round((m.x1 + (m.x2 - m.x1) * f) * 10) / 10;
+      m.y2 = Math.round((m.y1 + (m.y2 - m.y1) * f) * 10) / 10;
+    }, { paneel: false });
+  });
+  $('#plan-maten').addEventListener('change', (e) => {
+    wijzig((p) => { huidigPlan(p).afmetingen = e.target.checked; }, { paneel: false });
+  });
   $('#plan-verwijder').addEventListener('click', verwijderGekozen);
   $('#plan-symbool').addEventListener('input', (e) => {
     wijzig((p) => { huidigPlan(p).symbool = Number(e.target.value); }, { sleutel: 'symbool', paneel: false });

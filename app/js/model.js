@@ -16,7 +16,9 @@ export function nieuwPlan(naam = 'Gelijkvloers') {
     breedte: 1600,
     hoogte: 1000,
     symbool: 1.5, // grootte van de symbolen op dit plan
-    muren: [],
+    schaal: 100, // tekeneenheden per meter; null = nog niet ingesteld
+    afmetingen: true, // lengtes in meter tonen
+    muren: [], // lijnstukken: { soort: 'muur' | 'deur' | 'raam' | 'meet', x1, y1, x2, y2 }
     teksten: [],
     plaatsingen: {}, // item-id (of 'bord') -> { x, y, rot }
   };
@@ -300,7 +302,15 @@ export function leesProject(tekst) {
   };
   if (!NETTEN[project.aansluiting.net]) project.aansluiting.net = '1F230';
   project.plannen = (Array.isArray(data.plannen) && data.plannen.length ? data.plannen : [nieuwPlan()])
-    .map((p) => ({ ...nieuwPlan(), ...p, plaatsingen: p.plaatsingen || {}, muren: p.muren || [], teksten: p.teksten || [] }));
+    .map((p) => ({
+      ...nieuwPlan(),
+      ...p,
+      // Een plan uit een oudere versie met een achtergrond heeft geen gekende schaal.
+      schaal: p.schaal === undefined ? (p.achtergrond ? null : 100) : p.schaal,
+      plaatsingen: p.plaatsingen || {},
+      muren: (p.muren || []).map((m) => ({ soort: 'muur', ...m })),
+      teksten: p.teksten || [],
+    }));
   const vul = (k) => {
     if (k.soort === 'differentieel') {
       Object.assign(k, { ...nieuwDifferentieel(), onderbreking: 0, ...k, kinderen: k.kinderen || [] });

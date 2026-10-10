@@ -66,18 +66,25 @@
         <div class="werkbalk">
           <div class="groep">
             <button data-gereedschap="kies" class="aan" title="Selecteren en verslepen">Selecteren</button>
-            <button data-gereedschap="muur" title="Muren tekenen">Muur</button>
+            <button data-gereedschap="muur" title="Muren tekenen: klik per hoek">Muur</button>
+            <button data-gereedschap="deur" title="Deur tekenen: klik de twee kanten van de opening">Deur</button>
+            <button data-gereedschap="raam" title="Raam tekenen">Raam</button>
+            <button data-gereedschap="meet" title="Een afstand meten en laten staan">Meetlijn</button>
             <button data-gereedschap="tekst" title="Tekst plaatsen">Tekst</button>
           </div>
           <div class="groep">
             <button id="plan-laden" title="Een plan van de architect als achtergrond (afbeelding of PDF)">Plan laden…</button>
             <button id="plan-weg" title="Achtergrond weghalen">Plan weg</button>
+            <button data-gereedschap="schaal" id="plan-schaal-knop" title="Klik twee punten waarvan je de afstand kent, zodat lengtes in meter kloppen">Schaal…</button>
             <input type="file" id="plan-bestand" accept="image/*,.pdf,application/pdf" hidden>
           </div>
           <div class="groep">
             <button id="plan-draai" title="Draaien (R)">Draaien</button>
             <button id="plan-verwijder" title="Van het plan halen (Delete)">Van plan halen</button>
           </div>
+          <label class="schuif" title="Lengte van het gekozen lijnstuk">Lengte <input type="number" id="plan-lengte" min="0.01" step="0.01" disabled> m</label>
+          <label class="schuif vink-rij"><input type="checkbox" id="plan-maten"> Afmetingen</label>
+          <span id="plan-schaal-info" class="schaal-info"></span>
           <label class="schuif">Symbolen <input type="range" id="plan-symbool" min="0.5" max="8" step="0.1"></label>
           <label class="schuif">Plan <input type="range" id="plan-zicht" min="0.1" max="1" step="0.05"></label>
         </div>

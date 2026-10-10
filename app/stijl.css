@@ -185,6 +185,10 @@ svg.tekening.plaatsen { cursor: crosshair; }
 .werkbalk .groep { display: flex; gap: 4px; }
 .schuif { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--zacht); }
 .schuif input { width: 110px; }
+.schuif input[type=number] { width: 78px; }
+.schuif input[type=checkbox] { width: auto; }
+.schaal-info { font-size: 12.5px; color: var(--zacht); }
+.schaal-info.mist { color: var(--let-op); font-weight: 600; }
 
 /* Pagina's (materiaal, controle) */
 .tab.pagina { display: block; overflow: auto; }
