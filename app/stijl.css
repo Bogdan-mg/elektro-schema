@@ -146,6 +146,8 @@ main { flex: 1; min-height: 0; display: flex; }
 .icoon .b { font: 600 10px "Segoe UI", Arial, sans-serif; fill: currentColor; }
 .icoon .m { font: 600 7px "Segoe UI", Arial, sans-serif; fill: currentColor; }
 .icoon .l.dik { stroke-width: 3; }
+svg .l.blok { stroke-width: 3.4; stroke-linecap: butt; }
+svg .l.w { fill: #fff; }
 
 /* Formulieren */
 .formulier { display: grid; gap: 8px; }
@@ -225,6 +227,7 @@ dialog.dialoog .knoppen { display: flex; justify-content: flex-end; gap: 8px; ma
 /* ---------- Afdrukken ---------- */
 
 #afdruk { display: none; }
+#afdruk .doel { fill: transparent !important; stroke: none !important; }
 
 @media print {
   body { display: block; overflow: visible; height: auto; background: #fff; }

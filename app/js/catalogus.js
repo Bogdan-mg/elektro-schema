@@ -16,7 +16,7 @@ export const SECTIES = [1.5, 2.5, 4, 6, 10, 16, 25, 35];
 export const ADERS = [2, 3, 4, 5];
 
 export const KABELTYPES = {
-  XVB: { naam: 'XVB (kabel)', soort: 'kabel' },
+  XVB: { naam: 'XVB (kabel)', soort: 'kabel', klasse: 'Cca' },
   EXVB: { naam: 'EXVB (kabel, buiten/grond)', soort: 'kabel' },
   XGB: { naam: 'XGB (halogeenvrij)', soort: 'kabel' },
   VOB: { naam: 'VOB (draad in buis)', soort: 'draad' },
@@ -30,6 +30,7 @@ export const LICHTPUNTEN = {
   ledstrip: { naam: 'LED-strip', kort: 'LED' },
   tl: { naam: 'Lichtlijn / TL', kort: 'TL' },
   buiten: { naam: 'Buitenlicht', kort: 'buiten' },
+  nood: { naam: 'Noodverlichting', kort: 'nood' },
 };
 
 export const SCHAKELAARS = {
@@ -84,6 +85,7 @@ export const PALET = [
   { soort: 'lichtpunt', waarden: { variant: 'wand' }, naam: 'Wandlicht' },
   { soort: 'lichtpunt', waarden: { variant: 'spot' }, naam: 'Spot' },
   { soort: 'lichtpunt', waarden: { variant: 'buiten' }, naam: 'Buitenlicht' },
+  { soort: 'lichtpunt', waarden: { variant: 'nood' }, naam: 'Noodverlichting' },
   { soort: 'schakelaar', waarden: { variant: 'enkelpolig' }, naam: 'Schakelaar' },
   { soort: 'schakelaar', waarden: { variant: 'wissel' }, naam: 'Wisselschakelaar' },
   { soort: 'schakelaar', waarden: { variant: 'serie' }, naam: 'Serieschakelaar' },
@@ -104,12 +106,17 @@ export const PALET = [
 /** Een getal zoals een elektricien het schrijft: 2,5 in plaats van 2.5. */
 export const komma = (getal) => String(getal).replace('.', ',');
 
+/** Zoals in het AREI: "XVB Cca 3G2,5" (met de brandklasse als die gekend is). */
 export function kabelTekst(kabel) {
-  if (KABELTYPES[kabel.type]?.soort === 'draad') return `${kabel.type} ${kabel.aders}×${komma(kabel.sectie)}`;
-  return `${kabel.type} ${kabel.aders}G${komma(kabel.sectie)}`;
+  const t = KABELTYPES[kabel.type];
+  if (t?.soort === 'draad') return `${kabel.type} ${kabel.aders}×${komma(kabel.sectie)}`;
+  return `${kabel.type}${t?.klasse ? ` ${t.klasse}` : ''} ${kabel.aders}G${komma(kabel.sectie)}`;
 }
 
 export const automaatTekst = (a) => `${a.curve}${a.stroom}`;
+
+/** In/ΔIn zoals in het AREI, bv. "40/0,3A" voor 40 A en 300 mA. */
+export const diffTekst = (d) => `${d.stroom}/${komma(d.gevoeligheid / 1000)}A`;
 
 /** De naam van een onderdeel, zoals in de lijsten. */
 export function itemNaam(item) {

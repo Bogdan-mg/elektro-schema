@@ -1,10 +1,10 @@
 // Het ééndraadschema tekenen: hoofdbord links, kringen verticaal onder de verdeelbus.
-import { NETTEN, kabelTekst, automaatTekst, itemKort, komma } from './catalogus.js';
+import { NETTEN, kabelTekst, automaatTekst, diffTekst, itemKort, komma } from './catalogus.js';
 import { codes } from './model.js';
-import { symbool, automaatSymbool, diffSymbool, diffLiggend, aardeSymbool, lijn, tekst, esc } from './symbolen.js';
+import { symbool, automaatSymbool, diffSymbool, diffLiggend, aardeSymbool, tellerSymbool, lijn, tekst, esc } from './symbolen.js';
 
 export const KOLOM = 130; // breedte per kring
-export const STAP = 46; // hoogte per onderdeel
+export const STAP = 50; // hoogte per onderdeel
 const LIJN = 18; // waar de kringlijn binnen de kolom staat
 const Y0 = 70; // hoogte van de hoofdlijn
 const START = 236; // waar de eerste kring begint
@@ -69,12 +69,11 @@ export function tekenEendraad(project, { selectie = null } = {}) {
     const lx = x + LIJN;
     doel(x + 2, y + 8, KOLOM - 4, 62, d.id);
     lijnen.push(
-      lijn(lx, y, lx, y + 16),
-      diffSymbool(lx, y + 16),
-      tekst(lx + 20, y + 30, `${d.gevoeligheid} mA`, 'b'),
-      tekst(lx + 20, y + 42, `${d.stroom} A · ${d.polen}P`, 'k'),
-      tekst(lx + 20, y + 53, `type ${d.type}`, 'k'),
-      lijn(lx, y + 60, lx, y + 80),
+      lijn(lx, y, lx, y + 18),
+      diffSymbool(lx, y + 18),
+      tekst(lx + 12, y + 34, diffTekst(d), 'b'),
+      tekst(lx + 12, y + 46, `type ${d.type} · ${d.polen}P`, 'k'),
+      lijn(lx, y + 50, lx, y + 80),
     );
     const by = y + 80;
     if (!d.kinderen.length) {
@@ -103,12 +102,11 @@ export function tekenEendraad(project, { selectie = null } = {}) {
     tekst(20, Y0 - 34, NETTEN[aansluiting.net]?.naam || '', 'b'),
     tekst(20, Y0 - 22, `Hoofdzekering ${aansluiting.hoofdzekering} A`, 'k'),
     lijn(20, Y0, 60, Y0),
-    `<rect class="l" x="60" y="${Y0 - 13}" width="40" height="26"/>`,
-    tekst(80, Y0 + 4, 'kWh', 'b', 'middle'),
-    lijn(100, Y0, 128, Y0),
-    diffLiggend(150, Y0),
-    tekst(128, Y0 + 28, `${hoofd.gevoeligheid} mA`, 'b'),
-    tekst(128, Y0 + 40, `${hoofd.stroom} A · ${hoofd.polen}P · type ${hoofd.type}`, 'k'),
+    tellerSymbool(60, Y0),
+    lijn(100, Y0, 124, Y0),
+    diffLiggend(124, Y0),
+    tekst(122, Y0 + 22, diffTekst(hoofd), 'b'),
+    tekst(122, Y0 + 34, `type ${hoofd.type} · ${hoofd.polen}P`, 'k'),
     aardeSymbool(40, Y0 + 30),
     tekst(54, Y0 + 50, 'Aarding', 'k'),
     tekst(54, Y0 + 61, Number(aansluiting.aardingsweerstand) ? `${komma(aansluiting.aardingsweerstand)} Ω` : '… Ω', 'k'),
@@ -117,7 +115,7 @@ export function tekenEendraad(project, { selectie = null } = {}) {
   const kolommen = [];
   let x = START;
   let hoogte = 0;
-  let laatste = 172;
+  let laatste = 156;
   for (const kind of project.kinderen) {
     laatste = x + LIJN;
     const r = teken(kind, x, Y0);
@@ -125,7 +123,7 @@ export function tekenEendraad(project, { selectie = null } = {}) {
     x += r.breedte;
     hoogte = Math.max(hoogte, r.hoogte);
   }
-  lijnen.push(lijn(172, Y0, Math.max(laatste, START + 10), Y0, 'l bus'));
+  lijnen.push(lijn(156, Y0, Math.max(laatste, START + 10), Y0, 'l bus'));
   if (!project.kinderen.length) lijnen.push(tekst(START, Y0 + 24, 'Voeg een differentieel of kring toe', 'k'));
 
   return {
@@ -141,6 +139,8 @@ export const SCHEMA_STIJL = `
 .l{fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round}
 .l.dik{stroke-width:3}
 .l.bus{stroke-width:2.6}
+.l.blok{stroke-width:3.4;stroke-linecap:butt}
+.l.w{fill:#fff}
 .v{fill:currentColor;stroke:none}
 .b{font:600 10px "Segoe UI",Arial,sans-serif;fill:currentColor}
 .k{font:9px "Segoe UI",Arial,sans-serif;fill:currentColor;opacity:.8}

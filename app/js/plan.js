@@ -40,14 +40,14 @@ export function tekenPlan(project, plan, { selectie = null, raster = false, dele
   for (const [id, pl] of Object.entries(plan.plaatsingen)) {
     const deel = delen.get(id);
     if (!deel) continue;
-    const { svg, b } = deel.item === 'bord' ? bordSymbool() : symbool(deel.item);
+    const { svg, b, boven = -13, onder = 13 } = deel.item === 'bord' ? bordSymbool() : symbool(deel.item);
     const gekozen = selectie?.soort === 'item' && selectie.id === id;
     const titel = deel.item === 'bord' ? 'Verdeelbord' : `${deel.code} ${itemNaam(deel.item)}`;
     uit.push(
       `<g class="geplaatst${gekozen ? ' gekozen' : ''}" data-plaats="${esc(id)}" transform="translate(${pl.x} ${pl.y})">`
       + `<title>${esc(titel)}</title>`
       + `<g transform="rotate(${pl.rot || 0}) scale(${s})">`
-      + `<rect class="plaats-doel" x="${-b / 2 - 5}" y="-17" width="${b + 10}" height="34" rx="4"/>`
+      + `<rect class="plaats-doel" x="${-b / 2 - 5}" y="${boven - 4}" width="${b + 10}" height="${onder - boven + 8}" rx="4"/>`
       + `<g transform="translate(${-b / 2} 0)">${svg}</g></g>`
       + `<g transform="scale(${s})">${tekst(b / 2 + 4, -10, deel.code, 'b plan-code')}</g>`
       + '</g>',

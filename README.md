@@ -8,6 +8,10 @@ Windows-programma om voor een elektrische installatie (België, AREI) te tekenen
 
 Alles werkt **offline** en staat in één projectbestand (`.eschema`) op je pc.
 
+De symbolen volgen het AREI (Boek 1, hoofdstuk 2.13, tabel 2.23 "Grafische symbolen"): contactdozen met
+aarding en kinderbescherming, schakelaars (enkel- en tweepolig, wissel, kruis, omschakelaar, dimmer, drukknop),
+lichtpunten, toestellen, automaten ("C20") en differentiëlen ("40/0,3A type A").
+
 ## Installeren
 
 1. Ga naar **[Releases → laatste](../../releases/tag/laatste)** en download `Elektro-Schema-Setup-….exe`.

@@ -29,8 +29,8 @@ test('telt automaten, stopcontacten, dozen en kabel', () => {
   assert.equal(aantal(regels, 'Wisselschakelaar'), 2);
   assert.equal(aantal(regels, 'Inbouwspot'), 4);
   assert.equal(aantal(regels, 'Centraaldoos (lichtpunt)'), 1);
-  assert.equal(aantal(regels, 'XVB 3G2,5'), 22);
-  assert.equal(aantal(regels, 'XVB 3G1,5'), 33);
+  assert.equal(aantal(regels, 'XVB Cca 3G2,5'), 22);
+  assert.equal(aantal(regels, 'XVB Cca 3G1,5'), 33);
   assert.equal(modules, 2 + 2 + 1 + 1);
 });
 
