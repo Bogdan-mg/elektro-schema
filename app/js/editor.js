@@ -160,6 +160,11 @@ function formulier(velden, doel, sleutel) {
         if (String(w) === String(waarde)) o.selected = true;
         el.append(o);
       }
+    } else if (v.type === 'textarea') {
+      el = document.createElement('textarea');
+      el.rows = v.rijen || 4;
+      el.value = waarde ?? '';
+      if (v.placeholder) el.placeholder = v.placeholder;
     } else {
       el = document.createElement('input');
       el.type = v.type || 'text';
@@ -283,6 +288,12 @@ function alleSoorten() {
   return label;
 }
 
+/** Een eigen opmerking per kring of groep; die komt op de bladzijde "Opmerkingen" bij het afdrukken. */
+const OPMERKING = {
+  label: 'Wat kan beter?', pad: 'opmerking', type: 'textarea', rijen: 4,
+  placeholder: 'bv. De oven staat best op een eigen kring.',
+};
+
 const BEVEILIGINGEN = {
   differentieel: 'Differentieel',
   diffautomaat: 'Differentieelautomaat',
@@ -380,6 +391,8 @@ function tekenEigenschappen() {
         { label: 'Naam', pad: 'naam', placeholder: 'bv. diff 30mA wassalon' },
         { label: 'Vaste letter', pad: 'letter', placeholder: 'leeg = automatisch' },
       ], doel, id),
+      kop('Opmerking'),
+      formulier([OPMERKING], doel, id),
       kop('Beveiliging'),
       formulier(beveiligingVelden('', ding), doel, id),
       kop('Toevoegen op de verdeellijn van deze groep'),
@@ -399,6 +412,8 @@ function tekenEigenschappen() {
         { label: 'Vaste letter', pad: 'letter', placeholder: 'leeg = automatisch' },
         { label: 'Badkamer of natte ruimte', pad: 'badkamer', type: 'checkbox' },
       ], doel, id),
+      kop('Opmerking'),
+      formulier([OPMERKING], doel, id),
       kop('Automaat'),
       formulier([
         { label: 'Stroom', pad: 'automaat.stroom', type: 'select', opties: stroomKeuzes(ding.automaat.stroom).map((n) => [n, `${n} A`]), getal: true },

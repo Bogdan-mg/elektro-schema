@@ -176,6 +176,7 @@ async function afdrukken() {
       { naam: 'eendraad', label: 'Ééndraadschema', type: 'checkbox', waarde: true },
       { naam: 'situatie', label: 'Situatieschema', type: 'checkbox', waarde: true },
       { naam: 'lijst', label: 'Lijst kringen', type: 'checkbox', waarde: true },
+      { naam: 'opmerkingen', label: 'Opmerkingen per kring', type: 'checkbox', waarde: true },
       { naam: 'materiaal', label: 'Materiaallijst', type: 'checkbox', waarde: true },
     ],
     knoppen: [

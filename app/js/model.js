@@ -42,7 +42,7 @@ export function nieuwProject() {
 export function nieuwDifferentieel(waarden = {}) {
   return {
     id: nieuwId(), soort: 'differentieel', beveiliging: 'differentieel', naam: '', letter: '',
-    gevoeligheid: 30, type: 'A', stroom: 40, polen: 2, curve: 'C', onderbreking: 3000, kinderen: [], ...waarden,
+    gevoeligheid: 30, type: 'A', stroom: 40, polen: 2, curve: 'C', onderbreking: 3000, opmerking: '', kinderen: [], ...waarden,
   };
 }
 
@@ -56,6 +56,7 @@ export function nieuweKring(waarden = {}) {
     automaat: { stroom: 20, curve: 'C', polen: 2, onderbreking: 3000, gevoeligheid: 0, type: 'A', ...automaat },
     kabel: { type: 'XVB', aders: 3, sectie: 2.5, lengte: 0, plaatsing: 'inWand', ...kabel },
     badkamer: false,
+    opmerking: '', // eigen opmerking, komt op de bladzijde "Opmerkingen"
     items: [],
     ...rest,
   };

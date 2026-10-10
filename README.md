@@ -74,7 +74,9 @@ Een controle op de belangrijkste AREI-regels voor woningen, o.a.:
 **Afdrukken / PDF** (Ctrl+P): kies A4 of A3 liggend en wat er op moet. Elk blad krijgt een titelhoek met project, klant,
 adres, installateur, datum en bladnummer (die vul je in via de projectnaam bovenaan). Een lang ééndraadschema wordt
 over meerdere bladen verdeeld, tussen twee kringen. Het situatieschema krijgt een legende, en er is een bladzijde
-**Lijst kringen** met de letter en de naam van elke kring, zoals in Trikker.
+**Lijst kringen** met de letter en de naam van elke kring, zoals in Trikker. Daarna volgt een bladzijde
+**Opmerkingen per kring**: wat de controle vindt (bv. "de oven staat best op een eigen kring") plus wat je zelf bij een
+kring of groep schreef in het veld **Wat kan beter?**. Kringen zonder opmerkingen staan er niet bij.
 
 ### Opslaan en veiligheid
 

@@ -4,6 +4,7 @@ import { tekenPlan, legende, onderdelen, PLAN_STIJL } from './plan.js';
 import { icoon, esc } from './symbolen.js';
 import { materiaalTabel } from './lijsten.js';
 import { alleKnopen, codes } from './model.js';
+import { controleer } from './regels.js';
 import { staat } from './staat.js';
 
 export const FORMATEN = { A4: { b: 297, h: 210 }, A3: { b: 420, h: 297 } };
@@ -99,6 +100,59 @@ function lijstBladen(formaat) {
   return bladen;
 }
 
+const NIVEAU = { fout: 'Fout', waarschuwing: 'Let op' };
+
+/**
+ * "Opmerkingen" per kring: wat de controle vindt (fouten en waarschuwingen) en wat je er zelf bij schreef.
+ * Kringen zonder opmerkingen staan er niet bij.
+ */
+function opmerkingenBladen(formaat) {
+  const p = staat.project;
+  const code = codes(p);
+  const eigenaar = new Map();
+  for (const { knoop } of alleKnopen(p)) {
+    eigenaar.set(knoop.id, knoop.id);
+    if (knoop.soort === 'kring') for (const it of knoop.items) eigenaar.set(it.id, knoop.id);
+  }
+  const perKnoop = new Map();
+  const voeg = (sleutel, regel) => perKnoop.set(sleutel, [...(perKnoop.get(sleutel) || []), regel]);
+  for (const m of controleer(p).filter((x) => x.niveau !== 'info')) voeg(m.id === 'hoofd' ? 'hoofd' : eigenaar.get(m.id) || 'hoofd', { niveau: m.niveau, tekst: m.tekst });
+  const rijen = [];
+  const hoofd = perKnoop.get('hoofd');
+  if (hoofd) rijen.push({ kop: 'Hoofdbord', naam: '', regels: hoofd });
+  for (const { knoop } of alleKnopen(p)) {
+    const regels = [...(perKnoop.get(knoop.id) || [])];
+    if (knoop.opmerking?.trim()) regels.push({ niveau: 'eigen', tekst: knoop.opmerking.trim() });
+    if (regels.length) rijen.push({ kop: code.get(knoop.id), naam: knoop.naam || '', regels });
+  }
+  if (!rijen.length) {
+    return [{ soort: 'Opmerkingen', inhoud: '<h2>Opmerkingen per kring</h2><p class="leeg">Geen opmerkingen: de controle vond niets en er staan geen eigen opmerkingen bij de kringen.</p>' }];
+  }
+  // Ruwe schatting van de hoogte per rij (in mm), om de rijen over de bladen te verdelen.
+  const hoogte = (r) => 4 + r.regels.reduce((som, x) => som + Math.max(1, Math.ceil(x.tekst.length / 115)) * 4.1, 0);
+  const ruimte = formaat.h - 2 * MARGE - TITELHOEK - 22;
+  const bladen = [];
+  let huidig = [];
+  let gebruikt = 0;
+  for (const r of rijen) {
+    const h = hoogte(r);
+    if (huidig.length && gebruikt + h > ruimte) {
+      bladen.push(huidig);
+      huidig = [];
+      gebruikt = 0;
+    }
+    huidig.push(r);
+    gebruikt += h;
+  }
+  if (huidig.length) bladen.push(huidig);
+  return bladen.map((blad, i) => ({
+    soort: 'Opmerkingen',
+    inhoud: `<h2>Opmerkingen per kring${bladen.length > 1 ? ` (${i + 1}/${bladen.length})` : ''}</h2>
+      <div class="opmerkingen">${blad.map((r) => `<div class="orij"><div class="okop"><b>${esc(r.kop)}</b><span>${esc(r.naam)}</span></div>
+        <ul>${r.regels.map((x) => `<li class="${x.niveau}"><em>${x.niveau === 'eigen' ? 'Opmerking' : NIVEAU[x.niveau]}</em> ${esc(x.tekst)}</li>`).join('')}</ul></div>`).join('')}</div>`,
+  }));
+}
+
 function materiaalBlad() {
   return {
     soort: 'Materiaallijst',
@@ -108,12 +162,13 @@ function materiaalBlad() {
 }
 
 /** Bouw de bladen op in #afdruk. */
-export function bouwAfdruk({ formaat = 'A4', eendraad = true, situatie = true, lijst = true, materiaal = true }) {
+export function bouwAfdruk({ formaat = 'A4', eendraad = true, situatie = true, lijst = true, opmerkingen = true, materiaal = true }) {
   const f = FORMATEN[formaat];
   const bladen = [
     ...(eendraad ? eendraadBladen(f) : []),
     ...(situatie ? situatieBladen(f) : []),
     ...(lijst ? lijstBladen(f) : []),
+    ...(opmerkingen ? opmerkingenBladen(f) : []),
     ...(materiaal ? [materiaalBlad()] : []),
   ];
   const doel = document.getElementById('afdruk');

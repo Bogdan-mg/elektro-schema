@@ -66,7 +66,7 @@ export function controleer(project) {
         meld('fout', item.id, `${code.get(item.id)} ${t.naam} moet achter een differentieel van 30 mA.`);
       }
       if (t?.eigenKring && kring.items.length > 1) {
-        meld('waarschuwing', item.id, `${code.get(item.id)} ${t.naam} staat best op een eigen kring.`);
+        meld('waarschuwing', item.id, `${code.get(item.id)} ${t.naam} staat best op een eigen kring; nu staan er nog ${kring.items.length - 1} andere onderdelen op.`);
       }
     }
 
