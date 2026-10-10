@@ -391,3 +391,24 @@ dialog.import { width: min(1000px, 96vw); }
 .bib-item .pijl { align-self: flex-end; color: #666; font-size: 10px; }
 .punt { fill: #fff; fill-opacity: .6; stroke: #f59e0b; stroke-width: 1.8; cursor: pointer; }
 .punt:hover { fill: #f59e0b; fill-opacity: .8; }
+
+/* ---------- Tabblad Afdrukken en Extra ---------- */
+.afd-inhoud { padding: 10px 14px 20px; overflow: auto; height: calc(100% - 78px); }
+.afd-rij { display: flex; align-items: center; gap: 18px; margin: 6px 0; flex-wrap: wrap; }
+.afd-rij input[type=date], .afd-rij input:not([type]), .afd-rij select { min-width: 220px; }
+.afd-twee { display: grid; grid-template-columns: 3fr 2fr; gap: 14px; }
+.afd-twee > .afd-ht { min-width: 0; }
+.afd-ht-rij { display: flex; gap: 10px; margin-top: 6px; }
+.afd-ht-vak { width: 170px; height: 118px; border: 1px solid #aaa; background: #808080 center / contain no-repeat; }
+.afd-ht-vak:not(.leeg) { background-color: #fff; }
+.afd-ht-knoppen { display: flex; flex-direction: column; gap: 6px; }
+.afd-auto { color: #555; }
+.afd-voorbeeld { margin-top: 14px; background: #808080; padding: 12px; overflow: auto; min-height: 140px; }
+.afd-voorbeeld .blad { background: #fff; margin: 0 auto 12px; display: block; }
+.extra-inhoud { padding: 14px 18px; }
+.extra-titel { color: #1b1b6e; margin: 4px 0 6px; }
+.extra-lijn { border: 0; border-top: 3px solid #1b1b6e; margin: 10px 0; }
+.extra-knoppen { display: flex; gap: 8px; flex-wrap: wrap; }
+.extra-knop { display: flex; align-items: center; gap: 8px; width: 233px; height: 62px; background: #fff; border: 1px solid #999; font-size: 14px; cursor: pointer; }
+.extra-knop span { font-size: 26px; color: #1b1b6e; }
+.extra-knop:hover { background: #eef3ff; }

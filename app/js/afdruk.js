@@ -37,7 +37,7 @@ function titelhoek(blad, nr, totaal, opties) {
   const controle = [doc.controle.naam, adresTekst(doc.controle)].filter(Boolean).join(', ') || info.controle?.trim().split(/\r?\n/)[0];
   const logo = inst2.logo || inst.logo;
   const logoModus = inst2.logo ? inst2.logoModus : inst.logo ? 'naast' : 'geen';
-  const stroom = NETTEN[staat.project.aansluiting.net]?.kort || '';
+  const stroom = opties.stroom || NETTEN[staat.project.aansluiting.net]?.kort || '';
   const delen = [];
   if (logo && logoModus !== 'geen') delen.push({ w: logoModus === 'enkel' ? '40mm' : '24mm', html: `<div class="cel logo"><img src="${esc(logo)}" alt=""></div>` });
   delen.push({ w: '2fr', html: cel('Project', info.titel, 'breed') });
@@ -45,9 +45,16 @@ function titelhoek(blad, nr, totaal, opties) {
   delen.push({ w: '2fr', html: cel('Plaats van de elektrische installatie', plaats, 'breed') });
   if (logoModus !== 'enkel') delen.push({ w: '1.6fr', html: cel('Installateur', installateur) });
   if (controle) delen.push({ w: '1.5fr', html: cel('Controleorganisme', controle) });
-  if (opties.toonDatum !== false) delen.push({ w: '0.9fr', html: cel('Datum', info.datum ? info.datum.split('-').reverse().join('/') : '') });
+  if (opties.toonDatum !== false) delen.push({ w: '0.9fr', html: cel('Datum', (opties.datum || info.datum) ? (opties.datum || info.datum).split('-').reverse().join('/') : '') });
   if (opties.toonStroom !== false && stroom) delen.push({ w: '1fr', html: cel('Stroom', stroom) });
+  if (opties.versie) delen.push({ w: '1.1fr', html: cel('Versie', opties.versie) });
   if (opties.tekst?.trim()) delen.push({ w: '1.4fr', html: cel('Opmerking', opties.tekst.trim()) });
+  if (nr === totaal && opties.handtekeningen) {
+    const { eigenaar, installateur: inst3 } = opties.handtekeningen;
+    for (const [label, bron] of [['Handtekening eigenaar', eigenaar], ['Handtekening installateur', inst3]]) {
+      if (bron) delen.push({ w: '1.2fr', html: `<div class="cel logo handtekening"><span>${label}</span><img src="${esc(bron)}" alt=""></div>` });
+    }
+  }
   delen.push({ w: '1.5fr', html: `<div class="cel soort"><span>${esc(naam)}</span><b>${esc(blad.subtitel || bladTekst)}</b>${blad.subtitel ? `<small>${esc(bladTekst)}</small>` : ''}</div>` });
   return `<div class="titelhoek" style="grid-template-columns:${delen.map((d) => d.w).join(' ')}">${delen.map((d) => d.html).join('')}</div>`;
 }
@@ -213,7 +220,7 @@ function materiaalBlad() {
 }
 
 /** Bouw de bladen op in #afdruk. */
-export function bouwAfdruk({ formaat = 'A4', eendraad = true, situatie = true, lijst = true, opmerkingen = true, materiaal = true, paginering = 'auto', kringVolgorde = 'schema', toonDatum = true, toonStroom = true, tekst = '' }) {
+export function bouwAfdruk({ formaat = 'A4', eendraad = true, situatie = true, lijst = true, opmerkingen = true, materiaal = true, paginering = 'auto', kringVolgorde = 'schema', toonDatum = true, toonStroom = true, tekst = '', datum = '', stroom = '', versie = '', handtekeningen = null, doel = document.getElementById('afdruk') }) {
   const f = FORMATEN[formaat];
   const bladen = [
     ...(eendraad ? eendraadBladen(f, paginering) : []),
@@ -222,9 +229,9 @@ export function bouwAfdruk({ formaat = 'A4', eendraad = true, situatie = true, l
     ...(opmerkingen ? opmerkingenBladen(f) : []),
     ...(materiaal ? [materiaalBlad()] : []),
   ];
-  const doel = document.getElementById('afdruk');
   doel.innerHTML = bladen.map((b, i) => `<section class="blad${b.vrij ? ' vrij' : ''}" style="--b:${f.b}mm;--h:${f.h}mm">
-      <div class="blad-inhoud">${b.inhoud}</div>${titelhoek(b, i + 1, bladen.length, { toonDatum, toonStroom, tekst })}</section>`).join('');
+      <div class="blad-inhoud">${b.inhoud}</div>${titelhoek(b, i + 1, bladen.length, { toonDatum, toonStroom, tekst, datum, stroom, versie, handtekeningen })}</section>`).join('');
+  if (doel.id !== 'afdruk') return bladen.length;
   let pagina = document.getElementById('pagina-stijl');
   if (!pagina) {
     pagina = document.createElement('style');

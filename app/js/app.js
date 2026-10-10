@@ -6,6 +6,8 @@ import * as situatie from './situatie.js';
 import { startDocument } from './document.js';
 import { startLijsten, csvTekst } from './lijsten.js';
 import { bouwAfdruk, ruimAfdrukOp } from './afdruk.js';
+import { startAfdrukTab, afdrukParameters, toonVoorbeeld } from './afdruktab.js';
+import { startExtra } from './extra.js';
 import { vraag, bevestig, melding } from './dialoog.js';
 import { symbolenProject } from './overzicht.js';
 import { leesInstellingen, instellingenDialoog } from './instellingen.js';
@@ -21,6 +23,7 @@ const HERSTEL = 'elektro-schema-herstel';
 
 function naarTab(tab) {
   staat.tab = tab;
+  if (tab === 'afdrukken') setTimeout(() => window.dispatchEvent(new Event('afdruktab-open')), 0);
   for (const b of document.querySelectorAll('[data-tab]')) b.classList.toggle('aan', b.dataset.tab === tab);
   for (const s of document.querySelectorAll('.tab')) s.hidden = s.id !== `tab-${tab}`;
   herteken();
@@ -186,29 +189,11 @@ async function voorbeeld() {
 
 // ---------- Afdrukken, PDF en CSV ----------
 
-async function afdrukken() {
-  const { knop, waarden } = await vraag({
-    titel: 'Afdrukken of PDF',
-    velden: [
-      { naam: 'formaat', label: 'Papier', type: 'select', waarde: 'A4', opties: [['A4', 'A4 liggend'], ['A3', 'A3 liggend']] },
-      { naam: 'eendraad', label: 'Ééndraadschema', type: 'checkbox', waarde: true },
-      { naam: 'situatie', label: 'Situatieschema', type: 'checkbox', waarde: true },
-      { naam: 'lijst', label: 'Lijst kringen', type: 'checkbox', waarde: true },
-      { naam: 'opmerkingen', label: 'Opmerkingen per kring', type: 'checkbox', waarde: true },
-      { naam: 'materiaal', label: 'Materiaallijst', type: 'checkbox', waarde: true },
-      { naam: 'paginering', label: 'Ééndraadschema verdelen', type: 'select', waarde: 'auto', opties: [['auto', 'Automatisch in pagina’s verdelen'], ['manueel', 'Enkel waar ik “nieuwe pagina” instelde']] },
-      { naam: 'kringVolgorde', label: 'Lijst kringen', type: 'select', waarde: 'schema', opties: [['schema', 'In de volgorde van het schema'], ['alfabet', 'Alfabetisch']] },
-      { naam: 'toonDatum', label: 'Datum afdrukken', type: 'checkbox', waarde: true },
-      { naam: 'toonStroom', label: 'Stroomtype afdrukken', type: 'checkbox', waarde: true },
-      { naam: 'tekst', label: 'Extra tekst in de titelhoek', waarde: '' },
-    ],
-    knoppen: [
-      ...(desktop ? [{ tekst: 'PDF opslaan', waarde: 'pdf', hoofd: true }] : []),
-      { tekst: 'Afdrukken', waarde: 'print', hoofd: !desktop },
-      { tekst: 'Annuleren', waarde: null },
-    ],
-  });
-  if (!knop) return;
+async function afdrukken(modus) {
+  if (!['print', 'pdf', 'voorbeeld'].includes(modus)) { naarTab('afdrukken'); return; }
+  if (modus === 'voorbeeld') { toonVoorbeeld(); return; }
+  const knop = modus;
+  const waarden = afdrukParameters();
   const aantal = bouwAfdruk(waarden);
   if (!aantal) {
     melding('Er is niets om af te drukken.', 'fout');
@@ -395,6 +380,8 @@ function startBackups() {
 
 async function start() {
   startDocument();
+  startAfdrukTab({ afdrukken });
+  startExtra({ acties: () => acties });
   editor.startEditor();
   situatie.startSituatie();
   startLijsten({ naarTab });
