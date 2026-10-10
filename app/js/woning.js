@@ -4,7 +4,7 @@ import {
   nieuwId, nieuwItem, nieuweKring, nieuwDifferentieel, codes, zoek, kastNamen, kringVanItem, wijsToeEen, maakLos, maakKringLeeg,
 } from './model.js';
 import { itemNaam, TOESTELLEN, AUTOMAAT_STROMEN, CURVES, SECTIES, komma } from './catalogus.js';
-import { tekenPlan, onderdelen, kleefAanMuur, kleeftAanMuur, draaiStap, draaiRondSteel, symboolBreedte, plaatsingSvg } from './plan.js';
+import { tekenPlan, onderdelen, volgendeTekstPlaats, volgendeAdresPlaats, kleefAanMuur, kleeftAanMuur, draaiStap, draaiRondSteel, symboolBreedte, plaatsingSvg } from './plan.js';
 import { icoon, esc } from './symbolen.js';
 import { staat, wijzig, opWijziging } from './staat.js';
 import { Vlak } from './vlak.js';
@@ -152,6 +152,14 @@ function draaiGekozen(alt = false) {
   });
 }
 
+/** Shift + rechtermuisknop (tekst) of Ctrl + rechtermuisknop (adres): de plaats van de tekst bij het gekozen symbool doorlopen, zoals in Trikker. */
+function wisselPlaats(veld, volgende) {
+  if (!gekozenId) return;
+  wijzig((p) => {
+    for (const pl of p.plannen) if (pl.plaatsingen[gekozenId]) pl.plaatsingen[gekozenId][veld] = volgende(pl.plaatsingen[gekozenId][veld]);
+  });
+}
+
 function wisGekozen() {
   if (!gekozenId) return;
   const id = gekozenId;
@@ -261,7 +269,12 @@ function koppelPlan() {
       toonSpook(e);
     } else {
       const g = symboolOp(e);
-      if (g) { gekozenId = g.dataset.plaats; draaiGekozen(e.altKey); }
+      if (g) {
+        gekozenId = g.dataset.plaats;
+        if (e.shiftKey) wisselPlaats('tekstPlaats', volgendeTekstPlaats);
+        else if (e.ctrlKey) wisselPlaats('adresPlaats', volgendeAdresPlaats);
+        else draaiGekozen(e.altKey);
+      }
     }
   });
 

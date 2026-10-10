@@ -1,6 +1,6 @@
 // Koppelt een onderdeel van deze app aan het symbool van Trikker (de nagebouwde klassen in deze map)
 // en tekent het zoals Trikker het op het situatieschema doet (Grondplan).
-import { Graphics } from './g.js';
+import { Graphics, fontCursief, kwast, SF } from './g.js';
 import * as Aansluitklem from './Aansluitklem.js';
 import * as Aansluitpunt from './Aansluitpunt.js';
 import * as Aarding from './Aarding.js';
@@ -223,4 +223,58 @@ export function trikkerSymbool(item) {
   if (cache.size > 500) cache.clear();
   cache.set(sleutel, uit);
   return uit;
+}
+
+/** De ruimte rond het symbool waar tekst moet wegblijven, voor een draaiing in radialen, in tekeneenheden (nog niet maal de schaal van het plan). */
+export function trikkerTekstOffset(item, rotatie = 0) {
+  try {
+    const knoop = trikkerKnoop(item);
+    if (!knoop) return null;
+    if (item.adres) knoop.Adres = item.adres;
+    const t = knoop.textOffset(rotatie);
+    return { left: t.left * SCHAAL, top: t.top * SCHAAL, right: t.right * SCHAAL, bottom: t.bottom * SCHAAL };
+  } catch {
+    return null;
+  }
+}
+
+export const ADRES_PLAATSEN = ['plus0', 'plus90', 'plus180', 'plus270', 'verbergen'];
+
+const normaal = (hoek) => ((hoek % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+
+/**
+ * De adrestekst van een domoticasymbool, zoals Node.RenderAdres van Trikker hem tekent (cursief, in het draaiende vlak van het symbool).
+ * @param {string} plaatsing plus0 | plus90 | plus180 | plus270 | verbergen
+ * @returns {string} SVG in tekeneenheden, rond het midden van het symbool (nog te draaien met het symbool)
+ */
+export function trikkerAdresSvg(item, rotatie, plaatsing, tekst) {
+  if (!tekst || plaatsing === 'verbergen') return '';
+  const knoop = trikkerKnoop(item);
+  if (!knoop) return '';
+  const g = new Graphics();
+  const font = fontCursief(1.6);
+  const zwart = kwast();
+  const num3 = 32;
+  const num4 = 12.8;
+  const t = knoop.textOffset(rotatie);
+  let rot = rotatie;
+  let num5;
+  switch (plaatsing) {
+    case 'plus180': num5 = t.left; rot += Math.PI; g.rotateTransform(90); break;
+    case 'plus270': num5 = t.top; rot += 4.712389; g.rotateTransform(180); break;
+    case 'plus90': num5 = t.bottom; rot += Math.PI / 2; break;
+    default: num5 = t.right; g.rotateTransform(-90); break;
+  }
+  const num7 = normaal(rot + 0.087);
+  let sf = SF.leftCenter;
+  let rect = { x: num5, y: -num3 / 2, w: num4, h: num3 };
+  if (num7 >= Math.PI / 2 && num7 < 4.71238898038469) {
+    sf = SF.rightCenter;
+    rect = { x: -(num5 + num4), y: -num3 / 2, w: num4, h: num3 };
+    g.rotateTransform(-90);
+  } else {
+    g.rotateTransform(90);
+  }
+  g.tryDrawString(tekst, font, zwart, rect, sf);
+  return `<g class="tk-adres" transform="translate(${knoop.Width * SCHAAL / 2} 0) scale(${SCHAAL})">${g.uit.replace(/#000000/g, 'currentColor')}</g>`;
 }

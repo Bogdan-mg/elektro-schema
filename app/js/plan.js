@@ -1,6 +1,7 @@
 // Een plan van het situatieschema tekenen: achtergrond, het grondplan (muren, deuren, trappen, vlakken, …),
 // teksten en de geplaatste symbolen.
 import { planSymbool, bordSymbool, esc, tekst } from './symbolen.js';
+import { trikkerTekstOffset, trikkerAdresSvg, trikkerSymbool, ADRES_PLAATSEN, SCHAAL } from './trikker/kaart.js';
 import { alleItems, codes } from './model.js';
 import { itemNaam } from './catalogus.js';
 
@@ -483,60 +484,59 @@ export function codeDelen(code) {
   return m ? { letter: m[1], nummer: m[2] } : { letter: code || '', nummer: '' };
 }
 
-const POSITIES = ['rechts', 'links', 'boven', 'onder'];
+/** De volgorde waarin Trikker de tekstplaats doorloopt met Shift + rechtermuisknop, en die van het adres met Ctrl + rechtermuisknop. */
+export const TEKST_VOLGORDE = ['auto', 'links', 'boven', 'rechts', 'onder', 'verbergen'];
+export const ADRES_VOLGORDE = ADRES_PLAATSEN;
+const volgende = (lijst, nu, standaard) => lijst[(Math.max(0, lijst.indexOf(nu || standaard)) + 1) % lijst.length];
+export const volgendeTekstPlaats = (nu) => volgende(TEKST_VOLGORDE, nu, 'auto');
+export const volgendeAdresPlaats = (nu) => volgende(ADRES_VOLGORDE, nu, 'plus0');
 
-/** De ruimte die een tekstje inneemt (grof geschat), voor het vermijden van muren. */
-const tekstBreedte = (t, s) => String(t).length * 6.2 * s;
+/** De ruimte die een tekstje inneemt (zoals MeasureString bij Arial grofweg): breedte en hoogte voor een lettergrootte. */
+const tekstMaat = (t, f) => ({ w: String(t).length * f * 0.56, h: f * 1.15 });
 
 /**
- * Waar een tekst bij een symbool komt: één van rechts, links, boven of onder. Bij "auto" kiezen we de plaats waar
- * het minst een muur of een ander symbool in de weg staat.
+ * Waar de kringtekst (of letter en nummer) bij een symbool komt, zoals in GrondplanPageRenderer van Trikker: onder, rechts, boven of links
+ * van het symbool, op de afstand die het symbool zelf opgeeft (GetTextOffset), meegedraaid met de draaiing in kwarten.
+ * Bij "auto" is het de eerste plaats (in de volgorde onder, rechts, boven, links) waar geen muur of ander symbool in de weg staat.
+ * @returns {{x:number,y:number,anker:string,basis:string,vak:object}}
  */
-function tekstPlek(pl, deel, s, plan, positie, tekstje, anderen) {
-  const { b, boven = -13, onder = 13 } = deel.item === 'bord' ? bordSymbool() : planSymbool(deel.item);
-  const hoek = rad(pl.rot || 0);
-  const half = Math.max(-boven, onder);
-  const ex = (Math.abs(Math.cos(hoek)) * (b / 2) + Math.abs(Math.sin(hoek)) * half) * s;
-  const ey = (Math.abs(Math.sin(hoek)) * (b / 2) + Math.abs(Math.cos(hoek)) * half) * s;
-  const br = tekstBreedte(tekstje, s);
-  const hg = 10 * s;
+function tekstPlek(pl, deel, s, plan, positie, tekstje, anderen, fontGrootte) {
+  const item = deel.item;
+  const hoek = ((pl.rot || 0) % 360 + 360) % 360;
+  const o = (item === 'bord' ? null : trikkerTekstOffset(item, rad(hoek))) || { left: 12, top: 12, right: 12, bottom: 12 };
+  const sector = hoek < 45 || hoek >= 315 ? 0 : hoek < 135 ? 1 : hoek < 225 ? 2 : 3;
+  const [onder, rechts, boven, links] = [
+    [o.bottom, o.right, o.top, o.left], [o.right, o.top, o.left, o.bottom], [o.top, o.left, o.bottom, o.right], [o.left, o.bottom, o.right, o.top],
+  ][sector].map((v) => v * s);
+  const f = fontGrootte * s;
+  const { w, h } = tekstMaat(tekstje, f);
+  const rand = 0.5 * SCHAAL * s;
+  const { x, y } = pl;
   const kandidaten = {
-    rechts: { x: pl.x + ex + 3 * s, y: pl.y - 2 * s, anker: 'start' },
-    links: { x: pl.x - ex - 3 * s, y: pl.y - 2 * s, anker: 'end' },
-    boven: { x: pl.x, y: pl.y - ey - 3 * s, anker: 'middle' },
-    onder: { x: pl.x, y: pl.y + ey + 11 * s, anker: 'middle' },
+    onder: { x, y: y + onder, anker: 'middle', basis: 'text-before-edge', vak: { x0: x - w / 2, y0: y + onder, x1: x + w / 2, y1: y + onder + h } },
+    rechts: { x: x + rechts, y, anker: 'start', basis: 'central', vak: { x0: x + rechts, y0: y - h / 2, x1: x + rechts + w, y1: y + h / 2 } },
+    boven: { x, y: y - boven + rand, anker: 'middle', basis: 'text-after-edge', vak: { x0: x - w / 2, y0: y - boven - h + rand, x1: x + w / 2, y1: y - boven + rand } },
+    links: { x: x - links, y, anker: 'end', basis: 'central', vak: { x0: x - links - w, y0: y - h / 2, x1: x - links, y1: y + h / 2 } },
   };
   if (positie && positie !== 'auto' && kandidaten[positie]) return kandidaten[positie];
-  const box = (k) => {
-    const x0 = k.anker === 'start' ? k.x : k.anker === 'end' ? k.x - br : k.x - br / 2;
-    return { x0, x1: x0 + br, y0: k.y - hg, y1: k.y + 2 * s };
-  };
   const rakenMuur = (v) => plan.muren.some((m) => {
-    if (!['muur', 'boog', 'raam', 'deur', 'poort', undefined].includes(m.soort)) return false;
-    if (m.soort === 'boog') return false;
-    // Het dichtstbijzijnde punt van het segment bij het midden van het vak, vergeleken met de halve diagonaal.
+    if (!['muur', 'raam', 'deur', 'poort', undefined].includes(m.soort)) return false;
     const dx = m.x2 - m.x1;
     const dy = m.y2 - m.y1;
     const l2 = dx * dx + dy * dy || 1;
-    const cx = (v.x0 + v.x1) / 2;
-    const cy = (v.y0 + v.y1) / 2;
-    const t = Math.max(0, Math.min(1, ((cx - m.x1) * dx + (cy - m.y1) * dy) / l2));
-    const px = m.x1 + t * dx;
-    const py = m.y1 + t * dy;
-    return px > v.x0 - 3 && px < v.x1 + 3 && py > v.y0 - 3 && py < v.y1 + 3;
+    const dikte = Math.max(4, 6 * s) / 2;
+    // De hoeken en het midden van het vak, zoals Trikker (GetHitTestPoints), tegen de dikte van de muur.
+    return [[v.x0, v.y0], [v.x1, v.y0], [v.x0, v.y1], [v.x1, v.y1], [(v.x0 + v.x1) / 2, (v.y0 + v.y1) / 2]].some(([px, py]) => {
+      const t = Math.max(0, Math.min(1, ((px - m.x1) * dx + (py - m.y1) * dy) / l2));
+      return Math.hypot(px - (m.x1 + t * dx), py - (m.y1 + t * dy)) <= dikte;
+    });
   });
-  let beste = null;
-  for (const naam of POSITIES) {
+  const raaktAnder = (v) => anderen.some((q) => q.x > v.x0 && q.x < v.x1 && q.y > v.y0 && q.y < v.y1);
+  for (const naam of ['onder', 'rechts', 'boven', 'links']) {
     const k = kandidaten[naam];
-    const v = box(k);
-    let straf = POSITIES.indexOf(naam) * 0.1;
-    if (rakenMuur(v)) straf += 10;
-    for (const o of anderen) {
-      if (o.x > v.x0 - 8 * s && o.x < v.x1 + 8 * s && o.y > v.y0 - 8 * s && o.y < v.y1 + 8 * s) straf += 4;
-    }
-    if (!beste || straf < beste.straf) beste = { straf, ...k };
+    if (!rakenMuur(k.vak) && !raaktAnder(k.vak)) return k;
   }
-  return beste;
+  return kandidaten.onder; // niets vrij: zoals Trikker onder het symbool
 }
 
 /** Een verbinding als gebogen stippellijn met een pijl naar de lamp, zoals in de iPad-versie. */
@@ -564,37 +564,47 @@ export function plaatsingSvg(deel, pl, s, gekozen = false, id = '', { plan = nul
   const titel = deel.item === 'bord' ? 'Verdeelbord' : `${deel.code} ${itemNaam(deel.item)}`.trim();
   const kleur = pl.kleur ? ` style="--kleur:${esc(pl.kleur)}"` : '';
   const labels = [];
+  const trikker = deel.item !== 'bord' && Boolean(trikkerSymbool(deel.item));
+  let adresSvg = '';
   if (plan && deel.item !== 'bord') {
     const adres = deel.item.adres?.trim();
-    const toonAdres = adres && pl.adresPlaats !== 'verbergen';
+    const adresPlaats = pl.adresPlaats && ADRES_PLAATSEN.includes(pl.adresPlaats) ? pl.adresPlaats : 'plus0';
+    const toonAdres = adres && adresPlaats !== 'verbergen';
     const { letter, nummer } = codeDelen(deel.code);
     const punt = stijl === 'woning' && letter && nummer ? '.' : '';
     const kringTekst = `${plan.beletteren === false ? '' : letter}${punt}${plan.nummeren === false ? '' : nummer}`;
-    // Zoals in Trikker: de kring staat er bij "automatisch" enkel als er geen adres is.
+    // Zoals in Trikker (ShouldDrawKring): de kring staat er bij "automatisch" enkel als er geen adres is.
     const toonKring = kringTekst && (pl.tekstPlaats === 'verbergen' ? false : pl.tekstPlaats && pl.tekstPlaats !== 'auto' ? true : !toonAdres);
     if (toonKring) labels.push({ t: kringTekst, klasse: 'b plan-code', positie: pl.tekstPlaats });
-    if (toonAdres) labels.push({ t: adres, klasse: 'b plan-code adres', positie: pl.adresPlaats });
+    if (toonAdres) {
+      if (trikker) adresSvg = `<g transform="translate(${-b / 2} 0)">${trikkerAdresSvg(deel.item, rad(pl.rot || 0), adresPlaats, adres)}</g>`;
+      else labels.push({ t: adres, klasse: 'b plan-code adres', positie: pl.adresPlaats });
+    }
   } else if (deel.item === 'bord') {
     labels.push({ t: 'Bord', klasse: 'b plan-code', positie: pl.tekstPlaats });
   } else if (deel.code) {
     labels.push({ t: deel.code, klasse: 'b plan-code', positie: pl.tekstPlaats });
   }
-  const eigen = plan ? [] : [];
+  const eigen = [];
   let uit = '';
+  const woning = stijl === 'woning';
+  const letterGrootte = (plan?.kringLetterGrootte || 1.6) * SCHAAL;
   for (const lb of labels) {
-    const woning = stijl === 'woning';
-    const k = woning ? { x: pl.x + (b / 2 + 9) * s, y: pl.y - 11 * s, anker: 'start' }
-      : plan ? tekstPlek(pl, deel, s, plan, lb.positie, lb.t, anderen) : { x: pl.x + (b / 2 + 4) * s, y: pl.y - 10 * s, anker: 'start' };
+    if (lb.positie === 'verbergen') continue;
+    const k = woning ? { x: pl.x + (b / 2 + 9) * s, y: pl.y - 11 * s, anker: 'start', basis: 'auto' }
+      : plan && trikker ? tekstPlek(pl, deel, s, plan, lb.positie, lb.t, anderen, letterGrootte)
+        : { x: pl.x + (b / 2 + 4) * s, y: pl.y - 10 * s, anker: 'start', basis: 'auto' };
     if (woning) uit += `<line class="plan-leider" x1="0" y1="0" x2="${r1(k.x - pl.x)}" y2="${r1(k.y - pl.y + 2 * s)}"/>`;
+    const grootte = woning || !trikker ? 8.6 * s : letterGrootte * s;
     // De tekst staat los van de draaiing van het symbool, in de tekening zelf.
-    uit += `<text class="${lb.klasse}" x="${r1(k.x - pl.x)}" y="${r1(k.y - pl.y)}" text-anchor="${k.anker}" style="font-size:${r1(8.6 * s)}px">${esc(lb.t)}</text>`;
+    uit += `<text class="${lb.klasse}" x="${r1(k.x - pl.x)}" y="${r1(k.y - pl.y)}" text-anchor="${k.anker}"${k.basis && k.basis !== 'auto' ? ` dominant-baseline="${k.basis}"` : ''} style="font-size:${r1(grootte)}px">${esc(lb.t)}</text>`;
     eigen.push(k);
   }
   return `<g class="geplaatst${pl.los ? ' los' : ''}${gekozen ? ' gekozen' : ''}" data-plaats="${esc(id)}" transform="translate(${pl.x} ${pl.y})"${kleur}>`
     + `<title>${esc(titel)}</title>`
     + `<g transform="rotate(${pl.rot || 0}) scale(${s})">`
     + `<rect class="plaats-doel" x="${-b / 2 - 5}" y="${boven - 4}" width="${b + 10}" height="${onder - boven + 8}" rx="4"/>`
-    + `<g transform="translate(${-b / 2} 0)">${svg}</g></g>`
+    + `<g transform="translate(${-b / 2} 0)">${svg}</g>${adresSvg}</g>`
     + uit
     + '</g>';
 }

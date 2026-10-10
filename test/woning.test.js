@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { planSymbool, symbool } from '../app/js/symbolen.js';
-import { nieuwProject, nieuweKring, nieuwDifferentieel, nieuwItem, wijsToeEen, maakLos, kringVanItem, codes, rijen, kastNamen } from '../app/js/model.js';
+import { nieuwPlan, nieuwProject, nieuweKring, nieuwDifferentieel, nieuwItem, wijsToeEen, maakLos, kringVanItem, codes, rijen, kastNamen } from '../app/js/model.js';
 
 function projectMet() {
   const p = nieuwProject();
@@ -79,4 +79,40 @@ test('symbolen op het plan hebben geen aanvoerleiding, een contactdoos wel een k
   // zoals in Trikker: een steeltje van 3 eenheden (35 mm) tot aan de muur, links van het midden
   assert.match(sc.svg, /<line x1="-3" y1="0" x2="0" y2="0"/);
   assert.ok(sc.svg.includes('class="tk"'));
+});
+
+test('tekst en adres bij een symbool volgen Trikker', async () => {
+  const { plaatsingSvg, volgendeTekstPlaats, volgendeAdresPlaats } = await import('../app/js/plan.js');
+  const plan = nieuwPlan();
+  plan.symbool = 1;
+  const deel = { item: { ...nieuwItem('stopcontact'), id: 'a' }, code: 'B2' };
+  const tekstVan = (pl) => /<text class="b plan-code"[^>]*x="([-\d.]+)" y="([-\d.]+)"[^>]*text-anchor="(\w+)"/.exec(plaatsingSvg(deel, pl, 1, false, 'a', { plan, anderen: [] }));
+  // Automatisch: onder het symbool, gecentreerd, de boven-rand van de tekst op de afstand die het symbool opgeeft.
+  const auto = tekstVan({ x: 100, y: 100, rot: 0 });
+  assert.equal(auto[3], 'middle');
+  assert.ok(Number(auto[2]) > 0);
+  // Rechts, links, boven kiezen het anker en de kant.
+  assert.equal(tekstVan({ x: 100, y: 100, rot: 0, tekstPlaats: 'rechts' })[3], 'start');
+  assert.equal(tekstVan({ x: 100, y: 100, rot: 0, tekstPlaats: 'links' })[3], 'end');
+  assert.ok(Number(tekstVan({ x: 100, y: 100, rot: 0, tekstPlaats: 'boven' })[2]) < 0);
+  // Verbergen: geen tekst.
+  assert.equal(tekstVan({ x: 100, y: 100, rot: 0, tekstPlaats: 'verbergen' }), null);
+  // Een muur onder het symbool: dan gaat de tekst naar rechts (de volgende plaats in Trikkers volgorde).
+  plan.muren.push({ soort: 'muur', x1: 0, y1: 118, x2: 300, y2: 118 });
+  assert.equal(tekstVan({ x: 100, y: 100, rot: 0 })[3], 'start');
+  // Shift + rechtsklik en Ctrl + rechtsklik doorlopen dezelfde volgorde als Trikker.
+  assert.equal(volgendeTekstPlaats('auto'), 'links');
+  assert.equal(volgendeTekstPlaats('onder'), 'verbergen');
+  assert.equal(volgendeTekstPlaats('verbergen'), 'auto');
+  assert.equal(volgendeAdresPlaats(undefined), 'plus90');
+  assert.equal(volgendeAdresPlaats('plus270'), 'verbergen');
+  assert.equal(volgendeAdresPlaats('verbergen'), 'plus0');
+  // Een adres bij een domoticasymbool wordt cursief in het draaiende vlak van het symbool getekend.
+  const relais = { item: { ...nieuwItem('relais'), id: 'r', adres: 'A1.2' }, code: 'B3' };
+  const svg = plaatsingSvg(relais, { x: 0, y: 0, rot: 0 }, 1, false, 'r', { plan: nieuwPlan(), anderen: [] });
+  assert.match(svg, /class="tk-adres"/);
+  assert.match(svg, /font-style="italic"[^>]*>A1\.2</);
+  // Zonder adres geen adrestekst; bij "verbergen" ook niet.
+  assert.ok(!plaatsingSvg({ ...relais, item: { ...relais.item, adres: '' } }, { x: 0, y: 0, rot: 0 }, 1, false, 'r', { plan: nieuwPlan(), anderen: [] }).includes('tk-adres'));
+  assert.ok(!plaatsingSvg(relais, { x: 0, y: 0, rot: 0, adresPlaats: 'verbergen' }, 1, false, 'r', { plan: nieuwPlan(), anderen: [] }).includes('tk-adres'));
 });

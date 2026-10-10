@@ -149,6 +149,13 @@ Het eerste tabblad, **Woning**, werkt in vier stappen. Je kan er altijd naar het
 
 Het ééndraadschema, de materiaallijst en het afdrukken volgen daaruit; het projectbestand is hetzelfde als in de rest van het programma.
 
+### Symbolen, tekst en adres op het situatieschema (zoals Trikker)
+
+- De symbolen op het plan zijn **exact die van Trikker**: de tekenroutines van Trikker zijn nagebouwd en per variant vergeleken met het echte programma (`tools/trikker/LEESMIJ.md`, `npm test`). Het ééndraadschema houdt zijn eigen tekening.
+- **Muren**: een contactdoos kleeft met zijn steeltje aan de muur en gaat bij een muureinde rond de hoek, naar waar de muis staat. Draaien gebeurt rond dat steeltje, zodat het symbool aan dezelfde kant van de muur blijft.
+- **Tekst** (kringletter + nummer): staat onder, rechts, boven of links van het symbool op de afstand die het symbool zelf opgeeft. **Shift + rechtermuisknop** op een symbool doorloopt automatisch → links → boven → rechts → onder → verbergen.
+- **Adres** (domotica): cursief, **Ctrl + rechtermuisknop** doorloopt 0° → 90° → 180° → 270° → verbergen.
+
 ## Wat het niet doet
 
 Dit programma is geen kopie van Trikker maar een eigen programma met dezelfde werkwijze. Een paar dingen zijn er bewust niet in:

@@ -3,7 +3,7 @@ import { nieuwPlan, nieuwId, nieuwElement, nieuwItem, nieuweKring, voegKnoopToe,
 import { itemNaam, PALET } from './catalogus.js';
 import {
   tekenPlan, onderdelen, PLAN_STIJL, segmentSvg, afstand, lengteTekst, ketenLengte, muurKeten, ELEMENTEN,
-  kleefAanMuur, kleeftAanMuur, draaiStap, draaiRondSteel, plaatsingSvg, symboolBreedte, handvatten, omhulsel, verschuifElement, draaiPunt, deelVan, rechthoekVan,
+  kleefAanMuur, kleeftAanMuur, draaiStap, draaiRondSteel, volgendeTekstPlaats, volgendeAdresPlaats, plaatsingSvg, symboolBreedte, handvatten, omhulsel, verschuifElement, draaiPunt, deelVan, rechthoekVan,
 } from './plan.js';
 import { SCHEMA_STIJL } from './eendraad.js';
 import { icoon, esc } from './symbolen.js';
@@ -335,6 +335,28 @@ export function verwijderGekozen() {
   }, { paneel: false });
   zetKeuze([]);
   herteken({ paneel: false });
+}
+
+/** Zoals Shift + rechtermuisknop in Trikker: de plaats van de tekst bij de gekozen symbolen doorlopen (auto, links, boven, rechts, onder, verbergen). */
+export function wisselTekstPlaats() {
+  wijzig((p) => {
+    const plan = huidigPlan(p);
+    for (const k of staat.planKeuze) {
+      const pl = k.soort === 'item' && plan.plaatsingen[k.id];
+      if (pl) pl.tekstPlaats = volgendeTekstPlaats(pl.tekstPlaats);
+    }
+  }, { paneel: true });
+}
+
+/** Zoals Ctrl + rechtermuisknop in Trikker: de plaats van het adres doorlopen (0°, 90°, 180°, 270°, verbergen). */
+export function wisselAdresPlaats() {
+  wijzig((p) => {
+    const plan = huidigPlan(p);
+    for (const k of staat.planKeuze) {
+      const pl = k.soort === 'item' && plan.plaatsingen[k.id];
+      if (pl) pl.adresPlaats = volgendeAdresPlaats(pl.adresPlaats);
+    }
+  }, { paneel: true });
 }
 
 /** Draaien: symbolen een kwartslag (met Alt in kleine stappen), een deur de andere kant op. */
@@ -946,7 +968,8 @@ function maakVeld({ label, type = 'text', waarde, opties = null, min, max, stap,
   return veldRij(label, el);
 }
 
-const PLAATSEN = [['auto', 'Automatisch'], ['rechts', 'Rechts'], ['links', 'Links'], ['boven', 'Boven'], ['onder', 'Onder'], ['verbergen', 'Verbergen']];
+const PLAATSEN = [['auto', 'Automatisch'], ['links', 'Links'], ['boven', 'Boven'], ['rechts', 'Rechts'], ['onder', 'Onder'], ['verbergen', 'Verbergen']];
+const ADRES_OPTIES = [['plus0', 'Rechts (0°)'], ['plus90', 'Onder (90°)'], ['plus180', 'Links (180°)'], ['plus270', 'Boven (270°)'], ['verbergen', 'Verbergen']];
 
 function tekenEigenschappen() {
   const paneel = $('#plan-eigenschappen');
@@ -993,7 +1016,7 @@ function tekenEigenschappen() {
     form.append(
       maakVeld({ label: 'Hoek (°)', type: 'number', waarde: pl.rot || 0, bij: (v) => zet((pp) => { const x = pp.plaatsingen[id]; if (x) x.rot = ((Number(v) || 0) % 360 + 360) % 360; }, `hoek${id}`) }),
       maakVeld({ label: 'Plaatsing tekst', opties: PLAATSEN, waarde: pl.tekstPlaats || 'auto', bij: (v) => zet((pp) => { pp.plaatsingen[id].tekstPlaats = v; }) }),
-      maakVeld({ label: 'Plaatsing adres', opties: PLAATSEN, waarde: pl.adresPlaats || 'auto', bij: (v) => zet((pp) => { pp.plaatsingen[id].adresPlaats = v; }) }),
+      maakVeld({ label: 'Plaatsing adres', opties: ADRES_OPTIES, waarde: pl.adresPlaats || 'plus0', bij: (v) => zet((pp) => { pp.plaatsingen[id].adresPlaats = v; }) }),
       maakVeld({ label: 'Kleur', type: 'color', waarde: pl.kleur || '#c2410c', bij: (v) => zet((pp) => { pp.plaatsingen[id].kleur = v; }) }),
     );
     void rot;
@@ -1464,6 +1487,14 @@ export function startSituatie() {
       const huidig = plaatsen ? onderdelen(staat.project).get(plaatsen)?.item : PALET[losKeuze] && { soort: PALET[losKeuze].soort };
       plaatsRot = (plaatsRot + draaiStap(huidig, e.altKey)) % 360;
       svg.dispatchEvent(new PointerEvent('pointermove', { clientX: e.clientX, clientY: e.clientY, altKey: e.altKey }));
+    } else if (gereedschap === 'kies' && !punten.length && (e.target.closest?.('[data-plaats]') || staat.planKeuze.some((k) => k.soort === 'item'))) {
+      // Rechtermuisknop op een symbool: zoals in Trikker draaien, met Shift de plaats van de tekst en met Ctrl die van het adres.
+      e.preventDefault();
+      const id = e.target.closest?.('[data-plaats]')?.dataset.plaats;
+      if (id && !staat.planKeuze.some((k) => k.soort === 'item' && k.id === id)) zetKeuze([{ soort: 'item', id }]);
+      if (e.shiftKey) wisselTekstPlaats();
+      else if (e.ctrlKey) wisselAdresPlaats();
+      else draaiGekozen(e.altKey);
     } else if (gereedschap === 'deur') {
       e.preventDefault();
       tekenSpiegel = !tekenSpiegel;
