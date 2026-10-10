@@ -178,7 +178,7 @@ function tekenVlak() {
   $('#plan-maten').checked = plan.alleMaten === true;
   $('#plan-kleef').checked = plan.kleefMuur !== false;
   $('#plan-kleefgrid').checked = plan.kleefGrid === true;
-  $('#plan-recht').checked = plan.rechteHoeken !== false;
+  $('#plan-hoek').value = String(plan.hoekStap ?? 90);
   vulKringKeuze();
   $('#plan-grid').checked = plan.toonGrid !== false;
   $('#plan-beletter').checked = plan.beletteren !== false;
@@ -386,7 +386,17 @@ function vastPunt(punt, { van = null, ctrl = false, alt = false } = {}) {
     y = Math.round(y / GRID) * GRID;
   }
   // Rechte hoeken: standaard recht (0° en 90°) tenzij Alt; zonder die instelling houdt Ctrl de lijn recht.
-  const recht = van && (plan.rechteHoeken !== false ? !alt : ctrl);
+  const stap = plan.hoekStap ?? 90;
+  const recht = Boolean(van) && stap === 90 && !alt;
+  if (van && !alt && stap > 0 && stap < 90) {
+    // Op de dichtstbijzijnde hoek in stappen van 45° of 15°, met dezelfde lengte.
+    const l = Math.hypot(x - van.x, y - van.y);
+    const hoek = Math.round(Math.atan2(y - van.y, x - van.x) / ((stap * Math.PI) / 180)) * ((stap * Math.PI) / 180);
+    x = van.x + Math.cos(hoek) * l;
+    y = van.y + Math.sin(hoek) * l;
+  } else if (van && stap === 0 && ctrl) {
+    if (Math.abs(x - van.x) > Math.abs(y - van.y)) y = van.y; else x = van.x;
+  }
   if (recht) {
     if (Math.abs(x - van.x) > Math.abs(y - van.y)) y = van.y; else x = van.x;
   }
@@ -1567,7 +1577,7 @@ export function startSituatie() {
   vink('#plan-kleef', 'kleefMuur');
   vink('#plan-kleefgrid', 'kleefGrid');
   vink('#plan-grid', 'toonGrid');
-  vink('#plan-recht', 'rechteHoeken');
+  $('#plan-hoek').addEventListener('change', (e) => wijzig((p) => { huidigPlan(p).hoekStap = Number(e.target.value); }, { paneel: false }));
   vink('#plan-beletter', 'beletteren');
   vink('#plan-nummer', 'nummeren');
   $('#plan-transparant').addEventListener('change', (e) => window.dispatchEvent(new CustomEvent('actie', { detail: e.target.checked ? 'transparantAan' : 'transparantUit' })));

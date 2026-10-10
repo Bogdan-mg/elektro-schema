@@ -83,7 +83,7 @@ Het installatiebestand wordt automatisch gemaakt bij elke wijziging op `main` (z
 - De **tekst** bij een symbool staat zo dat ze geen muur of ander symbool raakt; je kan de plaats ook zelf kiezen (links, rechts, boven,
   onder of verbergen). Zoals in Trikker staat het **adres** (bij een input ook de kring van de output) in plaats van de kring als het ingevuld is.
   **Beletteren** en **Nummeren** zetten letter en nummer per pagina aan of uit.
-- **Begin met het situatieschema**: teken het huis (standaard met **rechte hoeken** en aan het raster, dus recht en netjes; Alt tekent vrij),
+- **Begin met het situatieschema**: teken het huis (standaard met **rechte hoeken** en aan het raster, dus recht en netjes; kies bij **Hoeken** ook 45°, per 15° of vrij, of houd Alt ingedrukt voor een schuine lijn),
   zet met **Losse symbolen** alle stopcontacten, lichtpunten en schakelaars (ze kleven aan de muur), en **verbind** met het gereedschap
   *Verbinden* elke schakelaar met de lampen die hij bedient. Maak daarna in het ééndraadschema de kringen (zekeringen) aan en geef
   per zekering aan wat erop staat: met **Kring-modus** kies je een kring en klik je de symbolen, of kies je symbolen met een kader en

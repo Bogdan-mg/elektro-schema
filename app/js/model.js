@@ -18,7 +18,7 @@ export function nieuwPlan(naam = 'Gelijkvloers') {
     symbool: 1.5, // grootte van de symbolen op dit plan
     schaal: 100, // tekeneenheden per meter; null = nog niet ingesteld
     kleefMuur: true, // symbolen tegen de dichtstbijzijnde muur zetten en muren aan elkaar laten kleven
-    rechteHoeken: true, // lijnen en muren in rechte hoeken (0° en 90°); Alt tekent vrij
+    hoekStap: 90, // muren en lijnen in stappen van deze hoek (90 = recht, 45, 15); 0 = vrij. Alt tekent even vrij
     verbindingen: [], // { id, van, naar }: een schakelaar met de lamp(en) die hij bedient
     kleefGrid: true, // alles op de kruispunten van het raster zetten
     toonGrid: true,
