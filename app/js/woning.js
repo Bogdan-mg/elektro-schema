@@ -180,9 +180,11 @@ function koppelPlan() {
       e.stopPropagation();
       return;
     }
-    if (stap === 'componenten' && !gewapend) {
+    if (stap === 'componenten') {
       const x = huidigPlan().plaatsingen[id];
       if (!x) return;
+      // Een symbool aanklikken kiest het (om te verslepen of te wissen), ook als er nog een symbool aan de muis hing.
+      gewapend = null;
       gekozenId = id;
       sleep = { soort: 'zet', id, start: { x: e.clientX, y: e.clientY }, x0: x.x, y0: x.y, bewogen: false, g };
       svg.setPointerCapture(e.pointerId);
