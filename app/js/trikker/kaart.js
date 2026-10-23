@@ -47,6 +47,10 @@ import * as Verdeelbord from './Verdeelbord.js';
 import * as Verwarmingstoestel from './Verwarmingstoestel.js';
 import * as Voorschakelapparaat from './Voorschakelapparaat.js';
 import * as Zonnepaneel from './Zonnepaneel.js';
+import * as Leiding from './Leiding.js';
+import * as Nota from './Nota.js';
+import * as StartNode from './StartNode.js';
+import * as NullNode from './NullNode.js';
 
 // In Trikker staan de teksten in een bronbestand; hier gewoon in het Nederlands.
 Bewegingsdetector.TEKSTEN.radar = 'Radar';
@@ -57,7 +61,7 @@ export const KLASSEN = {
   Bewegingsdetector, BewegingsdetectorActief, Boiler, Branddetector, Camera, Contactdoos, ContactdoosCommunicatie, Deurslot, DomoticaModule,
   Drukknop, Geluidsbron, Intercom, Ketel, Kiezer, Lichtpunt, Luidspreker, Microfoon, Monitor, Motor, Omvormer, Overspanningsbeveiliging, Pomp,
   Relais, Schakelaar, Slot, Smeltveiligheid, Teller, Toestel, ToestelKlein, Touchscreen, Transformator, Trillingsdetector, Ventiel, Verdeelbord,
-  Verwarmingstoestel, Voorschakelapparaat, Zonnepaneel,
+  Verwarmingstoestel, Voorschakelapparaat, Zonnepaneel, Leiding, Nota, StartNode, NullNode,
 };
 
 /** Eén eenheid in Trikker (35 mm op de tekening) in tekeneenheden van deze app. */

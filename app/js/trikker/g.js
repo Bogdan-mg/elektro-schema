@@ -47,6 +47,9 @@ export const SF = {
   rightCenter: { h: 2, v: 1 }, rightCenterNoClip: { h: 2, v: 1 }, leftBottom: { h: 0, v: 2 }, leftTop: { h: 0, v: 0 }, rightTop: { h: 2, v: 0 },
 };
 
+/** Instellingen voor het vergelijken met de proefopstelling. */
+export const opties = { regelsSamenvoegen: false };
+
 export class Graphics {
   constructor() {
     this.uit = '';
@@ -101,13 +104,24 @@ export class Graphics {
   drawPath(p, d) { this.#voeg(`<path d="${d}" ${Graphics.#stijl(p)}/>`); }
   fillPath(b, d) { this.#voeg(`<path d="${d}" ${Graphics.#vul(b)}/>`); }
 
-  /** Tekst: (tekst, font, kwast, x, y, uitlijning) of (tekst, font, kwast, {x,y,w,h}, uitlijning). */
+  /**
+   * Tekst: (tekst, font, kwast, x, y, uitlijning) of (tekst, font, kwast, {x,y,w,h}, uitlijning).
+   * Een tekst met "\n" wordt over meerdere regels getekend (regelhoogte = 1,15 × grootte, zoals de proefopstelling meet);
+   * met opties.regelsSamenvoegen worden de regels aan elkaar geplakt, zoals de proefopstelling (Linux) ze uitschrijft.
+   */
   drawString(s, font, b, x, y, sf) {
     if (typeof x === 'object') { sf = y; const r = x; x = sf?.h === 1 ? r.x + r.w / 2 : sf?.h === 2 ? r.x + r.w : r.x; y = sf?.v === 1 ? r.y + r.h / 2 : sf?.v === 2 ? r.y + r.h : r.y; }
     const anker = sf?.h === 1 ? 'middle' : sf?.h === 2 ? 'end' : 'start';
     const basis = sf?.v === 1 ? 'central' : sf?.v === 2 ? 'text-after-edge' : 'text-before-edge';
-    const esc = String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    this.#voeg(`<text x="${N(x)}" y="${N(y)}" font-family="Arial" font-size="${N(font.grootte)}" text-anchor="${anker}" dominant-baseline="${basis}"${font.stijl.includes('b') ? ' font-weight="bold"' : ''}${font.stijl.includes('i') ? ' font-style="italic"' : ''} fill="${(b || kwast()).kleur}">${esc}</text>`);
+    const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    let tekst = String(s);
+    if (opties.regelsSamenvoegen) tekst = tekst.replace(/\n/g, '');
+    const regels = tekst.split('\n');
+    const lh = font.grootte * 1.15;
+    regels.forEach((regel, i) => {
+      const yy = sf?.v === 1 ? y + (i - (regels.length - 1) / 2) * lh : sf?.v === 2 ? y - (regels.length - 1 - i) * lh : y + i * lh;
+      this.#voeg(`<text x="${N(x)}" y="${N(yy)}" font-family="Arial" font-size="${N(font.grootte)}" text-anchor="${anker}" dominant-baseline="${basis}"${font.stijl.includes('b') ? ' font-weight="bold"' : ''}${font.stijl.includes('i') ? ' font-style="italic"' : ''} fill="${(b || kwast()).kleur}">${esc(regel)}</text>`);
+    });
   }
   /** Zoals TryDrawString van Trikker: verwerkt alles zonder fout. */
   tryDrawString(...a) { try { this.drawString(...a); } catch { /* net als Trikker */ } }

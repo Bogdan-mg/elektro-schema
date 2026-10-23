@@ -4,9 +4,8 @@ import { penDun, penMiddel, kwast, fontNormaal, SF } from './g.js';
 export const KLASSE = 'Smeltveiligheid';
 
 const POLEN = { NietGespecifieerd: 0, Enkelpolig: 1, Dubbelpolig: 2, Driepolig: 3, Vierpolig: 4 };
-// Environment.NewLine tussen de twee tekstregels. De proefopstelling (Linux) schrijft "\n" weg uit de SVG-tekst,
-// zodat de regels daar aan elkaar plakken; voor een echte regelafbreking moet g.js tekst met "\n" kunnen tekenen.
-const NIEUWE_REGEL = '';
+// Environment.NewLine tussen de tekstregels (g.js kan ze samenvoegen om met de proefopstelling te vergelijken).
+const NIEUWE_REGEL = '\n';
 
 export function maak(props = {}) {
   const n = { Width: 14, Height: 10, NominaleStroomsterkte: 0, StroomsterkteEenheid: 'A', AantalPolen: 'NietGespecifieerd', Fase: '', Type: '' };
@@ -24,6 +23,7 @@ export function maak(props = {}) {
     return boven + (boven && onder ? NIEUWE_REGEL : '') + onder;
   };
 
+  n.tekst = tekst; // voor de lay-out (WorldAreaMargin)
   n.textOffset = () => ({ left: n.Width / 2 + 0.5, top: n.Height / 2 + 0.5, right: n.Width / 2 + 0.5, bottom: n.Height / 2 + 0.5 });
 
   n.render = (g) => {

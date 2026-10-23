@@ -28,6 +28,7 @@ export function maak(props = {}) {
   const heeftKind = () => !!n.Kind && n.Kind !== 'Nota';
   const rechterRand = () => (n.IngebouwdeSensor !== 'Geen' ? Math.max(4, n.Width / 2) : n.Width / 2);
 
+  n.aantalBuislampen = buis; // voor de lay-out (WorldAreaMargin)
   n.textOffset = (rotation = null) => {
     const flip = shouldFlipText(rotation);
     const wand = n.Wandverlichting === 'Ja';
