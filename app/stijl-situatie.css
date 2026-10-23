@@ -1,0 +1,174 @@
+/* Het tabblad Situatieschema, opgebouwd zoals het grondplan-scherm van Trikker (GrondplanScreen):
+   bovenbalk met modus en acties, links de toolbox (of de eigenschappen), midden het plan, onderaan de afmetingen. */
+
+#tab-situatie.ss {
+  --ss-wit: #fff;
+  --ss-balk: #f5f5f5;        /* WhiteSmoke */
+  --ss-grijs: #dcdcdc;       /* Gainsboro */
+  --ss-gekozen: #b0c4de;     /* LightSteelBlue */
+  --ss-tekst: #00013e;
+  --ss-oranje: #ff8c00;      /* DarkOrange */
+  --ss-oranje-licht: #fff1de;
+  display: flex;
+  flex-direction: column;
+  background: #696969;       /* DimGray: de achtergrond van het scherm */
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  font-size: 12px;
+}
+#tab-situatie.ss[hidden] { display: none; }
+#tab-situatie button { border-radius: 0; padding: 0; }
+#tab-situatie input[type=text], #tab-situatie input:not([type]), #tab-situatie input[type=number], #tab-situatie select { width: auto; border-radius: 0; padding: 1px 3px; }
+
+/* ----- Bovenbalk ----- */
+.ss-boven {
+  display: flex; align-items: flex-start; gap: 0; flex: none;
+  background: var(--ss-balk); padding: 3px 2px 3px 2px; min-height: 69px;
+}
+.ss-groep { display: flex; }
+.ss-streep { width: 3px; align-self: stretch; background: var(--ss-grijs); margin: 1px 4px; flex: none; }
+#tab-situatie .ss-knop {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  width: 76px; height: 60px; margin: 1px; background: var(--ss-wit); color: var(--ss-tekst); border: 1px solid #adadad; font-size: 12px;
+}
+#tab-situatie .ss-knop img { width: 32px; height: 32px; }
+#tab-situatie .ss-knop:hover:not(:disabled) { background: var(--ss-grijs); border-color: #adadad; }
+#tab-situatie .ss-knop:active:not(:disabled) { background: var(--ss-balk); }
+#tab-situatie .ss-knop.aan { background: var(--ss-gekozen); border-color: #6a8ab4; color: var(--ss-tekst); }
+#tab-situatie .ss-knop:disabled { opacity: 1; color: #a0a0a0; }
+#tab-situatie .ss-knop:disabled img { opacity: .35; }
+
+.ss-zoom { display: flex; align-items: center; gap: 0; margin-top: 15px; height: 32px; }
+#tab-situatie .ss-zoomknop { width: 32px; height: 32px; background: transparent; border: 0; }
+#tab-situatie .ss-zoomknop img { width: 32px; height: 32px; display: block; }
+#tab-situatie .ss-zoomknop.tekst { font-size: 20px; color: var(--ss-tekst); width: 26px; }
+#tab-situatie .ss-zoomknop:hover { background: var(--ss-grijs); }
+.ss-zoom input[type=range] { width: 100px; margin: 0 2px; padding: 0; }
+
+.ss-paginas { display: flex; flex-direction: column; gap: 4px; padding-top: 1px; }
+.ss-rij { display: flex; align-items: center; gap: 4px; }
+#tab-situatie .ss-mini {
+  width: 26px; height: 26px; background: var(--ss-wit); border: 1px solid #adadad; display: inline-flex; align-items: center; justify-content: center; flex: none;
+}
+#tab-situatie .ss-mini.breed { width: 55px; }
+#tab-situatie .ss-mini img { width: 20px; height: 20px; }
+#tab-situatie .ss-mini:hover:not(:disabled) { background: var(--ss-grijs); border-color: #adadad; }
+#tab-situatie .ss-mini:disabled img { opacity: .3; }
+#tab-situatie .ss-mini.aan { background: var(--ss-gekozen); }
+.ss-pagina { min-width: 66px; text-align: center; font-size: 12px; }
+
+.ss-vinkjes { display: flex; flex-direction: column; gap: 1px; justify-content: center; padding-left: 4px; }
+.ss-vinkjes label, .ss-op-pagina label { display: flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap; color: #000; }
+.ss-vinkjes input, .ss-op-pagina input { margin: 0; width: 13px; height: 13px; }
+
+/* ----- Midden ----- */
+.ss-midden { flex: 1; min-height: 0; display: flex; }
+.ss-links {
+  width: 239px; flex: none; display: flex; flex-direction: column; background: #f0f0f0; padding: 3px 0 3px 3px; gap: 3px; min-height: 0;
+}
+#tab-situatie .vlak { flex: 1; min-width: 0; background: #696969; }
+#tab-situatie .vlak svg.tekening { background: #696969; }
+#tab-situatie .vlak svg.tekening.plaatsen { cursor: crosshair; }
+
+/* Acties boven de toolbox (breedte, lijndikte, kleur, vergrendelen / roteren, spiegelen) */
+.ss-acties { display: flex; flex-direction: column; flex: none; }
+.ss-actie-rij { display: flex; align-items: center; gap: 4px; padding: 2px; min-height: 34px; }
+.ss-actie-rij[hidden] { display: none; }
+.ss-ic { width: 24px; height: 24px; flex: none; }
+.ss-ic.uit, .ss-combo:disabled { opacity: .4; }
+#tab-situatie .ss-combo { width: 45px; height: 21px; border: 1px solid #7a7a7a; background: #fff; font-size: 12px; padding: 0 2px; }
+#tab-situatie .ss-combo.graden { width: 41px; }
+#tab-situatie .ss-kleur { width: 21px; height: 21px; border: 1px solid #7a7a7a; background: #000; flex: none; }
+#tab-situatie .ss-kleur:disabled { opacity: .35; }
+#tab-situatie .ss-mini.rechts, #tab-situatie .ss-mini.slot { margin-left: auto; }
+
+/* Toolbox: verticale tabbladen links van het paneel (GrondplanToolbox.OnPaint) */
+.ss-toolbox { flex: 1; min-height: 0; display: flex; position: relative; }
+.ss-toolbox[hidden] { display: none; }
+.tb-tabs { width: 47px; flex: none; display: flex; flex-direction: column; align-items: flex-end; padding-top: 3px; gap: 0; position: relative; z-index: 1; }
+#tab-situatie .tb-pijl { width: 39px; height: 19px; margin: 0 0 3px 2px; background: #c0c0c0 center / 100% 100% no-repeat; border: 1px solid #696969; align-self: flex-start; flex: none; }
+#tab-situatie .tb-pijl:hover:not(:disabled) { background-color: var(--ss-grijs); }
+#tab-situatie .tb-pijl:active:not(:disabled) { background-color: #b0c4de; }
+#tab-situatie .tb-pijl:disabled { opacity: .4; }
+.tb-tabs .tb-ruimte { flex: 1; }
+#tab-situatie .tb-tab {
+  width: 45px; height: 28px; margin: 0 0 3px 0; flex: none; display: flex; align-items: center; justify-content: center;
+  background: var(--ss-grijs); border: 1px solid #a9a9a9; border-right: 1px solid #a9a9a9; border-radius: 8px 0 0 8px; padding: 0;
+  font: 700 15px Arial, sans-serif; color: #000;
+}
+#tab-situatie .tb-tab img { width: 22px; height: 22px; }
+#tab-situatie .tb-tab:hover { background: #e6e6e6; }
+#tab-situatie .tb-tab.aan { background: var(--ss-balk); border-color: #000; border-right-color: var(--ss-balk); margin-right: -2px; position: relative; z-index: 2; width: 47px; }
+#tab-situatie .tb-tab .tb-letter.klaar { color: #a9a9a9; }
+.tb-hoofd {
+  flex: 1; min-width: 0; background: var(--ss-balk); border: 1px solid #000; border-radius: 8px 8px 8px 8px; padding: 6px 2px 2px 6px; display: flex; min-height: 0; margin: 0 3px 3px 0;
+}
+.tb-paneel { flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 0; padding: 3px; }
+
+.tb-item { margin: 3px; padding: 0; background: transparent; border: 1px solid transparent; display: inline-flex; align-items: center; justify-content: center; flex: none; color: #000; cursor: default; }
+#tab-situatie .tb-item { border: 0; margin: 3px; background: transparent; }
+#tab-situatie .tb-item:hover:not(.uit) { background: #ebebeb; }
+#tab-situatie .tb-item.aan, #tab-situatie .tb-item.aan:hover { background: var(--ss-oranje-licht); outline: 0.35px solid var(--ss-oranje); box-shadow: inset 0 0 0 1px var(--ss-oranje); }
+.tb-item.tweepunt { width: 42px; height: 36px; margin: 0; }
+.tb-item.tweepunt img { max-width: 40px; max-height: 34px; width: auto; height: auto; }
+.tb-item.knoop { }
+.tb-item.knoop svg { display: block; overflow: visible; }
+.tb-item.uit { color: #d3d3d3; cursor: default; }
+.tb-scheiding { flex: 0 0 100%; width: 100%; height: 3px; margin: 3px 0; background: repeating-linear-gradient(90deg, #a0a0a0 0 4px, transparent 4px 7px) center 1px / 100% 1px no-repeat; }
+.tb-subkring { flex: 0 0 100%; display: flex; align-items: center; height: 15px; margin: 1px 0; font: 8pt Arial, sans-serif; color: #000; }
+.tb-subkring span { width: 20px; padding-left: 2px; }
+.tb-subkring i { flex: 1; height: 1px; background: repeating-linear-gradient(90deg, #a0a0a0 0 4px, transparent 4px 7px); margin-right: 8px; }
+.tb-leeg { padding: 8px; color: #666; font-size: 12px; }
+
+/* Eigenschappen (selectiemodus): zoals het PropertyGrid van Trikker */
+.ss-grid { flex: 1; min-height: 0; overflow: auto; background: #fff; border: 1px solid #828790; font-size: 12px; margin-right: 3px; }
+.ss-grid .pg-cat { background: #f0f0f0; font-weight: 700; padding: 2px 4px; border-top: 1px solid #dcdcdc; border-bottom: 1px solid #dcdcdc; color: #000; }
+.ss-grid .pg-rij { display: grid; grid-template-columns: 48% 52%; align-items: center; border-bottom: 1px solid #f0f0f0; min-height: 21px; }
+.ss-grid .pg-rij > span { padding: 1px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #000; }
+.ss-grid .pg-rij > span + * { margin: 0; }
+.ss-grid .pg-rij input, .ss-grid .pg-rij select { width: 100%; border: 0; border-left: 1px solid #f0f0f0; background: #fff; height: 21px; padding: 0 3px; font-size: 12px; border-radius: 0; }
+.ss-grid .pg-rij input[type=checkbox] { width: 14px; height: 14px; margin: 3px 6px; }
+.ss-grid .pg-rij input[type=color] { padding: 1px 3px; }
+.ss-grid .pg-leeg { padding: 8px; color: #666; }
+.ss-grid .pg-uit { padding: 6px 8px; color: #555; border-top: 1px solid #dcdcdc; }
+
+/* ----- Onderbalk ----- */
+.ss-onder {
+  display: flex; align-items: center; gap: 12px; flex: none; background: var(--ss-balk); height: 27px; padding: 0 4px; border-top: 1px solid var(--ss-grijs); position: relative;
+}
+.ss-info { display: flex; align-items: center; gap: 4px; flex: none; }
+.ss-info img { width: 20px; height: 20px; margin-left: 5px; }
+.ss-info b { font-weight: 400; min-width: 46px; font-size: 12px; }
+.ss-status { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #444; padding: 0 8px; }
+.ss-op-pagina { display: flex; align-items: center; gap: 12px; flex: none; }
+.ss-schaalknop { height: 21px; padding: 0 8px; background: #fff; border: 1px solid #adadad; color: var(--ss-tekst); font-size: 12px; flex: none; }
+.ss-schaalknop:hover { background: var(--ss-grijs); }
+
+.ss-meer { position: relative; flex: none; }
+.ss-meer summary { cursor: pointer; list-style: none; padding: 2px 8px; border: 1px solid #adadad; background: #fff; color: var(--ss-tekst); }
+.ss-meer summary::-webkit-details-marker { display: none; }
+.ss-meer[open] summary { background: var(--ss-gekozen); }
+.ss-meer-inhoud {
+  position: absolute; right: 0; bottom: 26px; width: 560px; max-width: calc(100vw - 260px); background: var(--ss-balk); border: 1px solid #adadad; padding: 8px; z-index: 5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .35); display: flex; flex-direction: column; gap: 8px;
+}
+.ss-meer-rij { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.ss-meer-inhoud button { padding: 3px 8px; background: #fff; border: 1px solid #adadad; color: var(--ss-tekst); }
+.ss-meer-inhoud button.aan { background: var(--ss-gekozen); }
+.ss-meer-inhoud label { display: flex; align-items: center; gap: 4px; }
+.ss-meer-inhoud input[type=number] { width: 70px; }
+.ss-schaalinfo { color: #555; }
+.ss-schaalinfo.mist { color: #b45309; }
+
+/* Het plan zelf: de selectie is oranje zoals in Trikker (DarkOrange) */
+#situatie-svg .plan-vlak { fill: #f5f5f5; stroke: none; }
+#situatie-svg .muur.gekozen, #situatie-svg .lijn.gekozen, #situatie-svg .trap.gekozen *, #situatie-svg .meet.gekozen, #situatie-svg .maatlijn.gekozen,
+#situatie-svg .deur.gekozen .deurblad, #situatie-svg .deur.gekozen .deurboog, #situatie-svg .raam.gekozen .raam-buiten,
+#situatie-svg .poort.gekozen .poort-lijn, #situatie-svg .poort.gekozen .poort-streep,
+#situatie-svg .rechthoek.gekozen rect, #situatie-svg .vlak.gekozen rect, #situatie-svg .afbeelding.gekozen .afb-doel { stroke: var(--ss-oranje, #ff8c00); }
+#situatie-svg .plantekst.gekozen { fill: #ff8c00; }
+#situatie-svg .geplaatst.gekozen { color: #000; }
+#situatie-svg .geplaatst.gekozen .plaats-doel { fill: rgba(255, 140, 0, .22); stroke: #ff8c00; stroke-width: .8; }
+#situatie-svg .handvat { fill: #ff8c00; stroke: #fff; }
+#situatie-svg .marquee { fill: rgba(255, 140, 0, .08); stroke: #ff8c00; }
+#situatie-svg .selectie-kader { fill: none; stroke: #ff8c00; stroke-dasharray: 5 3; pointer-events: none; }
+#situatie-svg .selectie-greep { fill: rgba(255, 140, 0, .5); stroke: #ff8c00; cursor: nwse-resize; }
