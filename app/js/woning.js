@@ -19,6 +19,14 @@ const STAPPEN = [
   ['kringen', 'kringen', '∞'],
 ];
 
+/** Eén zin per stap, onder de stappenbalk: wat je hier doet. */
+const UITLEG = {
+  componenten: 'Kies onderaan een symbool en tik op het plan om het te plaatsen. Rechtsklik draait, Esc stopt.',
+  verbindingen: 'Sleep van een schakelaar naar de lamp die hij bedient. Zo weet het programma wat bij elkaar hoort.',
+  verdeelbord: 'Zet de kastmodules en zekeringen van het verdeelbord klaar. Sleep onderdelen naar hun plaats.',
+  kringen: 'Kies bovenaan een zekering en tik de symbolen die erop zitten. De kringletter komt op het plan.',
+};
+
 let stap = 'componenten';
 let vlak = null;
 let acties = {};
@@ -574,6 +582,7 @@ function tekenBalk() {
 export function teken() {
   if (staat.tab !== 'woning' || !vlak) return;
   tekenBalk();
+  $('#w-uitleg').textContent = UITLEG[stap] || '';
   const verdeel = stap === 'verdeelbord';
   $('#w-plan').hidden = verdeel;
   $('#w-verdeel').hidden = !verdeel;
@@ -642,6 +651,8 @@ function koppelBalk() {
   $('#w-oog').addEventListener('click', () => { toonLabels = !toonLabels; teken(); });
   $('#w-home').addEventListener('click', () => acties.tab?.('document'));
   $('#w-potlood').addEventListener('click', () => acties.tab?.('situatie'));
+  $('#w-hint-teken').addEventListener('click', () => acties.tab?.('situatie'));
+  $('#w-hint-schema').addEventListener('click', () => acties.tab?.('eendraad'));
   $('#w-delen').addEventListener('click', () => { $('#w-menu').hidden = !$('#w-menu').hidden; });
   $('#w-menu').addEventListener('click', (e) => {
     const b = e.target.closest('[data-naar]');
@@ -695,7 +706,7 @@ export function startWoning({ acties: a }) {
     <div class="w-balk">
       <button class="w-rond" id="w-home" title="Document: klant en gegevens">⌂</button>
       <button class="w-rond" id="w-potlood" title="Het huis tekenen: muren, deuren, ramen">▢</button>
-      <nav id="w-stappen" class="w-stappen"></nav>
+      <div class="w-stapkolom"><nav id="w-stappen" class="w-stappen"></nav><p id="w-uitleg" class="w-uitleg"></p></div>
       <button class="w-rond" id="w-oog" title="Kringletters tonen of verbergen">◉</button>
       <button class="w-rond" id="w-delen" title="Verder naar het ééndraadschema, de materiaallijst of afdrukken">➦</button>
       <div id="w-menu" class="w-menu" hidden>
@@ -707,7 +718,7 @@ export function startWoning({ acties: a }) {
       <div id="w-plan" class="w-plan">
         <svg id="woning-svg" class="tekening"><g class="inhoud"><g class="plan-laag"></g><g class="voorbeeld-laag"></g></g></svg>
         <div id="w-acties" class="w-acties" hidden><button id="w-draai" title="Draaien (R)">↻</button><button id="w-kopie" title="Kopiëren">⧉</button><button id="w-wis" title="Wissen (Delete)">🗑</button></div>
-        <div id="w-hint" class="w-hint" hidden>Teken eerst de muren van het huis met de knop <b>▢</b> linksboven, of open een grondplan. Kom daarna terug om de symbolen te plaatsen.</div>
+        <div id="w-hint" class="w-hint" hidden><p>Teken eerst de muren van het huis met de knop <b>▢</b> linksboven, of laad het plan van de architect. Kom daarna terug om de symbolen te plaatsen.</p><div class="w-hint-knoppen"><button class="w-pil" id="w-hint-teken">Het huis tekenen</button><button class="w-pil" id="w-hint-schema">Liever meteen het ééndraadschema</button></div></div>
         <div class="w-zoom"><button id="w-zoom-uit">−</button><button id="w-passend">⤢</button><button id="w-zoom-in">+</button></div>
       </div>
       <div id="w-verdeel" class="w-verdeel" hidden></div>

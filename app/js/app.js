@@ -95,7 +95,13 @@ async function nieuw() {
   if (!await magVerder()) return;
   await wisHerstel();
   const p = nieuwProject();
-  p.document.controle.naam = leesInstellingen().controle || '';
+  const inst = leesInstellingen();
+  p.document.controle.naam = inst.controle || '';
+  // Mijn eigen gegevens (Instellingen) staan meteen bij de installateur, zodat je ze niet elke keer moet intikken.
+  const ik = inst.ik || {};
+  const tel = String(ik.telefoon || '');
+  Object.assign(p.document.installateur, { naam: ik.naam || '', btw: ik.btw || '' });
+  if (/@/.test(tel)) p.document.installateur.email = tel; else p.document.installateur.tel = tel;
   openProject(p, null);
   naarTab('document');
 }
