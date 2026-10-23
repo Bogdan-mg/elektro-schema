@@ -156,6 +156,12 @@ Het ééndraadschema, de materiaallijst en het afdrukken volgen daaruit; het pro
 - **Tekst** (kringletter + nummer): staat onder, rechts, boven of links van het symbool op de afstand die het symbool zelf opgeeft. **Shift + rechtermuisknop** op een symbool doorloopt automatisch → links → boven → rechts → onder → verbergen.
 - **Adres** (domotica): cursief, **Ctrl + rechtermuisknop** doorloopt 0° → 90° → 180° → 270° → verbergen.
 
+### Ééndraadschema en materiaallijst zoals Trikker
+
+- Het **ééndraadschema** wordt geschikt en getekend door een nabouw van Trikkers eigen lay-out (`app/js/trikker/eendraad/`): dezelfde plaatsing van kringen, differentiëlen, kabels en onderdelen, dezelfde nummering en kringletters. De nabouw is numeriek vergeleken met de echte Trikker-code (`tools/trikker/vergelijk-eendraad.mjs`, `npm test`).
+- De **materiaallijst** is standaard die van Trikker (`app/js/trikker/bom.js`, nagebouwd naar `Bom.cs`): één regel per omschrijving met het aantal. Kies "Uitgebreid" om ook inbouwdozen en meters kabel te zien.
+- De symbolen in de paletten en lijsten zijn de iconen van Trikker.
+
 ## Wat het niet doet
 
 Dit programma is geen kopie van Trikker maar een eigen programma met dezelfde werkwijze. Een paar dingen zijn er bewust niet in:

@@ -51,7 +51,8 @@ function beveiliging(b, { nummeren = false, naam = '', letter = '', id, nieuwePa
 
 /** Een onderdeel (met zijn opmerking) als boomknoop; null als Trikker er geen symbool voor heeft. */
 function onderdeel(item) {
-  const spec = trikkerSpec(item);
+  // Een eigen (geïmporteerd) symbool heeft in Trikker geen tekening hier: het komt als tekstje met zijn omschrijving.
+  const spec = trikkerSpec(item) || (item.soort === 'eigen' ? { k: 'Nota', p: { Tekst: item.omschrijving || 'eigen symbool' } } : null);
   if (!spec) return null;
   const p = { ...spec.p };
   if (item.adres?.trim()) {

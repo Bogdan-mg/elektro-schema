@@ -138,6 +138,7 @@ const KAART = {
   microfoon: (it) => ['Microfoon', { Selectief: jn(it.selectief), Aantal: aantal(it) }],
   monitor: (it) => ['Monitor', { Aantal: aantal(it) }],
   motor: (it) => ['Motor', { Tekst: it.opschrift ?? 'M', Aantal: aantal(it) }],
+  nota: (it) => ['Nota', { Tekst: it.opschrift ?? 'Nota', TekstGrootte: { 1: 1.5, 2: 2, 3: 3 }[it.grootte] || 2 }],
   omvormer: () => ['Omvormer', {}],
   overspanning: (it) => ['Overspanningsbeveiliging', { Tekst: it.opschrift || '' }],
   pomp: (it) => ['Pomp', { Aantal: aantal(it) }],
