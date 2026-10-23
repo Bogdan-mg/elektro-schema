@@ -2,7 +2,7 @@
 // Elk onderdeel begint op x = 0, waar de leiding van de kring aankomt, op hoogte y = 0.
 // Een symbool geeft terug: svg, b (breedte), boven/onder (hoe ver het boven en onder de leiding komt)
 // en midden (het midden van het eigenlijke teken, voor "x3", het adres en dergelijke).
-import { trikkerSymbool, trikkerEendraadSymbool, trikkerBordSymbool } from './trikker/kaart.js';
+import { trikkerSymbool, trikkerEendraadSymbool, trikkerBordSymbool, trikkerIcoon } from './trikker/kaart.js';
 
 export const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const r1 = (n) => Math.round(n * 10) / 10;
@@ -789,6 +789,9 @@ export function plaatsingTeken(x, y, plaatsing) {
 
 /** Een klein voorbeeld van een symbool, voor knoppen, lijsten en de legende. */
 export function icoon(item, grootte = 28) {
+  // Zoals de toolbox van Trikker: het symbool van Trikker zelf (context GrondplanToolboxNode), op maat van het vakje.
+  const t = trikkerIcoon(item, { schaal: 4, past: grootte + 8, max: grootte * 3 });
+  if (t) return t.svg.replace('class="tk-icoon"', 'class="icoon tk-icoon"');
   const s = item === 'bord' ? bordSymbool() : symbool(item);
   const boven = Math.min(-13, (s.boven ?? -13) - 2);
   const onder = Math.max(13, (s.onder ?? 13) + 2);

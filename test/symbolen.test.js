@@ -25,6 +25,6 @@ test('elk onderdeel heeft een geldig symbool', () => {
     assert.ok(s.svg.length > 20, `${item.soort}/${item.variant}`);
     assert.ok(s.b > 10 && s.b < 70, `breedte ${item.soort}/${item.variant}: ${s.b}`);
     assert.doesNotMatch(s.svg, /NaN|undefined/, `${item.soort}/${item.variant}`);
-    assert.match(icoon(item), /^<svg class="icoon"/);
+    assert.match(icoon(item), /^<svg class="icoon/);
   }
 });
