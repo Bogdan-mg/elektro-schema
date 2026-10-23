@@ -57,7 +57,7 @@ export function materiaalTabel(bewerkbaar, { symbolen = false } = {}) {
   for (const groep of GROEPEN) {
     const inGroep = regels.filter((r) => r.groep === groep);
     if (!inGroep.length) continue;
-    rijen.push(`<tr class="groep"><th colspan="${symbolen ? 6 : 5}">${esc(groep)}</th></tr>`);
+    if (groep !== 'Materiaallijst') rijen.push(`<tr class="groep"><th colspan="${symbolen ? 6 : 5}">${esc(groep)}</th></tr>`);
     for (const r of inGroep) {
       const prijs = Number(prijzen[r.sleutel]) || 0;
       totaal += prijs * r.aantal;
@@ -84,6 +84,9 @@ function tekenMateriaal() {
   $('#modules').textContent = `Verdeelkast: ${modules} modules in gebruik, met 20 % reserve ${reserve} modules`
     + ` (${Math.ceil(reserve / 13)} rij${Math.ceil(reserve / 13) > 1 ? 'en' : ''} van 13). Een 1P+N-automaat is als 1 module gerekend.`;
   $('#symbolen-in-lijst').checked = Boolean(staat.project.materiaal?.symbolen);
+  const stijl = staat.project.opties?.materiaalStijl || 'trikker';
+  $('#materiaal-stijl').value = stijl;
+  $('#marge-veld').hidden = stijl !== 'uitgebreid';
   $('#materiaal-tabel').innerHTML = materiaalTabel(true, { symbolen: Boolean(staat.project.materiaal?.symbolen) }).html;
 }
 
@@ -113,6 +116,9 @@ export function tekenTeller() {
 export function startLijsten({ naarTab }) {
   $('#marge').addEventListener('input', (e) => {
     wijzig((p) => { p.materiaal = { ...p.materiaal, marge: Math.max(0, Number(e.target.value) || 0) }; }, { sleutel: 'marge', paneel: false });
+  });
+  $('#materiaal-stijl').addEventListener('change', (e) => {
+    wijzig((p) => { p.opties = { ...p.opties, materiaalStijl: e.target.value }; }, { paneel: false });
   });
   $('#symbolen-in-lijst').addEventListener('change', (e) => {
     wijzig((p) => { p.materiaal = { ...p.materiaal, symbolen: e.target.checked }; }, { paneel: false });

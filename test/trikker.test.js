@@ -47,7 +47,7 @@ test('een los symbool koppelen aan een kring', () => {
   const item = nieuwItem('stopcontact');
   p.plannen[0].plaatsingen[item.id] = { x: 10, y: 20, rot: 0, los: true, item };
   assert.equal(losseSymbolen(p).length, 1);
-  assert.equal(materiaallijst(p).regels.some((r) => /Stopcontact/.test(r.omschrijving)), true);
+  assert.equal(materiaallijst(p, { stijl: 'uitgebreid' }).regels.some((r) => /Stopcontact/.test(r.omschrijving)), true);
   assert.ok(koppelLos(p, item.id, k.id));
   assert.equal(k.items.length, 1);
   assert.equal(losseSymbolen(p).length, 0);
@@ -58,7 +58,7 @@ test('een los symbool koppelen aan een kring', () => {
 test('een eigen symbool komt enkel op de materiaallijst met een omschrijving', () => {
   const p = nieuwProject();
   p.kinderen.push(nieuweKring({ items: [nieuwItem('eigen', { omschrijving: '' }), nieuwItem('eigen', { omschrijving: 'Rookmelder' }), nieuwItem('eigen', { omschrijving: 'Rookmelder' })] }));
-  const regel = materiaallijst(p).regels.filter((r) => r.groep === 'Eigen symbolen');
+  const regel = materiaallijst(p, { stijl: 'uitgebreid' }).regels.filter((r) => r.groep === 'Eigen symbolen');
   assert.equal(regel.length, 1);
   assert.equal(regel[0].aantal, 2);
 });

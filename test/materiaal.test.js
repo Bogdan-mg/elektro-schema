@@ -17,7 +17,7 @@ test('telt automaten, stopcontacten, dozen en kabel', () => {
     kabel: { type: 'XVB', aders: 3, sectie: 1.5, lengte: 30 },
     items: [nieuwItem('schakelaar', { variant: 'wissel' }), nieuwItem('schakelaar', { variant: 'wissel' }), nieuwItem('lichtpunt', { variant: 'spot', aantal: 4 }), nieuwItem('lichtpunt')],
   }));
-  const { regels, modules } = materiaallijst(p, { marge: 10 });
+  const { regels, modules } = materiaallijst(p, { marge: 10, stijl: 'uitgebreid' });
   assert.equal(aantal(regels, 'Differentieel 2P 40 A 300 mA type A (hoofdschakelaar)'), 1);
   assert.equal(aantal(regels, 'Differentieel 2P 40 A 30 mA type A'), 1);
   assert.equal(aantal(regels, 'Automaat 1P+N C20'), 1);
@@ -37,13 +37,13 @@ test('telt automaten, stopcontacten, dozen en kabel', () => {
 test('draad in buis telt per ader', () => {
   const p = nieuwProject();
   p.kinderen.push(nieuweKring({ kabel: { type: 'VOB', aders: 3, sectie: 2.5, lengte: 10 } }));
-  const { regels } = materiaallijst(p, { marge: 0 });
+  const { regels } = materiaallijst(p, { marge: 0, stijl: 'uitgebreid' });
   assert.equal(aantal(regels, 'VOB 2,5 mm²'), 30);
   assert.equal(aantal(regels, 'Buis'), 10);
 });
 
 test('CSV voor Excel', () => {
-  const { regels } = materiaallijst(voorbeeldProject());
+  const { regels } = materiaallijst(voorbeeldProject(), { stijl: 'uitgebreid' });
   const prijzen = { [regels[0].sleutel]: 12.5 };
   const csv = naarCsv(regels, prijzen);
   assert.ok(csv.startsWith('﻿Groep;Omschrijving'));

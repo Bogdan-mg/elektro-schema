@@ -1,9 +1,12 @@
 // De materiaallijst, rechtstreeks uit het ééndraadschema.
 import { TOESTELLEN, KABELTYPES, SOORTEN, kabelTekst, komma, itemNaam } from './catalogus.js';
-import { alleKnopen, losseSymbolen } from './model.js';
+import { alleKnopen, alleItems, losseSymbolen } from './model.js';
+import { projectSpec } from './trikker/eendraad/project.js';
+import { trikkerSpec } from './trikker/kaart.js';
+import { bom, sorteerBom } from './trikker/bom.js';
 
 export const GROEPEN = ['Verdeelbord', 'Kabels en draad', 'Stopcontacten', 'Schakelaars', 'Verlichting', 'Toestellen', 'Beveiliging',
-  'Alarm en detectie', 'Toegang', 'Communicatie', 'Sturing', 'Algemeen', 'Contactdozen', 'Dozen', 'Eigen symbolen'];
+  'Alarm en detectie', 'Toegang', 'Communicatie', 'Sturing', 'Algemeen', 'Contactdozen', 'Dozen', 'Eigen symbolen', 'Materiaallijst'];
 
 const MEERVOUD = ['enkel', 'dubbel', 'drievoudig', 'viervoudig'];
 const voudig = (n) => MEERVOUD[n - 1] || `${n}-voudig`;
@@ -33,9 +36,37 @@ const automaatNaam = (a) => `Automaat ${a.polen === 2 ? '1P+N' : `${a.polen}P`} 
 const automaatModules = (polen) => (polen === 2 ? 1 : polen);
 
 /**
+ * De materiaallijst zoals Trikker (Bom.cs, BomScreen): één regel per omschrijving met het aantal, op omschrijving gesorteerd, voor alle
+ * onderdelen van het ééndraadschema (ook beveiligingen, kabels en teller) en de losse symbolen op het situatieschema.
+ * Het aantal modules in de verdeelkast komt uit de uitgebreide lijst.
+ * @returns {{ regels: {sleutel, groep, omschrijving, aantal, eenheid, item}[], modules: number }}
+ */
+export function materiaallijstTrikker(project) {
+  const perId = new Map([...alleItems(project).map(({ item }) => item), ...losseSymbolen(project).map((l) => l.item)].map((i) => [i.id, i]));
+  const knopen = [];
+  const loop = (spec) => {
+    knopen.push({ klasse: spec.k, props: spec.p || {}, bron: spec.id });
+    for (const c of spec.c || []) loop(c);
+  };
+  loop(projectSpec(project));
+  for (const { item } of losseSymbolen(project)) {
+    const spec = trikkerSpec(item);
+    if (spec) knopen.push({ klasse: spec.k, props: spec.p || {}, bron: item.id });
+  }
+  const regels = sorteerBom(bom(knopen, { symbolen: true })).filter((r) => r.aantal > 0)
+    .map((r) => ({ sleutel: `Materiaallijst|${r.omschrijving}`, groep: 'Materiaallijst', omschrijving: r.omschrijving, aantal: r.aantal, eenheid: 'st', item: perId.get(r.symbool?.knoop?.bron) || null }));
+  return { regels, modules: materiaallijstUitgebreid(project).modules };
+}
+
+/** De lijst die je kiest: 'trikker' (standaard, zoals in Trikker) of 'uitgebreid' (met inbouwdozen en meters kabel). */
+export function materiaallijst(project, { marge = 10, stijl = project.opties?.materiaalStijl || 'trikker' } = {}) {
+  return stijl === 'uitgebreid' ? materiaallijstUitgebreid(project, { marge }) : materiaallijstTrikker(project);
+}
+
+/**
  * @returns {{ regels: {sleutel, groep, omschrijving, aantal, eenheid}[], modules: number }}
  */
-export function materiaallijst(project, { marge = 10 } = {}) {
+export function materiaallijstUitgebreid(project, { marge = 10 } = {}) {
   const regels = new Map();
   let huidigItem = null; // het onderdeel waar de regel bij hoort, om er een symbool bij te kunnen tonen
   const tel = (groep, omschrijving, aantal = 1, eenheid = 'st') => {
