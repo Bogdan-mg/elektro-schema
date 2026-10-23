@@ -1,5 +1,6 @@
 // Opstarten: tabbladen, bestanden openen en opslaan, afdrukken, sneltoetsen en herstel na een crash.
 import { nieuwProject, voorbeeldProject, leesProject, teBewaren, EXTENSIE } from './model.js';
+import { toonHulp, welkomGezien } from './welkom.js';
 import { staat, herteken, laad, wijzig, ongedaan, opnieuw, opWijziging, opGewijzigd, zetGewijzigd } from './staat.js';
 import * as editor from './editor.js';
 import * as situatie from './situatie.js';
@@ -279,7 +280,12 @@ function zetTransparant(aan) {
   else document.body.style.opacity = aan ? '0.55' : '';
 }
 
+function hulp(eerste = false) {
+  toonHulp({ eerste, nieuw, voorbeeld, openen, handleiding });
+}
+
 const acties = {
+  hulp: () => hulp(false),
   nieuw,
   openen,
   opslaan: () => opslaan(false),
@@ -342,6 +348,7 @@ function sneltoetsen(e) {
   }
   if (e.key === 'F1') { e.preventDefault(); handleiding(); return; }
   if (inVeld) return;
+  if (e.key === '?') { e.preventDefault(); hulp(false); return; }
   // In de desktopversie doet het menu kopiëren, plakken en alles selecteren zelf.
   if (desktop && ctrl && ['c', 'v', 'a'].includes(toets)) return;
 
@@ -398,6 +405,16 @@ async function start() {
     if (bestand) await openTekst(await bestand.text(), null);
   });
   window.addEventListener('keydown', sneltoetsen);
+  // Een projectbestand op het venster slepen opent het (een afbeelding op het plan slepen blijft gewoon werken).
+  const isProject = (e) => [...(e.dataTransfer?.items || [])].some((i) => i.kind === 'file') && [...(e.dataTransfer?.files || [])].every((f) => !f.name || /\.(eschema|json)$/i.test(f.name));
+  window.addEventListener('dragover', (e) => { if (!e.defaultPrevented && isProject(e)) e.preventDefault(); });
+  window.addEventListener('drop', async (e) => {
+    if (e.defaultPrevented) return;
+    const bestand = [...(e.dataTransfer?.files || [])].find((f) => /\.(eschema|json)$/i.test(f.name));
+    if (!bestand) return;
+    e.preventDefault();
+    if (await magVerder()) await openTekst(await bestand.text(), null);
+  });
   window.addEventListener('actie', (e) => acties[e.detail]?.());
   window.addEventListener('beforeunload', (e) => {
     if (!desktop && staat.gewijzigd) e.preventDefault();
@@ -448,6 +465,8 @@ async function start() {
     }
     await wisHerstel();
   }
+  // Voor wie het programma voor het eerst opent: een kort welkom met de werkwijze.
+  if (!welkomGezien()) hulp(true);
 }
 
 start();

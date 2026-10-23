@@ -32,6 +32,7 @@
       <button data-actie="openen" title="Openen (Ctrl+O)">Openen</button>
       <button data-actie="opslaan" class="hoofd" title="Opslaan (Ctrl+S)">Opslaan</button>
       <button data-actie="afdrukken" title="Afdrukken of PDF (Ctrl+P)">Afdrukken / PDF</button>
+      <button data-actie="hulp" class="hulp" title="Hulp en sneltoetsen (?)" aria-label="Hulp">?</button>
     </div>
   </header>
 
@@ -61,7 +62,7 @@
           <button data-eend="verplaatsen" class="tb" title="Verplaatsen (Ctrl+X): klik daarna op het nieuwe oranje bolletje"><span class="doc-ic">⬚</span>Verplaatsen</button>
           <button data-eend="favoriet" class="tb" title="Aan de favorieten toevoegen"><span class="doc-ic">☆</span>Favoriet</button>
           <div class="tb-dubbel"><button data-eend="verder" title="Eén plaats verder (Ctrl+→)">↗ Verder</button><button data-eend="terug" title="Eén plaats terug (Ctrl+←)">↙ Terug</button></div>
-          <button data-eend="zoekss" class="tb" title="Dit symbool zoeken op het situatieschema (Ctrl+F)"><span class="doc-ic">🔍</span>Zoek op SS</button>
+          <button data-eend="zoekss" class="tb" title="Dit symbool zoeken op het situatieschema (plan) (Ctrl+F)"><span class="doc-ic">🔍</span>Zoek op plan</button>
           <label class="schuif vink-rij"><input type="checkbox" id="vrij-tekenen"> Vrij tekenen</label>
           <span class="tb-ruimte"></span>
           <button id="eendraad-zoom-uit" title="Uitzoomen">🔍−</button>
@@ -71,6 +72,7 @@
         </div>
         <div class="vlak">
           <svg id="eendraad-svg" class="tekening"><g class="inhoud"></g></svg>
+          <div id="eendraad-leeg" class="leeg-hint" hidden><b>Nog geen kringen</b>Klik links op <i>+ Kring</i> om te beginnen. Of werk eerst in het tabblad <i>Woning</i> en laat de kringen daar maken.<br><button data-eend="leeg-kring">+ Kring toevoegen</button> <button data-eend="leeg-voorbeeld">Voorbeeld bekijken</button></div>
         </div>
         <div class="vlak-onder"><label class="schuif vink-rij"><input type="checkbox" id="naam-op-schema" checked> Naam kring op schema</label></div>
       </div>
@@ -130,7 +132,7 @@
             <button id="plan-kleur" title="Kleur van wat gekozen is">Kleur…</button>
             <input type="color" id="plan-kleur-kies" hidden>
             <button id="plan-verwijder" title="Van het plan halen (Delete)">Wissen</button>
-            <button id="plan-zoek" title="Dit symbool zoeken op het ééndraadschema (Ctrl+F)">Zoek op ES</button>
+            <button id="plan-zoek" title="Dit symbool zoeken op het ééndraadschema (Ctrl+F)">Zoek in schema</button>
           </div>
           <label class="schuif" title="Lengte van het gekozen lijnstuk">Lengte <input type="number" id="plan-lengte" min="0.01" step="0.01" disabled> m</label>
           <span id="plan-schaal-info" class="schaal-info"></span>

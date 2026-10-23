@@ -10,6 +10,7 @@ export function startExtra({ acties }) {
     <hr class="extra-lijn">
     <div class="extra-knoppen">
       <button class="extra-knop" data-x="instellingen"><span>⚙</span> Instellingen</button>
+      <button class="extra-knop" data-x="hulp"><span>❓</span> Snelstart en sneltoetsen</button>
       <button class="extra-knop" data-x="handleiding"><span>📖</span> Handleiding</button>
       <button class="extra-knop" data-x="symbolen"><span>⏚</span> Overzicht Symbolen</button>
       <button class="extra-knop" data-x="voorbeeld"><span>✦</span> Voorbeeldproject</button>

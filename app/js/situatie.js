@@ -7,7 +7,7 @@ import {
 } from './plan.js';
 import { SCHEMA_STIJL } from './eendraad.js';
 import { icoon, esc } from './symbolen.js';
-import { staat, wijzig, herteken, opWijziging, zetGewijzigd } from './staat.js';
+import { staat, wijzig, herteken, opWijziging, zetGewijzigd, ongedaan } from './staat.js';
 import { Vlak } from './vlak.js';
 import { vraag, vraagTekst, bevestig, melding } from './dialoog.js';
 import { importeer, leesBeeldBestand } from './import.js';
@@ -335,6 +335,7 @@ export function verwijderGekozen() {
   }, { paneel: false });
   zetKeuze([]);
   herteken({ paneel: false });
+  melding('Verwijderd', '', { knop: 'Ongedaan maken', actie: ongedaan });
 }
 
 /** Zoals Shift + rechtermuisknop in Trikker: de plaats van de tekst bij de gekozen symbolen doorlopen (auto, links, boven, rechts, onder, verbergen). */

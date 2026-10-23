@@ -61,7 +61,7 @@ export async function vraagTekst(titel, waarde = '', label = '') {
 }
 
 let meldingTimer = null;
-export function melding(tekst, soort = '') {
+export function melding(tekst, soort = '', { knop = '', actie = null } = {}) {
   let el = document.getElementById('melding');
   if (!el) {
     el = document.createElement('div');
@@ -70,7 +70,14 @@ export function melding(tekst, soort = '') {
     document.body.append(el);
   }
   el.textContent = tekst;
-  el.className = `zichtbaar ${soort}`;
+  if (knop && actie) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = knop;
+    b.addEventListener('click', () => { el.className = ''; actie(); });
+    el.append(b);
+  }
+  el.className = `zichtbaar ${soort}${knop && actie ? ' met-knop' : ''}`;
   clearTimeout(meldingTimer);
-  meldingTimer = setTimeout(() => { el.className = ''; }, 3500);
+  meldingTimer = setTimeout(() => { el.className = ''; }, knop && actie ? 7000 : 3500);
 }

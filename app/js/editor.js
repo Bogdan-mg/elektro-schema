@@ -10,7 +10,7 @@ import {
 import { vraag, melding } from './dialoog.js';
 import { tekenEendraad, SCHEMA_STIJL } from './eendraad.js';
 import { icoon, esc, automaatSymbool } from './symbolen.js';
-import { staat, wijzig, kies, opWijziging } from './staat.js';
+import { staat, wijzig, kies, opWijziging, ongedaan } from './staat.js';
 import { Vlak } from './vlak.js';
 
 let vlak;
@@ -39,6 +39,7 @@ export function verwijderGekozen() {
   if (!staat.selectie || staat.selectie === 'hoofd') return;
   const volgende = wijzig((p) => verwijder(p, staat.selectie));
   kies(volgende || 'hoofd');
+  melding('Verwijderd', '', { knop: 'Ongedaan maken', actie: ongedaan });
 }
 
 export function dupliceerGekozen() {
@@ -236,6 +237,7 @@ function tekenSchema() {
   if (!vlak.ingesteld) leesbaar();
   tekenPunten();
   $('#eendraad-zoom').value = vlak.s;
+  $('#eendraad-leeg').hidden = staat.project.kinderen.length > 0;
   $('#naam-op-schema').checked = staat.project.opties?.naamOpSchema !== false;
 }
 
@@ -1017,6 +1019,8 @@ function koppelBibliotheek() {
       else if (a === 'verder') verschuifGekozen(1);
       else if (a === 'terug') verschuifGekozen(-1);
       else if (a === 'zoekss') window.dispatchEvent(new CustomEvent('actie', { detail: 'zoekSS' }));
+      else if (a === 'leeg-kring') $('#knop-kring').click();
+      else if (a === 'leeg-voorbeeld') window.dispatchEvent(new CustomEvent('actie', { detail: 'voorbeeld' }));
     });
   }
 }

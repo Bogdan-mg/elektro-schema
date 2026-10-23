@@ -6,7 +6,7 @@ import {
 import { itemNaam, TOESTELLEN, AUTOMAAT_STROMEN, CURVES, SECTIES, komma } from './catalogus.js';
 import { tekenPlan, onderdelen, volgendeTekstPlaats, volgendeAdresPlaats, kleefAanMuur, kleeftAanMuur, draaiStap, draaiRondSteel, symboolBreedte, plaatsingSvg } from './plan.js';
 import { icoon, esc } from './symbolen.js';
-import { staat, wijzig, opWijziging } from './staat.js';
+import { staat, wijzig, opWijziging, ongedaan } from './staat.js';
 import { Vlak } from './vlak.js';
 import { vraag, vraagTekst, bevestig, melding } from './dialoog.js';
 import { controleer } from './regels.js';
@@ -172,6 +172,7 @@ function wisGekozen() {
       pl.verbindingen = (pl.verbindingen || []).filter((v) => v.van !== id && v.naar !== id);
     }
   });
+  melding('Symbool gewist', '', { knop: 'Ongedaan maken', actie: ongedaan });
 }
 
 function kopieerGekozen() {

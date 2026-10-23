@@ -509,3 +509,39 @@ dialog.import { width: min(1000px, 96vw); }
 
 .woning .w-hint { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); max-width: 460px; text-align: center; color: #5d6f86; font-size: 18px; line-height: 1.4; pointer-events: none; }
 .woning #woning-svg.gewapend { cursor: crosshair; }
+
+/* ---------- Welkom en hulp ---------- */
+
+dialog.dialoog.welkom { width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: auto; }
+dialog.welkom h3 { margin: 6px 0 0; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--zacht); }
+.welkom-kaarten { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 4px 0; }
+.welkom-kaart { display: grid; gap: 4px; text-align: left; padding: 12px; min-height: 86px; align-content: start; background: #fff; border: 1px solid var(--rand, #d5dae3); border-radius: 10px; cursor: pointer; }
+.welkom-kaart:hover, .welkom-kaart:focus-visible { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.15); outline: none; }
+.welkom-kaart b { font-size: 14.5px; }
+.welkom-kaart span { font-size: 12.5px; color: var(--zacht); line-height: 1.35; }
+.welkom-stappen { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.welkom-stappen li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; }
+.welkom-stappen .nr { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #2563eb; color: #fff; font-weight: 700; font-size: 12.5px; }
+.welkom-stappen div { display: grid; gap: 1px; }
+.welkom-stappen div span { color: var(--zacht); font-size: 13px; line-height: 1.4; }
+.welkom-toetsen summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
+.welkom-toetsen dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 6px 0 0; font-size: 13px; }
+.welkom-toetsen dt { margin: 0; } .welkom-toetsen dd { margin: 0; color: var(--zacht); }
+kbd { font: 12px ui-monospace, Consolas, monospace; background: #eef1f6; border: 1px solid #d5dae3; border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; white-space: nowrap; }
+.welkom-tip { font-size: 12.5px; }
+.welkom-niet { margin-right: auto; font-size: 12.5px; color: var(--zacht); }
+dialog.welkom .knoppen { align-items: center; flex-wrap: wrap; }
+@media (max-width: 640px) { .welkom-kaarten { grid-template-columns: 1fr; } }
+
+/* Een melding met een knop (bv. "Ongedaan maken") */
+#melding.met-knop { pointer-events: auto; display: flex; align-items: center; gap: 14px; }
+#melding button { background: transparent; color: #8ec5ff; border: 0; font-weight: 700; cursor: pointer; padding: 2px 4px; }
+#melding button:hover { text-decoration: underline; }
+
+/* Een hint op een leeg tekenvlak */
+.leeg-hint { position: absolute; left: 50%; top: 5%; transform: translateX(-50%); max-width: 360px; text-align: center; background: rgba(255,255,255,.94); border: 1px dashed #aeb7c6; border-radius: 12px; padding: 14px 18px; color: var(--zacht); line-height: 1.5; box-shadow: 0 4px 14px rgba(0,0,0,.06); z-index: 2; }
+.leeg-hint b { color: var(--tekst, #1f2733); display: block; margin-bottom: 4px; }
+.leeg-hint button { margin-top: 8px; }
+.vlak { position: relative; }
+
+button.hulp { width: 30px; height: 30px; border-radius: 50%; padding: 0; font-weight: 700; }
