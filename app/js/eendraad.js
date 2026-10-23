@@ -1,6 +1,7 @@
 // Het ééndraadschema tekenen zoals in Trikker: de hoofdverdeellijn onderaan met de voeding eronder,
 // groepen (generaal zekering, differentiëlen) als ketting naar boven tot hun verdeellijn, en de kringen
 // naar boven met hun onderdelen genummerd per rij, van onder naar boven.
+import { tekenProjectEendraad } from './trikker/eendraad/project.js';
 import { NETTEN, kabelTekst, komma } from './catalogus.js';
 import { codes, rijen, alleKringen } from './model.js';
 import {
@@ -74,7 +75,7 @@ function tekenOpschriften(kolommen, x, y) {
  * @returns {{ inhoud: string, breedte: number, hoogte: number, kolommen: {x0: number, x1: number}[] }}
  * inhoud is SVG zonder het <svg>-element zelf; kolommen zijn de plaatsen waar een blad mag eindigen.
  */
-export function tekenEendraad(project, { selectie = null } = {}) {
+function tekenEendraadOud(project, { selectie = null } = {}) {
   const code = codes(project);
   // Een input (drukknop, schakelaar, …) toont de kringen van de outputs met hetzelfde adres: "K.01 → B1".
   const uitgangen = new Map();
@@ -390,6 +391,20 @@ export function tekenEendraad(project, { selectie = null } = {}) {
     kolommen: snijpunten.sort((a, b) => a.x0 - b.x0),
     punten: punten.map((p) => ({ ...p, y: p.y + boven })),
   };
+}
+
+/**
+ * Het ééndraadschema van het project, getekend en geschikt zoals Trikker het doet (zie trikker/eendraad/).
+ * @returns {{ inhoud: string, breedte: number, hoogte: number, kolommen: {x0: number, x1: number, nieuw: boolean}[], punten: object[] }}
+ * inhoud is SVG zonder het <svg>-element zelf; kolommen zijn de plaatsen waar een blad mag eindigen.
+ */
+export function tekenEendraad(project, opties = {}) {
+  try {
+    return tekenProjectEendraad(project, opties);
+  } catch (fout) {
+    console.error('Ééndraadschema van Trikker niet getekend, het oude wordt gebruikt', fout);
+    return tekenEendraadOud(project, opties);
+  }
 }
 
 /** De stijl van de tekening, ook voor afdrukken. */

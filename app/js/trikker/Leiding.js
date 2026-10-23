@@ -53,6 +53,7 @@ export function maak(props = {}) {
 
   const tekstFormaat = (g, delen, y) => {
     const gewoon = fontNormaal(); const klein = fontKlein(); const vast = kwast();
+    if (g.metTspans) { g.drawRijk(delen, gewoon, klein, vast, 0, y, (gewoon.grootte * 1.15) / 3); return; }
     const totaal = delen.reduce((s, d) => s + meetBreedte(d.t, d.sub ? klein.grootte : gewoon.grootte), 0);
     let x = 0 - totaal / 2;
     for (const d of delen) {

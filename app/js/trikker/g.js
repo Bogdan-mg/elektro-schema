@@ -123,6 +123,20 @@ export class Graphics {
       this.#voeg(`<text x="${N(x)}" y="${N(yy)}" font-family="Arial" font-size="${N(font.grootte)}" text-anchor="${anker}" dominant-baseline="${basis}"${font.stijl.includes('b') ? ' font-weight="bold"' : ''}${font.stijl.includes('i') ? ' font-style="italic"' : ''} fill="${(b || kwast()).kleur}">${esc(regel)}</text>`);
     });
   }
+  /**
+   * Tekst in stukken (gewoon en subscript) die achter elkaar komen, gecentreerd rond x: één <text> met <tspan>'s, zodat de browser de
+   * echte letterbreedtes gebruikt. Enkel voor het scherm; de proefopstelling meet per stuk en kan zo niet vergeleken worden.
+   */
+  drawRijk(delen, font, klein, b, x, y, verschil) {
+    const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    let vorigSub = false;
+    const stukken = delen.map((d) => {
+      const dy = d.sub && !vorigSub ? ` dy="${N(verschil)}"` : (!d.sub && vorigSub ? ` dy="${N(-verschil)}"` : '');
+      vorigSub = d.sub;
+      return `<tspan xml:space="preserve"${d.sub ? ` font-size="${N(klein.grootte)}"` : ''}${dy}>${esc(d.t)}</tspan>`;
+    });
+    this.#voeg(`<text x="${N(x)}" y="${N(y)}" font-family="Arial" font-size="${N(font.grootte)}" text-anchor="middle" dominant-baseline="text-before-edge" fill="${(b || kwast()).kleur}" xml:space="preserve">${stukken.join('')}</text>`);
+  }
   /** Zoals TryDrawString van Trikker: verwerkt alles zonder fout. */
   tryDrawString(...a) { try { this.drawString(...a); } catch { /* net als Trikker */ } }
 }

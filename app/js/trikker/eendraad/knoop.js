@@ -390,6 +390,7 @@ export function gebiedEendraad(wortel, margeNaamKring) {
 export function bouwBoom(spec) {
   const props = { ...(spec.p || {}) };
   const k = new Knoop(spec.k, props);
+  if (spec.id !== undefined) k.id = spec.id;
   for (const c of spec.c || []) k.voegToe(bouwBoom(c));
   for (const s of spec.s || []) {
     const sat = bouwBoom(s);

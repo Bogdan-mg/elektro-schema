@@ -189,13 +189,18 @@ const KAART = {
   zonnepaneel: (it) => ['Zonnepaneel', { Symbool: it.gestandaardiseerd ? 'Gestandaardiseerd' : 'Trikker', Aantal: aantal(it) }],
 };
 
-/** Het Trikker-object dat bij een onderdeel hoort, of null als Trikker er geen symbool voor heeft (eigen symbolen, nota's). */
-export function trikkerKnoop(item) {
+/** De klasse en eigenschappen van Trikker bij een onderdeel ({ k, p }), of null als Trikker er geen symbool voor heeft. */
+export function trikkerSpec(item) {
   const kaart = KAART[item?.soort];
   if (!kaart) return null;
-  const [klasse, props] = kaart(item);
-  const module = KLASSEN[klasse];
-  return module ? module.maak(props) : null;
+  const [k, p] = kaart(item);
+  return KLASSEN[k] ? { k, p } : null;
+}
+
+/** Het Trikker-object dat bij een onderdeel hoort, of null als Trikker er geen symbool voor heeft (eigen symbolen, nota's). */
+export function trikkerKnoop(item) {
+  const spec = trikkerSpec(item);
+  return spec ? KLASSEN[spec.k].maak(spec.p) : null;
 }
 
 const cache = new Map();

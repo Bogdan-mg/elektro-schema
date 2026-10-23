@@ -7,7 +7,6 @@
   <title>Elektro Schema</title>
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="stijl.css">
-  <link rel="stylesheet" href="stijl-situatie.css">
   <script type="module" src="js/app.js"></script>
 </head>
 <body>
@@ -78,76 +77,85 @@
       <aside id="eigenschappen" class="paneel eigenschappen"></aside>
     </section>
 
-    <section id="tab-situatie" class="tab ss" hidden>
-      <div class="ss-boven">
-        <div class="ss-groep">
-          <button type="button" id="ss-tekenen" class="ss-knop aan" data-modus="tekenen" title="Tekenmodus inschakelen (Ctrl+D)"><img src="img/trikker/edit.png" alt=""><span>Tekenen</span></button>
-          <button type="button" id="ss-los" class="ss-knop" data-modus="los" title="Symbolen tekenen die geen link hebben met het eendraadschema" hidden><img src="img/trikker/pries.png" alt=""><span>Losse Symbolen</span></button>
-          <button type="button" id="ss-selecteren" class="ss-knop" data-modus="selecteren" title="Selectiemodus inschakelen (Ctrl+E)"><img src="img/trikker/select.png" alt=""><span>Selecteren</span></button>
-        </div>
-        <i class="ss-streep"></i>
-        <div class="ss-groep">
-          <button type="button" id="plan-verwijder" class="ss-knop" title="Alle geselecteerde componenten wissen"><img src="img/trikker/delete.png" alt=""><span>Wissen</span></button>
-          <button type="button" id="plan-kopieer" class="ss-knop" title="Alle geselecteerde componenten kopiëren naar het klembord (Ctrl+C)"><img src="img/trikker/copy.png" alt=""><span>Kopiëren</span></button>
-          <button type="button" id="plan-plak" class="ss-knop" title="Componenten van het klembord op de huidige pagina plakken (Ctrl+V)"><img src="img/trikker/paste.png" alt=""><span>Plakken</span></button>
-          <button type="button" id="plan-zoek" class="ss-knop" title="Zoek de geselecteerde component op het eendraadschema (Ctrl+F)"><img src="img/trikker/search_schema.png" alt=""><span>Zoek op ES</span></button>
-        </div>
-        <i class="ss-streep"></i>
-        <div class="ss-zoom">
-          <button type="button" id="situatie-zoom-uit" class="ss-zoomknop" title="Uitzoomen"><img src="img/trikker/zoom_minus.png" alt=""></button>
-          <input type="range" id="ss-zoom" min="0" max="200" step="1" value="8" title="In- of uitzoomen">
-          <button type="button" id="situatie-zoom-in" class="ss-zoomknop" title="Inzoomen"><img src="img/trikker/zoom_plus.png" alt=""></button>
-          <button type="button" id="situatie-passend" class="ss-zoomknop tekst" title="Alles in beeld">⤢</button>
-        </div>
-        <i class="ss-streep"></i>
-        <div class="ss-paginas">
-          <div class="ss-rij">
-            <button type="button" id="plan-vorige" class="ss-mini" title="Ga naar vorige pagina"><img src="img/trikker/page_previous.png" alt=""></button>
-            <span id="plan-pagina" class="ss-pagina" title="Geeft de huidige en het totaal aantal pagina's weer">p. 1/1</span>
-            <button type="button" id="plan-volgende" class="ss-mini" title="Ga naar volgende pagina"><img src="img/trikker/page_next.png" alt=""></button>
-            <button type="button" id="plan-pagina-toevoegen" class="ss-mini" title="Pagina toevoegen"><img src="img/trikker/page_plus.png" alt=""></button>
+    <section id="tab-situatie" class="tab drie" hidden>
+      <aside class="paneel">
+        <div class="paneel-kop"><h3>Plannen</h3><button id="plan-nieuw" class="klein">+ Plan</button></div>
+        <div id="plannen" class="lijst plannen"></div>
+        <div class="paneel-kop"><h3 id="plaats-kop">Onderdelen</h3><small id="plaats-teller"></small></div>
+        <p id="plaats-hint" class="hint">Klik een onderdeel en daarna op het plan. Het volgende onderdeel staat meteen klaar.</p>
+        <div id="te-plaatsen" class="lijst"></div>
+      </aside>
+      <div class="vlak-wrap">
+        <div class="werkbalk">
+          <div class="groep">
+            <button data-gereedschap="kies" class="aan" title="Selecteren, verslepen en kopiëren (Ctrl+E)">Selecteren</button>
+            <button data-gereedschap="muur" title="Muren tekenen: klik per hoek (Ctrl+D)">Muur</button>
+            <button data-gereedschap="boog" title="Ronde muur: begin, einde en een punt op de ronding">Ronde muur</button>
+            <button data-gereedschap="deur" title="Deur tekenen: klik de twee kanten van de opening, rechtsklik draait de openingsrichting">Deur</button>
+            <button data-gereedschap="poort" title="Garagepoort tekenen">Poort</button>
+            <button data-gereedschap="raam" title="Raam tekenen">Raam</button>
+            <button data-gereedschap="trap" title="Trap tekenen">Trap</button>
+            <button data-gereedschap="draaitrap" title="Draaitrap: middelpunt en buitenkant">Draaitrap</button>
+            <button data-gereedschap="rechthoek" title="Rechthoek tekenen">Rechthoek</button>
+            <button data-gereedschap="vlak" title="Een gekleurd vlak om een zone aan te duiden">Vlak</button>
+            <button data-gereedschap="lijn" title="Een gewone lijn">Lijn</button>
+            <button data-gereedschap="maat" title="Maatlijn: twee meetpunten en waar de lijn komt">Maatlijn</button>
+            <button data-gereedschap="meet" title="Een afstand meten en laten staan">Meetlijn</button>
+            <button data-gereedschap="tekst" title="Tekst plaatsen">Tekst</button>
+            <button data-gereedschap="afbeelding" title="Een afbeelding op het plan zetten (of sleep een bestand op het plan)">Afbeelding</button>
+            <button data-gereedschap="verbind" title="Verbind een schakelaar met de lamp(en) die hij bedient: klik de schakelaar en daarna de lampen">Verbinden</button>
+            <button data-gereedschap="kring" title="Kies een kring (zekering) en klik de symbolen die erop staan">Kring-modus</button>
+            <select id="plan-kring-kies" title="De kring voor de kring-modus"></select>
+            <button id="plan-toewijs" title="De gekozen symbolen aan een kring (zekering) toewijzen">Aan kring toewijzen…</button>
+            <button data-gereedschap="los" id="plan-los" title="Symbolen plaatsen die nog niet op het ééndraadschema staan (Ctrl+L)" hidden>Losse symbolen</button>
           </div>
-          <div class="ss-rij">
-            <button type="button" id="plan-pagina-wissen" class="ss-mini breed" title="Deze pagina wissen"><img src="img/trikker/page_delete.png" alt=""></button>
-            <button type="button" id="plan-herschik" class="ss-mini breed" title="Pagina's herschikken + extra instellingen"><img src="img/trikker/page_rearrange.png" alt=""></button>
+        </div>
+        <div class="werkbalk">
+          <div class="groep">
+            <button id="plan-laden" title="Een plan van de architect als achtergrond (afbeelding, PDF of DXF)">Plan laden…</button>
+            <button id="plan-aanpas" title="Lagen, kleur en uitsnede van het geladen plan wijzigen">Tekening aanpassen</button>
+            <button id="plan-weg" title="Achtergrond weghalen">Plan weg</button>
+            <button data-gereedschap="schaal" id="plan-schaal-knop" title="Klik twee punten waarvan je de afstand kent, zodat lengtes in meter kloppen">Schaal…</button>
+            <input type="file" id="plan-bestand" accept="image/*,.pdf,.dxf,application/pdf" hidden>
+            <input type="file" id="plan-afb-bestand" accept="image/*" hidden>
+          </div>
+          <div class="groep">
+            <button id="plan-kopieer" title="Kopiëren (Ctrl+C)">Kopiëren</button>
+            <button id="plan-plak" title="Plakken (Ctrl+V)">Plakken</button>
+            <button id="plan-draai" title="Draaien (R, met Alt in kleine stappen)">Draaien</button>
+            <button id="plan-spiegel-h" title="Horizontaal spiegelen">↔</button>
+            <button id="plan-spiegel-v" title="Verticaal spiegelen">↕</button>
+            <button id="plan-roteer" title="Over een zelf gekozen hoek roteren">Roteren…</button>
+            <button id="plan-groter" title="Vergroten of verkleinen">Schalen…</button>
+            <button id="plan-kleur" title="Kleur van wat gekozen is">Kleur…</button>
+            <input type="color" id="plan-kleur-kies" hidden>
+            <button id="plan-verwijder" title="Van het plan halen (Delete)">Wissen</button>
+            <button id="plan-zoek" title="Dit symbool zoeken op het ééndraadschema (Ctrl+F)">Zoek op ES</button>
+          </div>
+          <label class="schuif" title="Lengte van het gekozen lijnstuk">Lengte <input type="number" id="plan-lengte" min="0.01" step="0.01" disabled> m</label>
+          <span id="plan-schaal-info" class="schaal-info"></span>
+        </div>
+        <div class="werkbalk">
+          <label class="schuif" title="In welke hoeken je muren en lijnen tekent. Houd Alt ingedrukt om even vrij te tekenen.">Hoeken <select id="plan-hoek"><option value="90">Recht (90°)</option><option value="45">Recht en 45°</option><option value="15">Per 15°</option><option value="0">Vrij</option></select></label>
+          <label class="schuif vink-rij"><input type="checkbox" id="plan-grid"> Toon grid</label>
+          <label class="schuif vink-rij" title="Alles komt op de kruispunten van het raster"><input type="checkbox" id="plan-kleefgrid"> Kleef aan grid</label>
+          <label class="schuif vink-rij" title="Muren springen naar andere muren en symbolen kleven tegen de muur. Alt zet het even uit."><input type="checkbox" id="plan-kleef"> Kleef aan muren</label>
+          <label class="schuif vink-rij" title="Anders zie je de lengte enkel tijdens het tekenen of als je een muur, deur of raam aanklikt. Staat ook op de afdruk."><input type="checkbox" id="plan-maten"> Alle afmetingen</label>
+          <label class="schuif vink-rij" title="De kringletter bij de symbolen op deze pagina"><input type="checkbox" id="plan-beletter"> Beletteren</label>
+          <label class="schuif vink-rij" title="Het nummer bij de symbolen op deze pagina"><input type="checkbox" id="plan-nummer"> Nummeren</label>
+          <label class="schuif vink-rij" title="Het hele venster half doorschijnend, om iets over te tekenen"><input type="checkbox" id="plan-transparant"> Transparant</label>
+          <label class="schuif">Symbolen <input type="range" id="plan-symbool" min="0.5" max="8" step="0.1"></label>
+          <label class="schuif">Plan <input type="range" id="plan-zicht" min="0.1" max="1" step="0.05"></label>
+          <div class="groep">
+            <button id="plan-vorige" title="Vorige pagina">◀</button>
+            <span id="plan-pagina" class="schaal-info"></span>
+            <button id="plan-volgende" title="Volgende pagina">▶</button>
+            <button id="plan-pagina-toevoegen" title="Nieuwe pagina">+</button>
+            <button id="plan-pagina-wissen" title="Deze pagina wissen (de symbolen blijven in het ééndraadschema)">✕</button>
+            <button id="plan-herschik" title="Pagina’s herschikken en instellen">Pagina’s…</button>
+            <button id="plan-afdrukschaal" title="Afdrukschaal van deze pagina">Afdrukschaal…</button>
           </div>
         </div>
-        <i class="ss-streep"></i>
-        <div class="ss-vinkjes">
-          <label title="Transparante modus in- of uitschakelen"><input type="checkbox" id="plan-transparant"> Transparant</label>
-          <label title="Indien ingeschakeld worden de gridlijnen getoond"><input type="checkbox" id="plan-grid"> Toon grid</label>
-          <label title="Indien ingeschakeld kan men enkel exact op de gridlijnen tekenen"><input type="checkbox" id="plan-kleefgrid"> Kleef aan grid</label>
-          <label title="Indien ingeschakeld worden de uiteinden van de muren 'magnetisch'"><input type="checkbox" id="plan-kleef"> Kleef aan muren</label>
-        </div>
-      </div>
-      <div class="ss-midden">
-        <aside class="ss-links">
-          <div class="ss-acties">
-            <div class="ss-actie-rij" id="ss-rij1">
-              <img src="img/trikker/wall_width.png" alt="" class="ss-ic" id="ss-breedte-ic">
-              <input id="ss-breedte" class="ss-combo" list="ss-breedtes" value="200" inputmode="numeric" title="De breedte van alle muren, ramen en deuren">
-              <datalist id="ss-breedtes"><option value="50"><option value="100"><option value="200"></datalist>
-              <img src="img/trikker/line_widths.png" alt="" class="ss-ic" id="ss-lijndikte-ic">
-              <input id="ss-lijndikte" class="ss-combo" list="ss-lijndiktes" value="0.5" inputmode="decimal" title="De dikte van lijnen (mm)">
-              <datalist id="ss-lijndiktes"><option value="0.13"><option value="0.18"><option value="0.25"><option value="0.35"><option value="0.5"><option value="0.7"><option value="1"><option value="1.4"><option value="2"></datalist>
-              <button type="button" id="plan-kleur" class="ss-kleur" title="Kleur van de symbolen"></button>
-              <input type="color" id="plan-kleur-kies" hidden>
-              <button type="button" id="ss-slot" class="ss-mini slot" title="Vergrendel de geselecteerde afbeelding"><img src="img/trikker/lock_open.png" alt=""></button>
-            </div>
-            <div class="ss-actie-rij" id="ss-rij2">
-              <button type="button" id="plan-roteer" class="ss-mini" title="De geselecteerde objecten roteren"><img src="img/trikker/rotate_right.png" alt=""></button>
-              <input id="ss-graden" class="ss-combo graden" value="90" inputmode="numeric" title="Hoek in graden"><span>°</span>
-              <button type="button" id="plan-spiegel-h" class="ss-mini" title="De geselecteerde objecten horizontaal spiegelen"><img src="img/trikker/mirror_h.png" alt=""></button>
-              <button type="button" id="plan-spiegel-v" class="ss-mini" title="De geselecteerde objecten verticaal spiegelen"><img src="img/trikker/mirror_v.png" alt=""></button>
-              <button type="button" id="plan-aanpas" class="ss-mini rechts" title="De tekening aanpassen"><img src="img/trikker/edit_embedded_file.png" alt=""></button>
-            </div>
-          </div>
-          <div id="ss-toolbox" class="ss-toolbox">
-            <div class="tb-tabs" id="tb-tabs"></div>
-            <div class="tb-hoofd"><div class="tb-paneel" id="tb-paneel"></div></div>
-          </div>
-          <div id="ss-eigenschappen" class="ss-grid" hidden></div>
-        </aside>
         <div class="vlak">
           <svg id="situatie-svg" class="tekening">
             <defs>
@@ -157,50 +165,15 @@
             </defs>
             <g class="inhoud"><g class="achtergrond-laag"></g><g class="plan-laag"></g><g class="voorbeeld-laag"></g><g class="hand-laag"></g></g>
           </svg>
-        </div>
-      </div>
-      <div class="ss-onder">
-        <div class="ss-info" title="Afmetingen van het gekozen element">
-          <img src="img/trikker/width.png" alt="" title="Breedte [mm]"><b id="ss-info-breedte">---</b>
-          <img src="img/trikker/length.png" alt="" title="Lengte [mm]"><b id="ss-info-lengte">---</b>
-          <img src="img/trikker/angle.png" alt="" title="Hoek [°]"><b id="ss-info-hoek">---</b>
-          <img src="img/trikker/diameter.png" alt="" title="Diameter [mm]"><b id="ss-info-diameter">---</b>
-        </div>
-        <div id="plan-status" class="ss-status"></div>
-        <details class="ss-meer" id="ss-meer">
-          <summary title="Extra functies van dit programma die Trikker niet heeft">Extra</summary>
-          <div class="ss-meer-inhoud">
-            <div class="ss-meer-rij">
-              <button type="button" id="plan-laden" title="Een plan van de architect als achtergrond (afbeelding, PDF of DXF)">Plan laden…</button>
-              <button type="button" id="plan-weg" title="Achtergrond weghalen">Plan weg</button>
-              <button type="button" data-gereedschap="schaal" id="plan-schaal-knop" title="Klik twee punten waarvan je de afstand kent, zodat lengtes in meter kloppen">Schaal…</button>
-              <button type="button" data-gereedschap="tekst" title="Een eigen tekst plaatsen">Tekst…</button>
-              <button type="button" data-gereedschap="verbind" title="Verbind een schakelaar met de lamp(en) die hij bedient: klik de schakelaar en daarna de lampen">Verbinden</button>
-              <button type="button" data-gereedschap="kring" title="Kies een kring (zekering) en klik de symbolen die erop staan">Kring-modus</button>
-              <select id="plan-kring-kies" title="De kring voor de kring-modus"></select>
-              <button type="button" id="plan-toewijs" title="De gekozen symbolen aan een kring (zekering) toewijzen">Aan kring toewijzen…</button>
-              <button type="button" id="plan-groter" title="Vergroten of verkleinen">Schalen…</button>
-              <button type="button" id="plan-kleur-alles" title="Kleur van wat gekozen is">Kleur…</button>
-            </div>
-            <div class="ss-meer-rij">
-              <label title="In welke hoeken je muren en lijnen tekent. Houd Alt ingedrukt om even vrij te tekenen.">Hoeken <select id="plan-hoek"><option value="90">Recht (90°)</option><option value="45">Recht en 45°</option><option value="15">Per 15°</option><option value="0">Vrij</option></select></label>
-              <label title="Anders zie je de lengte enkel tijdens het tekenen of als je een muur, deur of raam aanklikt. Staat ook op de afdruk."><input type="checkbox" id="plan-maten"> Alle afmetingen</label>
-              <label title="Lengte van het gekozen lijnstuk">Lengte <input type="number" id="plan-lengte" min="0.01" step="0.01" disabled> m</label>
-              <label>Symbolen <input type="range" id="plan-symbool" min="0.5" max="8" step="0.1"></label>
-              <label>Plan <input type="range" id="plan-zicht" min="0.1" max="1" step="0.05"></label>
-              <span id="plan-schaal-info" class="ss-schaalinfo"></span>
-              <input type="file" id="plan-bestand" accept="image/*,.pdf,.dxf,application/pdf" hidden>
-              <input type="file" id="plan-afb-bestand" accept="image/*" hidden>
-            </div>
+          <div class="zoomknoppen">
+            <button id="situatie-zoom-uit" title="Uitzoomen">−</button>
+            <button id="situatie-passend" title="Alles in beeld">⤢</button>
+            <button id="situatie-zoom-in" title="Inzoomen">+</button>
           </div>
-        </details>
-        <button type="button" id="plan-afdrukschaal" class="ss-schaalknop" title="Schaal">1:50</button>
-        <div class="ss-op-pagina">
-          <span>Op deze pagina:</span>
-          <label><input type="checkbox" id="plan-beletter"> Beletteren</label>
-          <label><input type="checkbox" id="plan-nummer"> Nummeren</label>
+          <div id="plan-status" class="status"></div>
         </div>
       </div>
+      <aside id="plan-eigenschappen" class="paneel eigenschappen"></aside>
     </section>
 
     <section id="tab-materiaal" class="tab pagina" hidden>

@@ -133,7 +133,8 @@ test('een input toont de kring van de output met hetzelfde adres', () => {
   const lamp = nieuwItem('lichtpunt', { adres: 'K.01', functie: 'output' });
   p.kinderen.push(nieuweKring({ items: [knop] }), nieuweKring({ items: [lamp] }));
   const r = tekenEendraad(p);
-  assert.match(r.inhoud, /K\.01 → B1/);
+  assert.match(r.inhoud, />K\.01</);
+  assert.match(r.inhoud, /\(→B1\)/);
 });
 
 test('een nieuwe pagina op een kring geeft een rode lijn en een eigen snijpunt', () => {

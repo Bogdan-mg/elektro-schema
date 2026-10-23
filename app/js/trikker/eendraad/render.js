@@ -54,8 +54,9 @@ function tekenKnoop(g, knoop) {
  * @param {{naamKring?: boolean, schaal?: number}} opties
  * @returns {string} SVG-elementen (zonder <svg>), met zwart als #000000
  */
-export function tekenBoom(wortels, { naamKring = true, schaal = 1 } = {}) {
+export function tekenBoom(wortels, { naamKring = true, schaal = 1, metTspans = false } = {}) {
   const g = new Graphics();
+  g.metTspans = metTspans;
   const begin = g.save();
   g.scaleTransform(schaal, schaal);
   for (const wortel of wortels) {
