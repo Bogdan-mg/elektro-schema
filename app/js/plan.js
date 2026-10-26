@@ -448,7 +448,7 @@ export function kleefAanMuur(plan, punt, breedte) {
   const s = plan.symbool || 1;
   const dikte = Math.max(4, 6 * s);
   const afstandTotMidden = dikte / 2 + (breedte * s) / 2; // van de muurlijn tot het midden van het symbool
-  const bereik = afstandTotMidden + 30 * s;
+  const bereik = afstandTotMidden + Math.max(60 * s, 50); // ruim: ook als je het symbool wat verder van de muur loslaat, springt het ertegen
   let beste = null;
   plan.muren.forEach((m, i) => {
     if ((m.soort || 'muur') !== 'muur') return;
