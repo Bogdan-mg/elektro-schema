@@ -310,9 +310,13 @@ function koppelPlan() {
 }
 
 /** Het gekozen symbool hangt aan de muis tot je klikt: een doorschijnend voorbeeld op de plaats waar het zou komen. */
+let laatsteE = null;
 function toonSpook(e) {
   const laag = $('#woning-svg .voorbeeld-laag');
   if (stap !== 'componenten' || !gewapend || gewapend.tekst) { laag.innerHTML = ''; return; }
+  if (e) laatsteE = { clientX: e.clientX, clientY: e.clientY, altKey: e.altKey };
+  else e = laatsteE;
+  if (!e) return;
   const item = nieuwItem(gewapend.soort, gewapend.waarden);
   const plek = bepaalPlaats(vlak.naarTekening(e.clientX, e.clientY), item, e.altKey, gewapendRot);
   const plan = huidigPlan();
@@ -586,7 +590,9 @@ export function teken() {
   const verdeel = stap === 'verdeelbord';
   $('#w-plan').hidden = verdeel;
   $('#w-verdeel').hidden = !verdeel;
-  $('#w-acties').hidden = !(stap === 'componenten' && gekozenId && huidigPlan().plaatsingen[gekozenId]);
+  const gekozenOpPlan = Boolean(gekozenId && huidigPlan().plaatsingen[gekozenId]);
+  $('#w-acties').hidden = !(stap === 'componenten' && (gekozenOpPlan || (gewapend && !gewapend.tekst)));
+  $('#w-acties').classList.toggle('alleen-draai', !gekozenOpPlan);
   const paneel = $('#w-paneel');
   paneel.hidden = verdeel;
   if (verdeel) {
@@ -660,7 +666,13 @@ function koppelBalk() {
     $('#w-menu').hidden = true;
     acties.tab?.(b.dataset.naar);
   });
-  $('#w-draai').addEventListener('click', () => draaiGekozen());
+  $('#w-draai').addEventListener('click', () => {
+    // Met een symbool aan de vinger (of muis): het volgende symbool draaien; anders het gekozen symbool.
+    if (gewapend && !gewapend.tekst) {
+      gewapendRot = (gewapendRot + draaiStap({ soort: gewapend.soort }, false)) % 360;
+      toonSpook(null);
+    } else draaiGekozen();
+  });
   $('#w-kopie').addEventListener('click', kopieerGekozen);
   $('#w-wis').addEventListener('click', wisGekozen);
   $('#w-passend').addEventListener('click', () => { vlak.ingesteld = false; teken(); });

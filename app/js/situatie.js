@@ -17,6 +17,7 @@ const GRID = 20; // de maat van het raster, in tekeneenheden
 let vlak;
 let gereedschap = 'kies'; // 'kies' | een soort uit TEKEN | 'tekst' | 'schaal' | 'los'
 let plaatsen = null; // id van het onderdeel dat geplaatst wordt
+let laatstePlaatsMuis = null; // de laatste plaats van de muis of vinger op het plan, om het symbool opnieuw te tonen na het draaien
 let plaatsRot = 0; // de hoek waaronder het volgende onderdeel geplaatst wordt (rechtermuisknop draait)
 let losKeuze = null; // index in PALET voor losse symbolen
 let punten = []; // de punten die al aangeklikt zijn voor het element dat getekend wordt
@@ -1580,7 +1581,15 @@ export function startSituatie() {
     wijzig((p) => { huidigPlan(p).achtergrond = null; });
   });
   $('#plan-aanpas').addEventListener('click', () => tekeningAanpassen());
-  $('#plan-draai').addEventListener('click', () => draaiGekozen());
+  svg.addEventListener('pointermove', (e) => { laatstePlaatsMuis = { clientX: e.clientX, clientY: e.clientY, altKey: e.altKey }; }, true);
+  $('#plan-draai').addEventListener('click', () => {
+    // Met een symbool aan de vinger (of muis) draait het volgende symbool; anders het gekozen symbool.
+    if (plaatsen || (gereedschap === 'los' && losKeuze != null)) {
+      const huidig = plaatsen ? onderdelen(staat.project).get(plaatsen)?.item : PALET[losKeuze] && { soort: PALET[losKeuze].soort };
+      plaatsRot = (plaatsRot + draaiStap(huidig, false)) % 360;
+      if (laatstePlaatsMuis) svg.dispatchEvent(new PointerEvent('pointermove', laatstePlaatsMuis));
+    } else draaiGekozen();
+  });
   $('#plan-verwijder').addEventListener('click', verwijderGekozen);
   $('#plan-toewijs').addEventListener('click', () => toewijzen());
   $('#plan-kopieer').addEventListener('click', kopieer);

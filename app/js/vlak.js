@@ -15,6 +15,45 @@ export class Vlak {
     this.spatie = false;
     this.ingesteld = false;
 
+    // Aanraken: twee vingers knijpen = zoomen en schuiven. Een tweede vinger onderbreekt wat de eerste aan het doen was.
+    this.vingers = new Map();
+    this.knijpen = null;
+    svg.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'touch') return;
+      this.vingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (this.vingers.size === 2) {
+        const [a, b] = [...this.vingers.values()];
+        this.knijpen = { afstand: Math.hypot(a.x - b.x, a.y - b.y) || 1, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
+        this.gesleept = true;
+        e.stopImmediatePropagation();
+        e.preventDefault();
+      }
+    }, true);
+    svg.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'touch' || !this.vingers.has(e.pointerId)) return;
+      this.vingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (!this.knijpen || this.vingers.size < 2) return;
+      const [a, b] = [...this.vingers.values()];
+      const afstand = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+      const mx = (a.x + b.x) / 2;
+      const my = (a.y + b.y) / 2;
+      this.x += mx - this.knijpen.mx;
+      this.y += my - this.knijpen.my;
+      this.zoomRond(mx, my, afstand / this.knijpen.afstand);
+      this.knijpen = { afstand, mx, my };
+      this.gesleept = true;
+      e.stopImmediatePropagation();
+    }, true);
+    const vingerWeg = (e) => {
+      if (e.pointerType !== 'touch') return;
+      const was = this.knijpen;
+      this.vingers.delete(e.pointerId);
+      if (this.vingers.size < 2) this.knijpen = null;
+      if (was) { e.stopImmediatePropagation(); this.gesleept = true; }
+    };
+    svg.addEventListener('pointerup', vingerWeg, true);
+    svg.addEventListener('pointercancel', vingerWeg, true);
+
     svg.addEventListener('wheel', (e) => {
       e.preventDefault();
       const factor = Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015));

@@ -259,7 +259,7 @@ async function niko() {
 
 function handleiding() {
   if (desktop) desktop.handleiding();
-  else window.open('/handleiding.html', '_blank');
+  else window.open('handleiding.html', '_blank');
 }
 
 async function csv() {
@@ -449,6 +449,10 @@ async function start() {
   naarTab('woning');
   zetTitel();
   startBackups();
+  // Als webapp (bv. op de iPad): offline beschikbaar maken, zodat ze ook zonder internet opent.
+  if (!desktop && 'serviceWorker' in navigator && /^https?:$/.test(location.protocol) && location.hostname !== 'localhost') {
+    navigator.serviceWorker.register('sw.js').catch(() => { /* zonder offline-modus werkt de app ook */ });
+  }
 
   // Een bestand dat met een dubbelklik geopend werd, of werk dat niet opgeslagen was.
   const startBestand = desktop ? await desktop.startBestand() : null;

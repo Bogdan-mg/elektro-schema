@@ -138,6 +138,16 @@ rest uit.
 - **Ctrl+S** slaat het project op als `.eschema` (standaard in *Documenten*).
 - Loopt er iets mis voor je opgeslagen hebt, dan vraagt het programma bij de volgende start of het je werk mag terugzetten, en er worden automatisch backups bewaard (zie Instellingen).
 
+## Op de iPad (webapp)
+
+Het programma draait ook als webapp, zodat je het op een iPad kan gebruiken zonder App Store.
+
+1. Eénmalig op GitHub: **Settings → Pages → Source: GitHub Actions**. Daarna publiceert elke push naar `main` de webapp (workflow "iPad-webapp publiceren") op `https://<gebruikersnaam>.github.io/elektro-schema/`.
+2. Open dat adres in **Safari** op de iPad, tik op **Deel** en kies **Zet op beginscherm**. Je hebt nu een icoon dat het programma schermvullend opent.
+3. Na het eerste bezoek werkt het ook **zonder internet**. Bij een nieuwe versie haalt het die vanzelf op als je weer online bent.
+
+Op een aanraakscherm: één vinger tekent of plaatst, **twee vingers** knijpen en schuiven het tekenvlak. Draaien met de knop ↻ (voor het plaatsen en voor een gekozen symbool); de plaats van tekst en adres stel je in bij de eigenschappen van het symbool. Opslaan geeft een `.eschema`-bestand dat in de app Bestanden terechtkomt; openen kies je daar weer uit. Een foto van het plan of het verdeelbord kan je kiezen met de camera wanneer het programma om een afbeelding vraagt.
+
 ## Woning-werkwijze (zoals de iPad-versie)
 
 Het eerste tabblad, **Woning**, werkt in vier stappen. Je kan er altijd naar het gewone programma uit terug via de pijl rechtsboven.

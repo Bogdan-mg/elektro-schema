@@ -557,3 +557,16 @@ button.hulp { width: 30px; height: 30px; border-radius: 50%; padding: 0; font-we
 #nood-sectie h3 { margin: 0 0 2px; }
 table.nood tr.zonder-plaats td { color: #9a5b00; }
 table.nood tfoot td { font-weight: 600; background: #f1f3f6; }
+
+/* ---------- Aanraken (iPad) ---------- */
+svg.tekening, #woning-svg, #situatie-svg, #eendraad-svg { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+button, .rij, .w-item { -webkit-tap-highlight-color: transparent; }
+html { -webkit-text-size-adjust: 100%; }
+@media (pointer: coarse) {
+  button, select, input[type=checkbox] { min-height: 38px; }
+  .balk { padding-top: max(0px, env(safe-area-inset-top)); }
+  .woning .w-rond { width: 46px; height: 46px; }
+}
+body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+
+.woning .w-acties.alleen-draai #w-kopie, .woning .w-acties.alleen-draai #w-wis { display: none; }

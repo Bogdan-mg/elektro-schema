@@ -1,0 +1,16 @@
+{
+  "name": "Elektro Schema",
+  "short_name": "Elektro Schema",
+  "description": "Ééndraadschema, situatieschema en materiaallijst voor elektriciens",
+  "lang": "nl-BE",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1f2733",
+  "theme_color": "#1f2733",
+  "icons": [
+    { "src": "pwa/icoon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "pwa/icoon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

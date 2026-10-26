@@ -5,3 +5,4 @@ dist/
 test-uitvoer/
 app/vendor/
 app/handleiding.html
+app/bestanden.json
