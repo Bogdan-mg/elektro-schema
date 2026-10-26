@@ -2,7 +2,7 @@
 // wordt vertaald naar Trikkers boom (Verdeelbord -> automaten/differentiëlen -> leiding -> onderdelen), geschikt en getekend.
 import { berekenSchema, mogelijkePaginabreuken, tekenBoom } from './index.js';
 import { trikkerSpec, SCHAAL } from '../kaart.js';
-import { KABELTYPES as KABELS } from '../../catalogus.js';
+import { KABELTYPES as KABELS, brandklasse } from '../../catalogus.js';
 import { codes, rijen } from '../../model.js';
 
 const N = (k, p, ...c) => ({ k, ...(p && Object.keys(p).length ? { p } : {}), ...(c.length ? { c: c.filter(Boolean) } : {}) });
@@ -10,10 +10,11 @@ const komma = (x) => String(x).replace('.', ',');
 const POLEN = ['NietGespecifieerd', 'Enkelpolig', 'Dubbelpolig', 'Driepolig', 'Vierpolig'];
 
 /** Een kabel (leiding) uit de gegevens van een kring. */
-function leiding(kabel = {}) {
+function leiding(kabel = {}, standaard) {
   const def = KABELS[kabel.type] || {};
   const p = { GeleiderType: kabel.type || '', AantalGeleiders: Number(kabel.aders) || 0, GeleiderDoorsnede: kabel.sectie ? komma(kabel.sectie) : '' };
-  if (def.klasse) p.Brandklasse = def.klasse;
+  const klasse = brandklasse(kabel, standaard);
+  if (klasse) p.Brandklasse = klasse;
   if (def.soort === 'draad') p.InBuis = 'Ja';
   const plaatsing = { inWand: 'InWand', opWand: 'OpWand', lucht: 'Luchtleiding', ondergronds: 'Ondergronds' }[kabel.plaatsing];
   if (plaatsing) p.Plaatsing = plaatsing;
@@ -22,11 +23,15 @@ function leiding(kabel = {}) {
 }
 
 /** Een kabel uit een tekst zoals "EXVB 4G16" (de aansluiting op het net en het bord). */
-function leidingUitTekst(tekst) {
+function leidingUitTekst(tekst, standaard, metKlasse = false) {
   const t = String(tekst || '').trim();
   const m = /^(\S+)\s+(\d+)\s*G\s*([\d.,]+)$/i.exec(t);
   if (!m) return { Plaatsing: 'InWand', ...(t ? { GeleiderType: t } : {}) };
-  return { GeleiderType: m[1], AantalGeleiders: Number(m[2]), GeleiderDoorsnede: komma(m[3]), Plaatsing: 'InWand' };
+  const p = { GeleiderType: m[1], AantalGeleiders: Number(m[2]), GeleiderDoorsnede: komma(m[3]), Plaatsing: 'InWand' };
+  // De kabel naar het bord krijgt, net als de kabels van de kringen, automatisch de brandklasse van het project.
+  const klasse = metKlasse ? brandklasse({ type: m[1] }, standaard) : '';
+  if (klasse) p.Brandklasse = klasse;
+  return p;
 }
 
 /** De beveiliging van een groep, kring of het hoofd als AutomatischeSchakelaar van Trikker. */
@@ -83,17 +88,17 @@ function rijKnopen(kring) {
 }
 
 /** Een kring: de automaat, de kabel en de onderdelen. */
-function kringKnoop(kring, letter) {
+function kringKnoop(kring, letter, standaard) {
   const automaat = { ...kring.automaat, beveiliging: Number(kring.automaat.gevoeligheid) > 0 ? 'diffautomaat' : 'automaat' };
   const a = beveiliging(automaat, { naam: kring.naam, letter, id: kring.id, nieuwePagina: kring.nieuwePagina });
-  const kabel = N('Leiding', leiding(kring.kabel), ...rijKnopen(kring));
+  const kabel = N('Leiding', leiding(kring.kabel, standaard), ...rijKnopen(kring));
   a.c = [kabel];
   return a;
 }
 
 /** Een groep (differentieel, automaat, …) met zijn kringen; een groep zonder beveiliging geeft zijn kringen rechtstreeks door. */
-function groepKnopen(groep, code) {
-  const kinderen = groep.kinderen.flatMap((k) => (k.soort === 'kring' ? [kringKnoop(k, code.get(k.id))] : groepKnopen(k, code)));
+function groepKnopen(groep, code, standaard) {
+  const kinderen = groep.kinderen.flatMap((k) => (k.soort === 'kring' ? [kringKnoop(k, code.get(k.id), standaard)] : groepKnopen(k, code, standaard)));
   if (groep.beveiliging === 'geen') return kinderen;
   const b = beveiliging(groep, { nummeren: true, naam: groep.naam, letter: code.get(groep.id), id: groep.id, nieuwePagina: groep.nieuwePagina });
   b.c = kinderen;
@@ -103,14 +108,15 @@ function groepKnopen(groep, code) {
 /** De boom van het hele project. */
 export function projectSpec(project) {
   const code = codes(project);
+  const standaard = project.opties?.brandklasse;
   const { aansluiting, hoofd } = project;
   const bordKinderen = [];
   const weerstand = Number(aansluiting.aardingsweerstand);
   bordKinderen.push({ ...N('Aardingsstrip', {}, weerstand ? N('Aarding', { Tekst: `${komma(weerstand)} Ω` }) : N('Aarding', {})), id: 'aarding' });
-  for (const k of project.kinderen) bordKinderen.push(...(k.soort === 'kring' ? [kringKnoop(k, code.get(k.id))] : groepKnopen(k, code)));
+  for (const k of project.kinderen) bordKinderen.push(...(k.soort === 'kring' ? [kringKnoop(k, code.get(k.id), standaard)] : groepKnopen(k, code, standaard)));
   const bord = { ...N('Verdeelbord', hoofd.nummer?.trim() ? { Nummer: hoofd.nummer.trim() } : {}), c: bordKinderen, id: 'bord' };
   const hoofdBeveiliging = { ...beveiliging({ ...hoofd, beveiliging: hoofd.beveiliging || 'differentieel' }, { id: 'hoofd' }), c: [bord] };
-  const keten = { ...N('Leiding', leidingUitTekst(aansluiting.kabelBord)), c: [hoofdBeveiliging] };
+  const keten = { ...N('Leiding', leidingUitTekst(aansluiting.kabelBord, standaard, true)), c: [hoofdBeveiliging] };
   const naTeller = hoofd.teller !== false ? { ...N('Teller', {}), c: [keten] } : keten;
   const voeding = { ...N('Leiding', leidingUitTekst(aansluiting.kabelNet)), c: [naTeller] };
   const klem = { ...N('Aansluitklem', { Tekst: '' }), c: [voeding] };

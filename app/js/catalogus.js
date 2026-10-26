@@ -17,9 +17,9 @@ export const SECTIES = [1.5, 2.5, 4, 6, 10, 16, 25, 35];
 export const ADERS = [2, 3, 4, 5];
 
 export const KABELTYPES = {
-  XVB: { naam: 'XVB (kabel)', soort: 'kabel', klasse: 'Cca' },
-  EXVB: { naam: 'EXVB (kabel, buiten/grond)', soort: 'kabel' },
-  XGB: { naam: 'XGB (halogeenvrij)', soort: 'kabel' },
+  XVB: { naam: 'XVB (kabel)', soort: 'kabel', brandklasse: true },
+  EXVB: { naam: 'EXVB (kabel, buiten/grond)', soort: 'kabel', brandklasse: true },
+  XGB: { naam: 'XGB (halogeenvrij)', soort: 'kabel', brandklasse: true },
   VOB: { naam: 'VOB (draad in buis)', soort: 'draad' },
   'H07RN-F': { naam: 'H07RN-F (soepel)', soort: 'kabel' },
 };
@@ -297,12 +297,29 @@ export const PALET = [
 /** Een getal zoals een elektricien het schrijft: 2,5 in plaats van 2.5. */
 export const komma = (getal) => String(getal).replace('.', ',');
 
+/** De keuzes voor de brandklasse (reactie bij brand, EN 50575) van een kabel. */
+export const BRANDKLASSEN = [['Cca', 'Cca'], ['Cca-s1b,d1,a1', 'Cca-s1b,d1,a1'], ['Dca', 'Dca'], ['Eca', 'Eca'], ['B2ca', 'B2ca'], ['geen', 'Geen (niet tonen)']];
+export const STANDAARD_BRANDKLASSE = 'Cca';
+
+/**
+ * De brandklasse die bij een kabel hoort: die van de kring zelf, anders de standaard van het project.
+ * Draad in een buis en soepel snoer (H07RN-F) krijgen er geen automatisch. "geen" laat ze weg.
+ * @param {string} [standaard] de standaard van het project (project.opties.brandklasse)
+ */
+export function brandklasse(kabel, standaard = STANDAARD_BRANDKLASSE) {
+  if (kabel.klasse === 'geen') return '';
+  if (kabel.klasse) return kabel.klasse;
+  if (!KABELTYPES[kabel.type]?.brandklasse) return '';
+  return standaard === 'geen' ? '' : standaard || STANDAARD_BRANDKLASSE;
+}
+
 /** Zoals in het AREI: "XVB Cca 3G2,5" (met de brandklasse als die gekend is). */
-export function kabelTekst(kabel) {
+export function kabelTekst(kabel, standaard = STANDAARD_BRANDKLASSE) {
   if (kabel.tekst) return kabel.tekst;
   const t = KABELTYPES[kabel.type];
   if (t?.soort === 'draad') return `${kabel.type} ${kabel.aders}×${komma(kabel.sectie)}`;
-  return `${kabel.type}${t?.klasse ? ` ${t.klasse}` : ''} ${kabel.aders}G${komma(kabel.sectie)}`;
+  const klasse = brandklasse(kabel, standaard);
+  return `${kabel.type}${klasse ? ` ${klasse}` : ''} ${kabel.aders}G${komma(kabel.sectie)}`;
 }
 
 export const automaatTekst = (a) => `${a.curve}${a.stroom}`;

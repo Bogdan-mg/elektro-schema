@@ -3,6 +3,7 @@ import { tekenEendraad, SCHEMA_STIJL } from './eendraad.js';
 import { tekenPlan, legende, onderdelen, PLAN_STIJL } from './plan.js';
 import { icoon, esc } from './symbolen.js';
 import { materiaalTabel } from './lijsten.js';
+import { noodTabel } from './noodverlichting.js';
 import { alleKnopen, codes } from './model.js';
 import { controleer } from './regels.js';
 import { staat } from './staat.js';
@@ -211,6 +212,13 @@ function opmerkingenBladen(formaat) {
   }));
 }
 
+/** De lijst met noodverlichting: waar elk noodlicht hangt en op welke kring. Geen blad als er geen noodverlichting is. */
+function noodBlad() {
+  const t = noodTabel(staat.project);
+  if (!t.html) return null;
+  return { soort: 'Noodverlichting', vrij: true, inhoud: `<h2>Lijst noodverlichting</h2>${t.html}` };
+}
+
 function materiaalBlad() {
   return {
     soort: 'Materiaallijst',
@@ -220,13 +228,14 @@ function materiaalBlad() {
 }
 
 /** Bouw de bladen op in #afdruk. */
-export function bouwAfdruk({ formaat = 'A4', eendraad = true, situatie = true, lijst = true, opmerkingen = true, materiaal = true, paginering = 'auto', kringVolgorde = 'schema', toonDatum = true, toonStroom = true, tekst = '', datum = '', stroom = '', versie = '', handtekeningen = null, doel = document.getElementById('afdruk') }) {
+export function bouwAfdruk({ formaat = 'A4', eendraad = true, situatie = true, lijst = true, opmerkingen = true, nood = true, materiaal = true, paginering = 'auto', kringVolgorde = 'schema', toonDatum = true, toonStroom = true, tekst = '', datum = '', stroom = '', versie = '', handtekeningen = null, doel = document.getElementById('afdruk') }) {
   const f = FORMATEN[formaat];
   const bladen = [
     ...(eendraad ? eendraadBladen(f, paginering) : []),
     ...(situatie ? situatieBladen(f) : []),
     ...(lijst ? lijstBladen(f, kringVolgorde) : []),
     ...(opmerkingen ? opmerkingenBladen(f) : []),
+    ...(nood ? [noodBlad()].filter(Boolean) : []),
     ...(materiaal ? [materiaalBlad()] : []),
   ];
   doel.innerHTML = bladen.map((b, i) => `<section class="blad${b.vrij ? ' vrij' : ''}" style="--b:${f.b}mm;--h:${f.h}mm">

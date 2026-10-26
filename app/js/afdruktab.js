@@ -7,7 +7,7 @@ import { melding } from './dialoog.js';
 const $ = (s) => document.querySelector(s);
 const STROMEN = ['2 x 230V ~ 50Hz', '3 x 230V ~ 50Hz', '3 x 400V + N ~ 50Hz', '230V ~ 50Hz'];
 const STANDAARD = {
-  formaat: 'A4', eendraad: true, situatie: true, lijst: true, opmerkingen: true, materiaal: false, paginering: 'auto', kringVolgorde: 'schema',
+  formaat: 'A4', eendraad: true, situatie: true, lijst: true, opmerkingen: true, nood: true, materiaal: false, paginering: 'auto', kringVolgorde: 'schema',
   toonDatum: false, datum: '', toonStroom: true, stroom: STROMEN[0], versieAuto: false, versie: '', tekst: '', eigenaar: '', installateur: '',
 };
 
@@ -83,6 +83,7 @@ export function startAfdrukTab({ afdrukken }) {
           <div class="afd-rij">${vink('situatie', 'Situatieschema afdrukken')}</div>
           <div class="afd-rij">${vink('lijst', 'Lijst met kringen afdrukken')}${radio('kringVolgorde', 'schema', 'In volgorde van schema')}${radio('kringVolgorde', 'alfabet', 'Alfabetisch')}</div>
           <div class="afd-rij">${vink('opmerkingen', 'Opmerkingen per kring afdrukken')}</div>
+          <div class="afd-rij">${vink('nood', 'Lijst met noodverlichting afdrukken (als die er is)')}</div>
           <div class="afd-rij">${vink('materiaal', 'Materiaallijst afdrukken')}</div></fieldset>
         <fieldset class="dblok"><legend>Info</legend>
           <div class="afd-rij"><label class="dvink"><input type="checkbox" data-o="toonDatum"> Datum:</label><input type="date" data-o="datum"></div>

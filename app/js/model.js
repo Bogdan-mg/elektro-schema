@@ -60,7 +60,7 @@ export function nieuwProject() {
       titel: 'Nieuw project', klant: '', adres: '', installateur: '', datum: vandaag(), opmerking: '',
       werfAdres: '', installateurEigen: true, uitvoerder: '', controle: '',
     },
-    opties: { losseSymbolen: true },
+    opties: { losseSymbolen: true, brandklasse: 'Cca' },
     document: nieuwDocument(),
     aansluiting: { net: '1F230', hoofdzekering: 40, aardingsweerstand: 0, kabelNet: '', kabelBord: '' },
     hoofd: { beveiliging: 'differentieel', gevoeligheid: 300, type: 'A', stroom: 40, polen: 2, curve: 'C', onderbreking: 0, teller: true },

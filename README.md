@@ -162,6 +162,11 @@ Het ééndraadschema, de materiaallijst en het afdrukken volgen daaruit; het pro
 - De **materiaallijst** is standaard die van Trikker (`app/js/trikker/bom.js`, nagebouwd naar `Bom.cs`): één regel per omschrijving met het aantal. Kies "Uitgebreid" om ook inbouwdozen en meters kabel te zien.
 - De symbolen in de paletten en lijsten zijn de iconen van Trikker.
 
+### Brandklasse en noodverlichting
+
+- De **brandklasse** van kabels (bv. Cca) komt automatisch op het ééndraadschema en in de materiaallijst. Je kiest de standaard bij het Hoofdbord ("Brandklasse van de kabels"); per kring kan je ze overschrijven of weglaten. Draad in een buis (VOB) en soepel snoer (H07RN-F) krijgen er geen. Welke klasse in jouw geval verplicht is, hangt van het gebouw af: het programma vult enkel in wat jij kiest.
+- De **lijst noodverlichting** (tabblad Materiaallijst en als blad bij het afdrukken) toont elk lichtpunt dat als noodverlichting is ingesteld, met kring, soort (centraal of decentraal) en de plaats op het situatieschema: verdieping, de ruimte (de tekst bij het lichtpunt of de dichtstbijzijnde tekst op het plan) en de plek in meter.
+
 ## Wat het niet doet
 
 Dit programma is geen kopie van Trikker maar een eigen programma met dezelfde werkwijze. Een paar dingen zijn er bewust niet in:

@@ -198,7 +198,7 @@ function tekenEendraadOud(project, { selectie = null } = {}) {
     const lx = x + LINKS;
     const label = opschriften({ ...k.automaat, beveiliging: Number(k.automaat.gevoeligheid) ? 'diffautomaat' : 'automaat' });
     const apparaat = Math.max(40, ...label.map(kolomLengte)) + 6;
-    const kabel = kabelTekst(k.kabel) + (Number(k.kabel.lengte) ? ` - ${komma(k.kabel.lengte)}m` : '');
+    const kabel = kabelTekst(k.kabel, project.opties?.brandklasse) + (Number(k.kabel.lengte) ? ` - ${komma(k.kabel.lengte)}m` : '');
     const kabelY = yb - apparaat - 12;
     const kabelEinde = kabelY - breedte(kabel);
     const kop = apparaat + 12 + breedte(kabel) + 22;

@@ -1,4 +1,5 @@
 // De tabbladen Materiaallijst en Controle.
+import { noodTabel } from './noodverlichting.js';
 import { materiaallijst, naarCsv, GROEPEN } from './materiaal.js';
 import { controleer } from './regels.js';
 import { esc, icoon } from './symbolen.js';
@@ -88,6 +89,9 @@ function tekenMateriaal() {
   $('#materiaal-stijl').value = stijl;
   $('#marge-veld').hidden = stijl !== 'uitgebreid';
   $('#materiaal-tabel').innerHTML = materiaalTabel(true, { symbolen: Boolean(staat.project.materiaal?.symbolen) }).html;
+  const nood = noodTabel(staat.project);
+  $('#nood-sectie').hidden = !nood.html;
+  $('#nood-tabel').innerHTML = nood.html;
 }
 
 function tekenControle() {

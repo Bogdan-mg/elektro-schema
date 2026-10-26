@@ -1,7 +1,7 @@
 // Het tabblad Ééndraadschema: de boom links, de tekening in het midden, de eigenschappen rechts.
 import {
   NETTEN, AUTOMAAT_STROMEN, CURVES, DIFF_GEVOELIGHEDEN, DIFF_TYPES, SECTIES, ADERS, KABELTYPES,
-  SOORTEN, SOORT_GROEPEN, PALET, itemNaam, kabelTekst, automaatLabel, komma,
+  SOORTEN, SOORT_GROEPEN, PALET, itemNaam, kabelTekst, automaatLabel, komma, BRANDKLASSEN,
 } from './catalogus.js';
 import {
   nieuwDifferentieel, nieuweKring, nieuwItem, voegKnoopToe, voegItemToe, verwijder, verschuif, dupliceer, verplaatsNaar,
@@ -211,7 +211,7 @@ function tekenBoom() {
         const dicht = staat.dicht.has(k.id);
         html.push(rij(k.id, diepte,
           `<button class="klap" data-klap="${esc(k.id)}" title="${dicht ? 'Openklappen' : 'Dichtklappen'}">${k.items.length ? (dicht ? '▸' : '▾') : ''}</button>`
-          + `<span class="ic letter">${esc(code.get(k.id))}</span><b>${esc(k.naam || 'Kring')}</b><small title="${esc(kabelTekst(k.kabel))}">${esc(automaatLabel(k.automaat))}</small>`));
+          + `<span class="ic letter">${esc(code.get(k.id))}</span><b>${esc(k.naam || 'Kring')}</b><small title="${esc(kabelTekst(k.kabel, staat.project.opties?.brandklasse))}">${esc(automaatLabel(k.automaat))}</small>`));
         if (!dicht) {
           for (const item of k.items) {
             html.push(rij(item.id, diepte + 1, `${icoon(item, 22)}<span class="code">${esc(code.get(item.id))}</span><span>${esc(itemNaam(item))}</span>${item.tekst ? `<small>${esc(item.tekst)}</small>` : ''}`, ' item'));
@@ -497,6 +497,7 @@ function tekenEigenschappen() {
         { label: 'Kabel van het net', pad: 'aansluiting.kabelNet', placeholder: 'bv. EXVB 4x70' },
         { label: 'Kabel naar het bord', pad: 'aansluiting.kabelBord', placeholder: 'bv. XVB 5G10' },
         { label: 'Met teller (kWh)', pad: 'hoofd.teller', type: 'checkbox' },
+        { label: 'Brandklasse van de kabels', pad: 'opties.brandklasse', type: 'select', opties: BRANDKLASSEN },
         { label: 'Nummer (voorvoegsel van de kringen)', pad: 'hoofd.nummer', placeholder: 'bv. 1: kringen 1A, 1B, …' },
       ], (pr) => pr, 'hoofd'),
       kop('Hoofdbeveiliging'),
@@ -570,6 +571,7 @@ function tekenEigenschappen() {
         { label: 'Doorsnede', pad: 'kabel.sectie', type: 'select', opties: SECTIES.map((n) => [n, `${komma(n)} mm²`]), getal: true },
         { label: 'Lengte (m)', pad: 'kabel.lengte', type: 'number', getal: true, min: 0 },
         { label: 'Plaatsing', pad: 'kabel.plaatsing', type: 'select', opties: Object.entries(PLAATSINGEN) },
+        { label: 'Brandklasse', pad: 'kabel.klasse', type: 'select', opties: [['', `Automatisch (${staat.project.opties?.brandklasse === 'geen' ? 'niet tonen' : staat.project.opties?.brandklasse || 'Cca'})`], ...BRANDKLASSEN] },
       ], doel, id),
       kop('Onderdeel toevoegen'),
       palet(),

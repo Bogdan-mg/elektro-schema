@@ -103,7 +103,7 @@ export function materiaallijstUitgebreid(project, { marge = 10 } = {}) {
         kabels.set(k, (kabels.get(k) || 0) + lengte * kring.kabel.aders);
         kabels.set('Buis', (kabels.get('Buis') || 0) + lengte);
       } else {
-        const k = kabelTekst(kring.kabel);
+        const k = kabelTekst(kring.kabel, project.opties?.brandklasse);
         kabels.set(k, (kabels.get(k) || 0) + lengte);
       }
     }
