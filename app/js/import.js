@@ -66,6 +66,64 @@ async function pdfLagen(doc) {
   }
 }
 
+const mul = (a, b) => [a[0] * b[0] + a[1] * b[2], a[0] * b[1] + a[1] * b[3], a[2] * b[0] + a[3] * b[2], a[2] * b[1] + a[3] * b[3], a[4] * b[0] + a[5] * b[2] + b[4], a[4] * b[1] + a[5] * b[3] + b[5]];
+const donker = (hex) => {
+  const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(hex));
+  return !m || (0.299 * parseInt(m[1], 16) + 0.587 * parseInt(m[2], 16) + 0.114 * parseInt(m[3], 16)) / 255 < 0.35;
+};
+
+/**
+ * De dikke lijnen van een PDF-pagina (muren in een bouwplan), als lijnstukken in punten (pagina linksboven = 0, 0).
+ * Alleen donkere lijnen met een dikte vanaf minDikte punten; dunne lijnen (symbolen, maten, tekst) en witte lijnen (openingen) blijven weg.
+ * @returns {{ lijnen: {x1:number,y1:number,x2:number,y2:number}[], breedte: number, hoogte: number }}
+ */
+export async function pdfMuren(doc, nummer, minDikte = 5) {
+  const { OPS } = await import('../vendor/pdfjs/pdf.min.mjs');
+  const pagina = await doc.getPage(nummer);
+  const zicht = pagina.getViewport({ scale: 1 });
+  const ol = await pagina.getOperatorList();
+  let m = [...zicht.transform];
+  const stapel = [];
+  let dikte = 1;
+  let kleur = '#000000';
+  const uit = [];
+  const gezien = new Set();
+  const stroken = new Set([OPS.stroke, OPS.closeStroke, OPS.fillStroke, OPS.eoFillStroke, OPS.closeFillStroke, OPS.closeEOFillStroke]);
+  const voegToe = (a, b) => {
+    const sleutel = [a, b].map((p) => `${Math.round(p[0] * 2)},${Math.round(p[1] * 2)}`).sort().join('|');
+    if (gezien.has(sleutel)) return;
+    gezien.add(sleutel);
+    if (Math.hypot(a[0] - b[0], a[1] - b[1]) < 0.5) return;
+    uit.push({ x1: a[0], y1: a[1], x2: b[0], y2: b[1] });
+  };
+  for (let i = 0; i < ol.fnArray.length; i++) {
+    const f = ol.fnArray[i];
+    const a = ol.argsArray[i];
+    if (f === OPS.save) stapel.push({ m, dikte, kleur });
+    else if (f === OPS.restore) ({ m, dikte, kleur } = stapel.pop() || { m, dikte, kleur });
+    else if (f === OPS.transform) m = mul(a, m);
+    else if (f === OPS.setLineWidth) dikte = a[0];
+    else if (f === OPS.setStrokeRGBColor) kleur = Array.isArray(a) && a.length === 3 ? `#${a.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}` : a[0];
+    else if (f === OPS.constructPath && stroken.has(a[0])) {
+      if (dikte * Math.sqrt(Math.abs(m[0] * m[3] - m[1] * m[2])) < minDikte || !donker(kleur)) continue;
+      const d = a[1][0] || a[1];
+      const punt = (x, y) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
+      let vorige = null;
+      let begin = null;
+      for (let k = 0; k < d.length;) {
+        const op = d[k];
+        if (op === 0) { vorige = begin = punt(d[k + 1], d[k + 2]); k += 3; }
+        else if (op === 1) { const p = punt(d[k + 1], d[k + 2]); if (vorige) voegToe(vorige, p); vorige = p; k += 3; }
+        else if (op === 2) { const p = punt(d[k + 5], d[k + 6]); if (vorige) voegToe(vorige, p); vorige = p; k += 7; }
+        else if (op === 3) { const p = punt(d[k + 3], d[k + 4]); if (vorige) voegToe(vorige, p); vorige = p; k += 5; }
+        else if (op === 4) { if (vorige && begin) voegToe(vorige, begin); vorige = begin; k += 1; }
+        else break;
+      }
+    }
+  }
+  return { lijnen: uit, breedte: zicht.width, hoogte: zicht.height };
+}
+
 /** Een PDF-pagina op een vaste schaal (pixels per punt) naar een canvas. */
 async function pdfNaarCanvas(doc, nummer, schaal, lagen) {
   const pagina = await doc.getPage(nummer);
@@ -169,6 +227,8 @@ export async function importeer(bestand, bron = null) {
       <div class="importvoorbeeld"><canvas id="imp-canvas" width="640" height="440"></canvas><div id="imp-kader" class="imp-kader"></div><div id="imp-bezig" class="imp-bezig">Bezig…</div></div>
       <div class="importopties">
         ${paginas > 1 ? `<label class="veld"><span>Pagina</span><select id="imp-pagina">${Array.from({ length: paginas }, (_, i) => `<option value="${i + 1}" ${i + 1 === st.pagina ? 'selected' : ''}>Pagina ${i + 1}</option>`).join('')}</select></label>` : ''}
+        ${soort === 'pdf' ? `<label class="vink" title="Zet de dikke lijnen van deze pagina (de muren) om in muren die je kan bewerken, in plaats van een afbeelding. Symbolen, maten en tekst blijven weg."><input type="checkbox" id="imp-muren"> Muren overnemen als lijnen</label>
+        <label class="veld" id="imp-dikte-veld" hidden><span>Minimale dikte (pt)</span><input type="number" id="imp-dikte" min="0.5" max="40" step="0.5" value="5"></label>` : ''}
         <label class="vink"><input type="checkbox" id="imp-kleur-aan" ${st.kleur ? 'checked' : ''}> Eén kleur voor alles</label>
         <input type="color" id="imp-kleur" value="${st.kleur || '#9ca3af'}">
         <h4>Lagen <small>(klik rechts voor alles aan/uit)</small></h4>
@@ -293,6 +353,7 @@ export async function importeer(bestand, bron = null) {
     canvas.addEventListener('pointermove', beweeg);
     canvas.addEventListener('pointerup', los);
   });
+  dlg.querySelector('#imp-muren')?.addEventListener('change', (e) => { dlg.querySelector('#imp-dikte-veld').hidden = !e.target.checked; });
   dlg.querySelector('#imp-hele').addEventListener('click', () => { st.uitsnede = { x0: 0, y0: 0, x1: 1, y1: 1 }; teken(); });
   dlg.querySelector('#imp-pagina')?.addEventListener('change', (e) => { st.pagina = Number(e.target.value); schaalPx = vorig.schaalPx || null; maakVolledig(); });
   dlg.querySelector('#imp-kleur-aan').addEventListener('change', (e) => { st.kleur = e.target.checked ? dlg.querySelector('#imp-kleur').value : null; teken(); });
@@ -321,7 +382,11 @@ export async function importeer(bestand, bron = null) {
   });
 
   let uit = null;
-  if (knop === 'ok' && volledig) {
+  if (knop === 'ok' && soort === 'pdf' && dlg.querySelector('#imp-muren')?.checked) {
+    // Geen afbeelding: de dikke lijnen worden muren. Eén punt van de pagina wordt 2 tekeneenheden, met wat marge rond de muren.
+    const r = await pdfMuren(pdf.doc, st.pagina, Number(dlg.querySelector('#imp-dikte').value) || 5);
+    uit = { muren: r.lijnen, paginaBreedte: r.breedte, paginaHoogte: r.hoogte, schaal: null, bron: null };
+  } else if (knop === 'ok' && volledig) {
     const instellingen = { pagina: st.pagina, kleur: st.kleur, uitsnede: st.uitsnede, schaalPx, lagen: Object.fromEntries(lagen.map((l) => [l.id, l.aan])) };
     let c = resultaatCanvas();
     let src = c.toDataURL('image/png');

@@ -1130,6 +1130,33 @@ function schuifPlanOp(plan, dx, dy) {
   for (const t of plan.teksten) { t.x += dx; t.y += dy; }
 }
 
+/** De muren uit een PDF (dikke lijnen) op het plan zetten, groot genoeg en netjes in beeld. */
+function wallenToevoegen(r) {
+  const K = 2; // tekeneenheden per punt van de pagina
+  const marge = 40;
+  const xs = r.muren.flatMap((m) => [m.x1, m.x2]);
+  const ys = r.muren.flatMap((m) => [m.y1, m.y2]);
+  if (!xs.length) { melding('Geen dikke lijnen gevonden op deze pagina. Probeer een kleinere minimale dikte.', 'fout'); return; }
+  const x0 = Math.min(...xs);
+  const y0 = Math.min(...ys);
+  const breedte = Math.ceil((Math.max(...xs) - x0) * K + 2 * marge);
+  const hoogte = Math.ceil((Math.max(...ys) - y0) * K + 2 * marge);
+  wijzig((p) => {
+    const plan = huidigPlan(p);
+    plan.breedte = Math.max(plan.breedte || 0, breedte);
+    plan.hoogte = Math.max(plan.hoogte || 0, hoogte);
+    for (const m of r.muren) {
+      plan.muren.push(nieuwElement('muur', { x1: Math.round(((m.x1 - x0) * K + marge) * 10) / 10, y1: Math.round(((m.y1 - y0) * K + marge) * 10) / 10, x2: Math.round(((m.x2 - x0) * K + marge) * 10) / 10, y2: Math.round(((m.y2 - y0) * K + marge) * 10) / 10 }));
+    }
+    plan.schaal = null;
+    plan.symbool = Math.round(Math.min(8, Math.max(0.6, (Math.max(plan.breedte, plan.hoogte) / 1000) * 1.2)) * 10) / 10;
+  });
+  vlak.ingesteld = false;
+  herteken();
+  zetGereedschap('schaal');
+  melding(`${r.muren.length} muren overgenomen. Stel nu de schaal in: klik twee punten waarvan je de afstand kent.`);
+}
+
 async function laadAchtergrond(bestand) {
   melding(isTekening(bestand) ? 'Tekening inlezen…' : 'Afbeelding inlezen…');
   let beeld;
@@ -1141,6 +1168,7 @@ async function laadAchtergrond(bestand) {
     return;
   }
   if (!beeld) return;
+  if (beeld.muren) { wallenToevoegen(beeld); return; }
   const id = nieuwId();
   wijzig((p) => {
     p.afbeeldingen[id] = { src: beeld.src, breedte: beeld.breedte, hoogte: beeld.hoogte, naam: bestand.name, ...(beeld.bron ? { bron: beeld.bron } : {}) };
