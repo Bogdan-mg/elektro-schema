@@ -14,6 +14,7 @@
   <title>Elektro Schema</title>
   <link rel="icon" type="image/png" href="pwa/icoon-192.png">
   <link rel="stylesheet" href="stijl.css">
+  <link rel="stylesheet" href="stijl-situatie.css">
   <script type="module" src="js/app.js"></script>
 </head>
 <body>
@@ -97,21 +98,21 @@
       <div class="vlak-wrap">
         <div class="werkbalk">
           <div class="groep">
-            <button data-gereedschap="kies" class="aan" title="Selecteren, verslepen en kopiëren (Ctrl+E)">Selecteren</button>
-            <button data-gereedschap="muur" title="Muren tekenen: klik per hoek (Ctrl+D)">Muur</button>
-            <button data-gereedschap="boog" title="Ronde muur: begin, einde en een punt op de ronding">Ronde muur</button>
-            <button data-gereedschap="deur" title="Deur tekenen: klik de twee kanten van de opening, rechtsklik draait de openingsrichting">Deur</button>
-            <button data-gereedschap="poort" title="Garagepoort tekenen">Poort</button>
-            <button data-gereedschap="raam" title="Raam tekenen">Raam</button>
-            <button data-gereedschap="trap" title="Trap tekenen">Trap</button>
-            <button data-gereedschap="draaitrap" title="Draaitrap: middelpunt en buitenkant">Draaitrap</button>
-            <button data-gereedschap="rechthoek" title="Rechthoek tekenen">Rechthoek</button>
-            <button data-gereedschap="vlak" title="Een gekleurd vlak om een zone aan te duiden">Vlak</button>
-            <button data-gereedschap="lijn" title="Een gewone lijn">Lijn</button>
+            <button data-gereedschap="kies" class="aan" title="Selecteren, verslepen en kopiëren (Ctrl+E)"><img src="img/trikker/select.png" alt="" draggable="false"><span>Selecteren</span></button>
+            <button data-gereedschap="muur" hidden title="Muren tekenen: klik per hoek (Ctrl+D)">Muur</button>
+            <button data-gereedschap="boog" hidden title="Ronde muur: begin, einde en een punt op de ronding">Ronde muur</button>
+            <button data-gereedschap="deur" hidden title="Deur tekenen: klik de twee kanten van de opening, rechtsklik draait de openingsrichting">Deur</button>
+            <button data-gereedschap="poort" hidden title="Garagepoort tekenen">Poort</button>
+            <button data-gereedschap="raam" hidden title="Raam tekenen">Raam</button>
+            <button data-gereedschap="trap" hidden title="Trap tekenen">Trap</button>
+            <button data-gereedschap="draaitrap" hidden title="Draaitrap: middelpunt en buitenkant">Draaitrap</button>
+            <button data-gereedschap="rechthoek" hidden title="Rechthoek tekenen">Rechthoek</button>
+            <button data-gereedschap="vlak" hidden title="Een gekleurd vlak om een zone aan te duiden">Vlak</button>
+            <button data-gereedschap="lijn" hidden title="Een gewone lijn">Lijn</button>
             <button data-gereedschap="maat" title="Maatlijn: twee meetpunten en waar de lijn komt">Maatlijn</button>
             <button data-gereedschap="meet" title="Een afstand meten en laten staan">Meetlijn</button>
             <button data-gereedschap="tekst" title="Tekst plaatsen">Tekst</button>
-            <button data-gereedschap="afbeelding" title="Een afbeelding op het plan zetten (of sleep een bestand op het plan)">Afbeelding</button>
+            <button data-gereedschap="afbeelding" hidden title="Een afbeelding op het plan zetten (of sleep een bestand op het plan)">Afbeelding</button>
             <button data-gereedschap="verbind" title="Verbind een schakelaar met de lamp(en) die hij bedient: klik de schakelaar en daarna de lampen">Verbinden</button>
             <button data-gereedschap="kring" title="Kies een kring (zekering) en klik de symbolen die erop staan">Kring-modus</button>
             <select id="plan-kring-kies" title="De kring voor de kring-modus"></select>
@@ -121,7 +122,7 @@
         </div>
         <div class="werkbalk">
           <div class="groep">
-            <button id="plan-laden" title="Een plan van de architect als achtergrond (afbeelding, PDF of DXF)">Plan laden…</button>
+            <button id="plan-laden" title="Een plan van de architect als achtergrond (afbeelding, PDF of DXF)"><img src="img/trikker/picture.png" alt="" draggable="false"><span>Plan laden…</span></button>
             <button id="plan-aanpas" title="Lagen, kleur en uitsnede van het geladen plan wijzigen">Tekening aanpassen</button>
             <button id="plan-weg" title="Achtergrond weghalen">Plan weg</button>
             <button data-gereedschap="schaal" id="plan-schaal-knop" title="Klik twee punten waarvan je de afstand kent, zodat lengtes in meter kloppen">Schaal…</button>
@@ -129,17 +130,17 @@
             <input type="file" id="plan-afb-bestand" accept="image/*" hidden>
           </div>
           <div class="groep">
-            <button id="plan-kopieer" title="Kopiëren (Ctrl+C)">Kopiëren</button>
-            <button id="plan-plak" title="Plakken (Ctrl+V)">Plakken</button>
-            <button id="plan-draai" title="Draaien (R, met Alt in kleine stappen)">Draaien</button>
-            <button id="plan-spiegel-h" title="Horizontaal spiegelen">↔</button>
-            <button id="plan-spiegel-v" title="Verticaal spiegelen">↕</button>
-            <button id="plan-roteer" title="Over een zelf gekozen hoek roteren">Roteren…</button>
+            <button id="plan-kopieer" title="Kopiëren (Ctrl+C)"><img src="img/trikker/copy.png" alt="" draggable="false"><span>Kopiëren</span></button>
+            <button id="plan-plak" title="Plakken (Ctrl+V)"><img src="img/trikker/paste.png" alt="" draggable="false"><span>Plakken</span></button>
+            <button id="plan-draai" title="Draaien (R, met Alt in kleine stappen)"><img src="img/trikker/rotate_right.png" alt="" draggable="false"><span>Draaien</span></button>
+            <button id="plan-spiegel-h" title="Horizontaal spiegelen"><img src="img/trikker/mirror_h.png" alt="" draggable="false"></button>
+            <button id="plan-spiegel-v" title="Verticaal spiegelen"><img src="img/trikker/mirror_v.png" alt="" draggable="false"></button>
+            <button id="plan-roteer" title="Over een zelf gekozen hoek roteren"><img src="img/trikker/angle.png" alt="" draggable="false"><span>Roteren…</span></button>
             <button id="plan-groter" title="Vergroten of verkleinen">Schalen…</button>
             <button id="plan-kleur" title="Kleur van wat gekozen is">Kleur…</button>
             <input type="color" id="plan-kleur-kies" hidden>
-            <button id="plan-verwijder" title="Van het plan halen (Delete)">Wissen</button>
-            <button id="plan-zoek" title="Dit symbool zoeken op het ééndraadschema (Ctrl+F)">Zoek in schema</button>
+            <button id="plan-verwijder" title="Van het plan halen (Delete)"><img src="img/trikker/delete.png" alt="" draggable="false"><span>Wissen</span></button>
+            <button id="plan-zoek" title="Dit symbool zoeken op het ééndraadschema (Ctrl+F)"><img src="img/trikker/search_schema.png" alt="" draggable="false"><span>Zoek in schema</span></button>
           </div>
           <label class="schuif" title="Lengte van het gekozen lijnstuk">Lengte <input type="number" id="plan-lengte" min="0.01" step="0.01" disabled> m</label>
           <span id="plan-schaal-info" class="schaal-info"></span>
@@ -156,12 +157,12 @@
           <label class="schuif">Symbolen <input type="range" id="plan-symbool" min="0.5" max="8" step="0.1"></label>
           <label class="schuif">Plan <input type="range" id="plan-zicht" min="0.1" max="1" step="0.05"></label>
           <div class="groep">
-            <button id="plan-vorige" title="Vorige pagina">◀</button>
+            <button id="plan-vorige" title="Vorige pagina"><img src="img/trikker/page_previous.png" alt="" draggable="false"></button>
             <span id="plan-pagina" class="schaal-info"></span>
-            <button id="plan-volgende" title="Volgende pagina">▶</button>
-            <button id="plan-pagina-toevoegen" title="Nieuwe pagina">+</button>
-            <button id="plan-pagina-wissen" title="Deze pagina wissen (de symbolen blijven in het ééndraadschema)">✕</button>
-            <button id="plan-herschik" title="Pagina’s herschikken en instellen">Pagina’s…</button>
+            <button id="plan-volgende" title="Volgende pagina"><img src="img/trikker/page_next.png" alt="" draggable="false"></button>
+            <button id="plan-pagina-toevoegen" title="Nieuwe pagina"><img src="img/trikker/page_plus.png" alt="" draggable="false"></button>
+            <button id="plan-pagina-wissen" title="Deze pagina wissen (de symbolen blijven in het ééndraadschema)"><img src="img/trikker/page_delete.png" alt="" draggable="false"></button>
+            <button id="plan-herschik" title="Pagina’s herschikken en instellen"><img src="img/trikker/page_rearrange.png" alt="" draggable="false"><span>Pagina’s…</span></button>
             <button id="plan-afdrukschaal" title="Afdrukschaal van deze pagina">Afdrukschaal…</button>
           </div>
         </div>

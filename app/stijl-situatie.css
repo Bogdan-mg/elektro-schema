@@ -172,3 +172,20 @@
 #situatie-svg .marquee { fill: rgba(255, 140, 0, .08); stroke: #ff8c00; }
 #situatie-svg .selectie-kader { fill: none; stroke: #ff8c00; stroke-dasharray: 5 3; pointer-events: none; }
 #situatie-svg .selectie-greep { fill: rgba(255, 140, 0, .5); stroke: #ff8c00; cursor: nwse-resize; }
+
+/* Werkbalken van het situatieschema: knoppen met een pictogram erboven, zoals in Trikker */
+#tab-situatie .werkbalk button:has(> img) { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-width: 58px; min-height: 52px; padding: 3px 6px; font-size: 11px; background: #fff; border: 1px solid #adadad; border-radius: 0; color: #00013e; }
+#tab-situatie .werkbalk button:has(> img:only-child) { min-width: 36px; min-height: 36px; }
+#tab-situatie .werkbalk button > img { width: 26px; height: 26px; }
+#tab-situatie .werkbalk button:has(> img):hover:not(:disabled) { background: #dcdcdc; }
+#tab-situatie .werkbalk button.aan:has(> img) { background: #b0c4de; border-color: #6a8ab4; }
+#tab-situatie .werkbalk button:disabled > img { opacity: .35; }
+#tab-situatie .werkbalk { flex-wrap: wrap; gap: 3px 6px; padding: 3px 6px; background: #f5f5f5; align-items: center; }
+#tab-situatie .werkbalk .groep { display: flex; flex-wrap: wrap; gap: 2px; align-items: center; }
+#tab-situatie .werkbalk button { min-height: 40px; padding: 3px 8px; background: #fff; border: 1px solid #adadad; border-radius: 0; color: #00013e; font-size: 12px; }
+#tab-situatie .werkbalk button:hover:not(:disabled) { background: #dcdcdc; }
+#tab-situatie .werkbalk button:disabled { color: #a0a0a0; }
+#tab-situatie .werkbalk button.aan { background: #b0c4de; border-color: #6a8ab4; }
+#tab-situatie .werkbalk button:has(> img) { min-width: 52px; min-height: 44px; }
+#tab-situatie .werkbalk button > img { width: 22px; height: 22px; }
+#tab-situatie .werkbalk button:has(> img:only-child) { min-width: 34px; min-height: 34px; padding: 2px; }

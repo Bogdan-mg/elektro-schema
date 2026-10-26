@@ -11,6 +11,7 @@ import { staat, wijzig, herteken, opWijziging, zetGewijzigd, ongedaan } from './
 import { Vlak } from './vlak.js';
 import { vraag, vraagTekst, bevestig, melding } from './dialoog.js';
 import { importeer, leesBeeldBestand } from './import.js';
+import { bouwTabs, paneelHtml, tabHtml, sleutelVan, eersteKiesbare } from './trikker/toolbox.js';
 
 const $ = (s) => document.querySelector(s);
 const GRID = 20; // de maat van het raster, in tekeneenheden
@@ -28,6 +29,9 @@ let achtergrondSleutel = null;
 let klembord = null;
 let verbindVan = null; // de schakelaar waarvan je lampen aan het verbinden bent
 let plakTeller = 0;
+let tbTab = 'huis'; // het gekozen tabblad van de toolbox
+let tbTabs = [];
+let tbSleutel = null; // het gekozen element van de toolbox
 
 /** Hoeveel klikken elk gereedschap nodig heeft. */
 const TEKEN = {
@@ -88,33 +92,66 @@ function tekenLijst() {
     lijst.scrollTop = scroll;
     return;
   }
-  $('#plaats-kop').textContent = 'Onderdelen';
-  $('#plaats-hint').textContent = 'Klik een onderdeel en daarna op het plan. Het volgende onderdeel staat meteen klaar.';
+  $('#plaats-kop').textContent = 'Toolbox';
+  $('#plaats-hint').textContent = '';
   const plan = huidigPlan();
-  const code = codes(p);
-  const waar = new Map();
-  for (const pl of p.plannen) for (const [id, x] of Object.entries(pl.plaatsingen)) if (!x.los) waar.set(id, pl);
-  const status = (id) => {
-    const pl = waar.get(id);
-    if (!pl) return { klasse: 'open', tekst: '' };
-    if (pl.id === plan.id) return { klasse: 'geplaatst', tekst: '✓' };
-    return { klasse: 'elders', tekst: pl.naam };
-  };
-  const rij = (id, ic, codeTekst, naam) => {
-    const s = status(id);
-    return `<div class="rij item ${s.klasse}${plaatsen === id ? ' actief' : ''}${gekozen('item', id) ? ' gekozen' : ''}" data-item="${esc(id)}" style="--diepte:1">
-      ${ic}<span class="code">${esc(codeTekst)}</span><span>${esc(naam)}</span><small>${esc(s.tekst)}</small></div>`;
-  };
-  const html = [rij('bord', icoon('bord', 22), '', 'Verdeelbord')];
-  for (const { knoop } of alleKringen(p)) {
-    const alles = knoop.items.every((it) => waar.has(it.id));
-    html.push(`<div class="rij kop${alles ? ' klaar' : ''}" style="--diepte:0"><span class="ic letter">${esc(code.get(knoop.id))}</span><b>${esc(knoop.naam || 'Kring')}</b></div>`);
-    for (const item of knoop.items) html.push(rij(item.id, icoon(item, 22), code.get(item.id), itemNaam(item)));
-  }
-  lijst.innerHTML = html.join('');
+  const waar = new Set();
+  for (const pl of p.plannen) for (const [id, x] of Object.entries(pl.plaatsingen)) if (!x.los) waar.add(id);
+  tbTabs = bouwTabs(p, waar);
+  if (!tbTabs.some((t) => t.id === tbTab)) tbTab = 'huis';
+  const tab = tbTabs.find((t) => t.id === tbTab);
+  const sleutel = plaatsen ? (plaatsen === 'bord' ? 'bord' : `knoop:${plaatsen}`) : (gereedschap !== 'kies' ? tbSleutel : null);
+  lijst.innerHTML = `<div class="ss-toolbox"><div class="tb-tabs">${tbTabs.map((t) => `<button type="button" class="tb-tab${t.id === tbTab ? ' aan' : ''}" data-tbtab="${esc(t.id)}" title="${esc(t.naam || '')}">${tabHtml(t)}</button>`).join('')}</div>
+    <div class="tb-hoofd"><div class="tb-paneel">${paneelHtml(tab, sleutel)}</div></div></div>`;
   lijst.scrollTop = scroll;
   const open = volgorde(p).filter((id) => !waar.has(id)).length;
   $('#plaats-teller').textContent = open ? `${open} nog te plaatsen` : 'alles geplaatst';
+  void plan;
+}
+
+/** Een klik in de toolbox: een gereedschap met twee punten, een symbool om te plaatsen of een tekst. */
+function toolboxKlik(e) {
+  const tabKnop = e.target.closest('[data-tbtab]');
+  if (tabKnop) {
+    tbTab = tabKnop.dataset.tbtab;
+    const t = tbTabs.find((x) => x.id === tbTab);
+    const eerste = t?.soort === 'kring' ? eersteKiesbare(t) : null;
+    if (eerste) { klikToolbox(sleutelVan(eerste), eerste); return; }
+    tekenLijst();
+    return;
+  }
+  const knop = e.target.closest('[data-sleutel]');
+  if (!knop || knop.classList.contains('uit')) return;
+  const tab = tbTabs.find((x) => x.id === tbTab);
+  const it = tab?.items.find((x) => sleutelVan(x) === knop.dataset.sleutel);
+  if (it) klikToolbox(knop.dataset.sleutel, it);
+}
+
+function klikToolbox(sleutel, it) {
+  tbSleutel = sleutel;
+  if (it.type === 'tweepunt') { zetGereedschap(it.gereedschap); tbSleutel = sleutel; tekenLijst(); return; }
+  if (it.type === 'import') { $('#plan-afb-bestand').click(); return; }
+  if (it.type === 'nota') { zetGereedschap('tekst'); tbSleutel = sleutel; tekenLijst(); return; }
+  if (it.type === 'bord') { startPlaatsen(plaatsen === 'bord' ? null : 'bord'); return; }
+  if (it.type === 'knoop') {
+    const id = it.id;
+    if (huidigPlan().plaatsingen[id] && plaatsen !== id) {
+      zetKeuze([{ soort: 'item', id }]);
+      staat.selectie = id;
+      plaatsen = null;
+      herteken({ paneel: true });
+    } else startPlaatsen(plaatsen === id ? null : id);
+    return;
+  }
+  if (it.type === 'los') {
+    const i = PALET.findIndex((w) => w.soort === it.item.soort && (it.item.soort !== 'toestelKlein' || (w.waarden?.opschrift || '') === (it.item.opschrift || '')));
+    const j = i >= 0 ? i : PALET.findIndex((w) => w.soort === it.item.soort);
+    if (j < 0) { melding('Dit symbool kan nog niet als los symbool op het plan.', 'info'); return; }
+    zetGereedschap('los');
+    losKeuze = j;
+    tbSleutel = sleutel;
+    tekenLijst();
+  }
 }
 
 // ---------- Tekenvlak ----------
@@ -1573,17 +1610,7 @@ export function startSituatie() {
       tekenLijst();
       return;
     }
-    const rij = e.target.closest('[data-item]');
-    if (!rij) return;
-    const id = rij.dataset.item;
-    if (huidigPlan().plaatsingen[id] && plaatsen !== id) {
-      zetKeuze([{ soort: 'item', id }]);
-      if (id !== 'bord') staat.selectie = id;
-      plaatsen = null;
-      herteken({ paneel: true });
-    } else {
-      startPlaatsen(plaatsen === id ? null : id);
-    }
+    toolboxKlik(e);
   });
 
   $('#plan-nieuw').addEventListener('click', nieuwPlanToevoegen);

@@ -1,7 +1,9 @@
 // De toolbox van het situatieschema, nagebouwd naar GrondplanToolbox.cs van Trikker:
 // verticale tabbladen (huis, standaardteksten, één per kring) met links daarvan de gereedschappen en symbolen.
 // Dit bestand bevat enkel gegevens en HTML; de bediening zit in situatie.js.
-import { tekst } from './teksten.js';
+import { krijg } from './tekst.js';
+
+const tekst = (sleutel, standaard = '') => krijg(sleutel) ?? standaard;
 import { trikkerIcoon, notaIcoon } from './kaart.js';
 import { alleKringen, codes, rijen, nieuwItem } from '../model.js';
 import { itemNaam } from '../catalogus.js';
