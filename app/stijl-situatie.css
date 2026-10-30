@@ -189,3 +189,10 @@
 #tab-situatie .werkbalk button:has(> img) { min-width: 52px; min-height: 44px; }
 #tab-situatie .werkbalk button > img { width: 22px; height: 22px; }
 #tab-situatie .werkbalk button:has(> img:only-child) { min-width: 34px; min-height: 34px; padding: 2px; }
+
+/* De minder gebruikte opties staan opgeklapt, zodat het plan meer ruimte heeft */
+#tab-situatie .werkbalk-opties { background: #f5f5f5; border-top: 1px solid #dcdcdc; }
+#tab-situatie .werkbalk-opties > summary { cursor: pointer; padding: 3px 10px; font-size: 12px; color: #00013e; list-style: none; user-select: none; }
+#tab-situatie .werkbalk-opties > summary::before { content: "▸ "; }
+#tab-situatie .werkbalk-opties[open] > summary::before { content: "▾ "; }
+#tab-situatie .werkbalk-opties > summary::-webkit-details-marker { display: none; }

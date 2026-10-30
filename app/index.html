@@ -145,6 +145,7 @@
           <label class="schuif" title="Lengte van het gekozen lijnstuk">Lengte <input type="number" id="plan-lengte" min="0.01" step="0.01" disabled> m</label>
           <span id="plan-schaal-info" class="schaal-info"></span>
         </div>
+        <details class="werkbalk-opties"><summary>Opties en pagina’s</summary>
         <div class="werkbalk">
           <label class="schuif" title="In welke hoeken je muren en lijnen tekent. Houd Alt ingedrukt om even vrij te tekenen.">Hoeken <select id="plan-hoek"><option value="90">Recht (90°)</option><option value="45">Recht en 45°</option><option value="15">Per 15°</option><option value="0">Vrij</option></select></label>
           <label class="schuif vink-rij"><input type="checkbox" id="plan-grid"> Toon grid</label>
@@ -166,6 +167,7 @@
             <button id="plan-afdrukschaal" title="Afdrukschaal van deze pagina">Afdrukschaal…</button>
           </div>
         </div>
+        </details>
         <div class="vlak">
           <svg id="situatie-svg" class="tekening">
             <defs>
