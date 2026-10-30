@@ -31,6 +31,7 @@ let verbindVan = null; // de schakelaar waarvan je lampen aan het verbinden bent
 let plakTeller = 0;
 let tbTab = 'huis'; // het gekozen tabblad van de toolbox
 let tbTabs = [];
+let zoekTekst = ''; // wat in het zoekvak voor symbolen staat
 let tbSleutel = null; // het gekozen element van de toolbox
 
 /** Hoeveel klikken elk gereedschap nodig heeft. */
@@ -92,6 +93,7 @@ function tekenLijst() {
     lijst.scrollTop = scroll;
     return;
   }
+  if (zoekTekst.trim()) { tekenZoekResultaat(lijst, scroll); return; }
   $('#plaats-kop').textContent = 'Toolbox';
   $('#plaats-hint').textContent = '';
   const plan = huidigPlan();
@@ -107,6 +109,34 @@ function tekenLijst() {
   const open = volgorde(p).filter((id) => !waar.has(id)).length;
   $('#plaats-teller').textContent = open ? `${open} nog te plaatsen` : 'alles geplaatst';
   void plan;
+}
+
+/** De symbolen die bij het zoekwoord passen: eerst de onderdelen van dit project, dan alle soorten die je los kunt plaatsen. */
+function tekenZoekResultaat(lijst, scroll) {
+  const p = staat.project;
+  const woorden = zoekTekst.toLowerCase().split(/\s+/).filter(Boolean);
+  const past = (t) => woorden.every((w) => t.toLowerCase().includes(w));
+  const code = codes(p);
+  const waar = new Set();
+  for (const pl of p.plannen) for (const [id, x] of Object.entries(pl.plaatsingen)) if (!x.los) waar.add(id);
+  const projectRijen = [];
+  for (const { knoop } of alleKringen(p)) {
+    for (const item of knoop.items) {
+      const naam = `${code.get(item.id) || ''} ${itemNaam(item)} ${knoop.naam || ''}`;
+      if (past(naam)) projectRijen.push(`<div class="rij item ${waar.has(item.id) ? 'geplaatst' : 'open'}${plaatsen === item.id ? ' actief' : ''}" data-item="${esc(item.id)}" style="--diepte:1">${icoon(item, 22)}<span class="code">${esc(code.get(item.id) || '')}</span><span>${esc(itemNaam(item))}</span><small>${waar.has(item.id) ? '✓' : ''}</small></div>`);
+    }
+  }
+  const losRijen = PALET.map((w, i) => [w, i]).filter(([w]) => past(`${w.naam} ${w.soort}`))
+    .map(([w, i]) => `<div class="rij item open${gereedschap === 'los' && losKeuze === i ? ' actief' : ''}" data-zoek-los="${i}" style="--diepte:1">${icoon(nieuwItem(w.soort, w.waarden), 22)}<span>${esc(w.naam)}</span></div>`);
+  $('#plaats-kop').textContent = 'Gevonden';
+  $('#plaats-hint').textContent = 'Klik een symbool en daarna op het plan.';
+  $('#plaats-teller').textContent = '';
+  lijst.innerHTML = [
+    projectRijen.length ? '<div class="rij kop"><b>In dit project</b></div>' + projectRijen.join('') : '',
+    losRijen.length ? '<div class="rij kop"><b>Los symbool plaatsen</b></div>' + losRijen.join('') : '',
+    !projectRijen.length && !losRijen.length ? '<p class="hint">Niets gevonden. Probeer een ander woord, bijvoorbeeld "stopcontact", "lamp" of "schakelaar".</p>' : '',
+  ].join('');
+  lijst.scrollTop = scroll;
 }
 
 /** Een klik in de toolbox: een gereedschap met twee punten, een symbool om te plaatsen of een tekst. */
@@ -1610,7 +1640,21 @@ export function startSituatie() {
       tekenLijst();
       return;
     }
+    const zl = e.target.closest('[data-zoek-los]');
+    if (zl) {
+      zetGereedschap('los');
+      losKeuze = Number(zl.dataset.zoekLos);
+      tekenLijst();
+      return;
+    }
     toolboxKlik(e);
+  });
+  $('#symbool-zoek').addEventListener('input', (e) => {
+    zoekTekst = e.target.value;
+    tekenLijst();
+  });
+  $('#symbool-zoek').addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { e.target.value = ''; zoekTekst = ''; tekenLijst(); }
   });
 
   $('#plan-nieuw').addEventListener('click', nieuwPlanToevoegen);

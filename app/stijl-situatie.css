@@ -196,3 +196,5 @@
 #tab-situatie .werkbalk-opties > summary::before { content: "▸ "; }
 #tab-situatie .werkbalk-opties[open] > summary::before { content: "▾ "; }
 #tab-situatie .werkbalk-opties > summary::-webkit-details-marker { display: none; }
+
+#tab-situatie .zoekvak { width: 100%; box-sizing: border-box; margin: 4px 0 6px; padding: 6px 8px; font-size: 13px; border: 1px solid #adadad; border-radius: 4px; background: #fff; color: #00013e; }
