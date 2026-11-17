@@ -1,0 +1,59 @@
+/* Het tabblad Verdeelkast */
+#tab-kast { padding: 0; overflow: auto; background: #eef1f5; }
+.km { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; padding: 16px; align-items: start; color: #1c2533; }
+.km button { font: inherit; cursor: pointer; border: 1px solid #d5dbe3; background: #fff; border-radius: 8px; padding: 7px 12px; color: #1c2533; }
+.km button:hover { background: #f3f6fa; }
+.km .km-hoofd { background: #2563eb; border-color: #2563eb; color: #fff; }
+.km .km-hoofd:hover { background: #1d4ed8; }
+.km .km-gevaar { color: #b91c1c; }
+.km-kop { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.km-kop h2 { margin: 0; font-size: 18px; }
+.km-rechts { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+.km-info { color: #64708a; font-size: 13px; }
+.km-uitleg { color: #64708a; font-size: 13px; margin: 6px 0 12px; }
+.km-kast { background: #dfe4ea; border: 2px solid #9aa4b1; border-radius: 14px; padding: 12px; box-shadow: inset 0 0 0 6px #e9edf2; }
+.km-rij { background: #f7f9fb; border: 1px solid #d5dbe3; border-radius: 10px; margin-bottom: 12px; padding: 10px 10px 30px; }
+.km-rij:last-child { margin-bottom: 0; }
+.km-rijkop { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.km-rijkop button { padding: 4px 9px; font-size: 13px; }
+.km-rail { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 34px 8px; min-height: 150px; padding: 28px 8px 8px;
+  background: linear-gradient(#cfd5dc, #cfd5dc) left 62% / 100% 14px no-repeat; }
+.km-groep { position: relative; display: flex; align-items: flex-end; gap: 3px; }
+.km-groep::before { content: attr(data-label); position: absolute; left: 0; right: 0; top: -24px; height: 18px; border-radius: 5px 5px 0 0;
+  background: var(--k); color: #fff; font-size: 11px; font-weight: 600; padding: 1px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 100%; }
+.km-groep::after { content: ""; position: absolute; left: -2px; right: -2px; top: -6px; bottom: -6px; border: 2px solid var(--k); border-top: 0; border-radius: 0 0 8px 8px; pointer-events: none; opacity: .55; }
+.km .km-mod { position: relative; width: 48px; height: 118px; padding: 6px 2px; border: 1px solid #9aa4b1; border-radius: 5px; background: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between; box-shadow: 0 1px 0 #0001; }
+.km .km-mod.km-diff { width: 98px; background: linear-gradient(#fff, #f2f5f9); }
+.km .km-mod.km-aan { outline: 3px solid #2563eb; z-index: 2; }
+.km .km-mod.km-let { box-shadow: inset 0 -5px 0 #f97316; }
+.km-hendel { width: 16px; height: 26px; border-radius: 3px; background: #1c2533; margin-top: 4px; }
+.km-diff .km-hendel { background: #3b4656; }
+.km-test { position: absolute; top: 8px; right: 8px; width: 11px; height: 11px; border-radius: 50%; background: #facc15; border: 1px solid #a16207; }
+.km-mod b { font-size: 12px; line-height: 1.1; text-align: center; }
+.km-mod small { font-size: 10px; color: #64708a; text-align: center; line-height: 1.15; }
+.km-letter { position: absolute; bottom: -22px; left: 0; right: 0; text-align: center; font-weight: 700; font-size: 13px; }
+.km .km-plus { width: 48px; height: 118px; border: 2px dashed #a8b2bf; border-radius: 6px; background: transparent; color: #7a8698; font-size: 24px; padding: 0; }
+.km-leeg { color: #64708a; font-size: 13px; padding: 12px; }
+.km-overzicht { margin-top: 16px; background: #fff; border: 1px solid #d5dbe3; border-radius: 12px; padding: 12px 14px; }
+.km-overzicht table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.km-overzicht th, .km-overzicht td { text-align: left; padding: 5px 6px; border-bottom: 1px solid #edf0f4; }
+.km-overzicht th { color: #64708a; font-weight: 600; }
+.km-overzicht tr[data-id] { cursor: pointer; }
+.km-overzicht tr[data-id]:hover { background: #f5f8fc; }
+.km-paneel { background: #fff; border: 1px solid #d5dbe3; border-radius: 12px; padding: 14px; position: sticky; top: 0; }
+.km-paneel h3 { margin: 0 0 6px; font-size: 16px; }
+.km-paneel h4 { margin: 14px 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .4px; color: #64708a; border-top: 1px solid #d5dbe3; padding-top: 12px; }
+.km-veld { display: grid; grid-template-columns: 110px 1fr; gap: 8px; align-items: center; margin-bottom: 8px; font-size: 13px; }
+.km-veld span { color: #64708a; }
+.km-veld input, .km-veld select { width: 100%; font: inherit; border: 1px solid #d5dbe3; border-radius: 7px; padding: 6px 8px; background: #fff; }
+.km-items { list-style: none; margin: 0 0 10px; padding: 0; }
+.km-items li { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border: 1px solid #d5dbe3; border-radius: 7px; margin-bottom: 6px; font-size: 13px; }
+.km-items li button { padding: 2px 10px; font-size: 15px; }
+.km-items li button:first-of-type { margin-left: auto; }
+.km-snel { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.km-snel button { text-align: left; padding: 8px 9px; font-size: 13px; }
+.km-waarsch { background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; border-radius: 8px; padding: 8px 10px; font-size: 13px; margin-top: 8px; }
+.km-ok { background: #f0fdf4; border: 1px solid #86efac; color: #166534; border-radius: 8px; padding: 8px 10px; font-size: 13px; margin-top: 8px; }
+.km-knoppen2 { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; border-top: 1px solid #d5dbe3; padding-top: 12px; }
+@media (max-width: 1000px) { .km { grid-template-columns: 1fr; } .km-paneel { position: static; } }

@@ -10,6 +10,7 @@ import { bouwAfdruk, ruimAfdrukOp } from './afdruk.js';
 import { startAfdrukTab, afdrukParameters, toonVoorbeeld } from './afdruktab.js';
 import { startExtra } from './extra.js';
 import { startWoning } from './woning.js';
+import { startKast } from './kast.js';
 import { vraag, bevestig, melding } from './dialoog.js';
 import { symbolenProject } from './overzicht.js';
 import { leesInstellingen, instellingenDialoog } from './instellingen.js';
@@ -397,6 +398,7 @@ async function start() {
   startDocument();
   startAfdrukTab({ afdrukken });
   startWoning({ acties: { tab: naarTab } });
+  startKast({ tab: naarTab });
   startExtra({ acties: () => acties });
   editor.startEditor();
   situatie.startSituatie();
