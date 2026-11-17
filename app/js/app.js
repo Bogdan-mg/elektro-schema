@@ -11,6 +11,7 @@ import { startAfdrukTab, afdrukParameters, toonVoorbeeld } from './afdruktab.js'
 import { startExtra } from './extra.js';
 import { startWoning } from './woning.js';
 import { startKast } from './kast.js';
+import { startLades } from './lades.js';
 import { vraag, bevestig, melding } from './dialoog.js';
 import { symbolenProject } from './overzicht.js';
 import { leesInstellingen, instellingenDialoog } from './instellingen.js';
@@ -141,6 +142,18 @@ async function opslaan(als = false) {
       return false;
     }
   } else {
+    // iPad/iPhone: via het deelmenu kies je meteen "Bewaar in Bestanden" (of iCloud Drive, AirDrop, mail …).
+    const bestand = new File([inhoud], `${naam}.${EXTENSIE}`, { type: 'application/octet-stream' });
+    if (/iPad|iPhone|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document && navigator.canShare?.({ files: [bestand] })) {
+      try {
+        await navigator.share({ files: [bestand], title: naam });
+      } catch (e) {
+        if (e.name === 'AbortError') return false;
+      }
+      await wisHerstel();
+      zetGewijzigd(false);
+      return true;
+    }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([inhoud], { type: 'application/json' }));
     a.download = `${naam}.${EXTENSIE}`;
@@ -399,6 +412,7 @@ async function start() {
   startAfdrukTab({ afdrukken });
   startWoning({ acties: { tab: naarTab } });
   startKast({ tab: naarTab });
+  startLades();
   startExtra({ acties: () => acties });
   editor.startEditor();
   situatie.startSituatie();
