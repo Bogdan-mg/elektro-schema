@@ -1737,8 +1737,19 @@ export function startSituatie() {
   $('#situatie-zoom-in').addEventListener('click', () => { vlak.zoom(1.25); tekenHandvatten(); });
   $('#situatie-zoom-uit').addEventListener('click', () => { vlak.zoom(0.8); tekenHandvatten(); });
   $('#situatie-passend').addEventListener('click', () => {
+    // Zoals in Trikker: inzoomen op wat er getekend is; is de pagina nog leeg, dan de hele pagina.
     const plan = huidigPlan();
-    vlak.passend(plan.breedte, plan.hoogte, { max: 2 });
+    const xs = [];
+    const ys = [];
+    for (const m of plan.muren) { xs.push(m.x1, m.x2); ys.push(m.y1, m.y2); }
+    for (const pl of Object.values(plan.plaatsingen)) { xs.push(pl.x); ys.push(pl.y); }
+    for (const t of plan.teksten) { xs.push(t.x); ys.push(t.y); }
+    if (xs.length > 1 && !plan.achtergrond) {
+      const rand = 40;
+      const x0 = Math.min(...xs) - rand;
+      const y0 = Math.min(...ys) - rand;
+      vlak.passendOp(x0, y0, Math.max(...xs) + rand - x0, Math.max(...ys) + rand - y0, { max: 4 });
+    } else vlak.passend(plan.breedte, plan.hoogte, { max: 2 });
     tekenHandvatten();
   });
 

@@ -198,3 +198,12 @@
 #tab-situatie .werkbalk-opties > summary::-webkit-details-marker { display: none; }
 
 #tab-situatie .zoekvak { width: 100%; box-sizing: border-box; margin: 4px 0 6px; padding: 6px 8px; font-size: 13px; border: 1px solid #adadad; border-radius: 4px; background: #fff; color: #00013e; }
+
+/* Aanraakscherm: de werkbalken in één rij die je opzij schuift, zodat de tekening de ruimte krijgt */
+@media (pointer: coarse), (max-width: 1400px) {
+  #tab-situatie .werkbalk { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  #tab-situatie .werkbalk::-webkit-scrollbar { display: none; }
+  #tab-situatie .werkbalk .groep { flex-wrap: nowrap; }
+  #tab-situatie .werkbalk > *, #tab-situatie .werkbalk .groep > * { flex: none; }
+  #tab-situatie .werkbalk button { min-height: 44px; }
+}

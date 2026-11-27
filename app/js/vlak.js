@@ -133,6 +133,17 @@ export class Vlak {
     this.pas();
   }
 
+  /** Een stuk van de tekening (vanaf x0, y0) passend in beeld. */
+  passendOp(x0, y0, breedte, hoogte, { marge = 24, max = 1.6 } = {}) {
+    const r = this.svg.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    this.s = Math.min(max, (r.width - 2 * marge) / breedte, (r.height - 2 * marge) / hoogte);
+    this.x = (r.width - breedte * this.s) / 2 - x0 * this.s;
+    this.y = (r.height - hoogte * this.s) / 2 - y0 * this.s;
+    this.ingesteld = true;
+    this.pas();
+  }
+
   /** Schermcoördinaten naar coördinaten in de tekening. */
   naarTekening(clientX, clientY) {
     const r = this.svg.getBoundingClientRect();

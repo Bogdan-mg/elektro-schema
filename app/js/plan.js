@@ -735,7 +735,7 @@ export const PLAN_STIJL = `
 .plantekst{font-family:"Segoe UI",Arial,sans-serif;fill:#3a3f47;cursor:move}
 .plantekst.gekozen{fill:#2563eb}
 .geplaatst{color:var(--kleur,#c2410c);cursor:move}
-.geplaatst .plaats-doel{fill:rgba(255,255,255,.75);stroke:none}
+.geplaatst .plaats-doel{fill:transparent;stroke:none}
 .geplaatst.gekozen .plaats-doel{fill:rgba(37,99,235,.16);stroke:#2563eb;stroke-width:1}
 .geplaatst.gekozen{color:#1d4ed8}
 .geplaatst.los{color:var(--kleur,#64748b)}
