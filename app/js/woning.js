@@ -26,6 +26,8 @@ const UITLEG = {
   verdeelbord: 'Zet de kastmodules en zekeringen van het verdeelbord klaar. Sleep onderdelen naar hun plaats.',
   kringen: 'Kies bovenaan een zekering en tik de symbolen die erop zitten. De kringletter komt op het plan.',
 };
+// Op een aanraakscherm is er geen rechtermuisknop of Esc: daar draai je met de knop ↻.
+if (globalThis.matchMedia?.('(pointer: coarse)')?.matches) UITLEG.componenten = 'Kies onderaan een symbool en tik op het plan om het te plaatsen. Draaien doe je met de knop ↻.';
 
 let stap = 'componenten';
 let vlak = null;

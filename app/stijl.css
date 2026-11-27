@@ -563,7 +563,7 @@ svg.tekening, #woning-svg, #situatie-svg, #eendraad-svg { touch-action: none; -w
 button, .rij, .w-item { -webkit-tap-highlight-color: transparent; }
 html { -webkit-text-size-adjust: 100%; }
 @media (pointer: coarse) {
-  button, select, input[type=checkbox] { min-height: 38px; }
+  button, select { min-height: 40px; }
   .balk { padding-top: max(0px, env(safe-area-inset-top)); }
   .woning .w-rond { width: 46px; height: 46px; }
 }
@@ -596,4 +596,76 @@ body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-ins
 }
 @media (max-width: 1100px), (pointer: coarse), (any-pointer: coarse) {
   #tab-situatie .lade-knoppen button, #tab-eendraad .lade-knoppen button { padding: 0 18px; border-radius: 23px; }
+}
+
+/* ---------- iPad met de vinger: compacte bovenbalk, grote tikvlakken, geen zoom bij invoervelden ---------- */
+@media (pointer: coarse) {
+  /* Bovenbalk in twee rijen: project en knoppen bovenaan, de tabbladen eronder over de hele breedte */
+  .balk { gap: 4px 8px; padding: 4px 10px 0; padding-top: max(4px, env(safe-area-inset-top)); }
+  .merk { font-size: 0; }
+  .merk .bliksem { font-size: 20px; }
+  .projectnaam { max-width: 34vw; font-size: 15px; min-height: 40px; }
+  .opgeslagen { min-width: 0; }
+  .balk .acties { margin-left: auto; gap: 6px; }
+  .balk .acties button { min-height: 40px; min-width: 44px; font-size: 15px; }
+  .balk .acties button.hulp { width: 40px; height: 40px; min-width: 40px; }
+  .scheiding { margin: 0 2px; }
+  .balk .tabs { order: 10; flex: 1 0 100%; margin: 0 -10px; padding: 0 10px 4px; }
+  .balk .tabs button { min-height: 40px; padding: 6px 11px; font-size: 15px; }
+
+  /* Invoervelden: 16px, anders zoomt iOS bij het tikken in */
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]), select, textarea { font-size: 16px !important; }
+  input[type=text], input[type=number], input[type=date], input[type=search], input:not([type]), select { min-height: 40px; }
+  input[type=checkbox], input[type=radio] { width: 22px; height: 22px; min-height: 0; margin: 0; flex: none; }
+  input[type=range] { min-height: 40px; }
+  .vink, .dvink, .schuif, .inline, .vink-rij { min-height: 40px; font-size: 14px; }
+  .dveld, .veld { font-size: 14px; }
+  .dveld textarea { flex: 1; min-width: 0; }
+  .hint { font-size: 13.5px; }
+
+  /* Kleine knopjes groter */
+  .klap { width: 32px; min-height: 36px; font-size: 16px; }
+  .rij { min-height: 40px; }
+  .rij.item { min-height: 40px; }
+  .rij button.mini { min-width: 40px; min-height: 40px; padding: 0 8px; font-size: 16px; }
+  .zoomknoppen button { width: 46px; height: 46px; font-size: 20px; }
+  table.materiaal td input { width: 100px; padding: 4px 8px; }
+  details > summary { min-height: 40px; display: flex; align-items: center; }
+
+  /* Ééndraadschema: werkbalk in één rij die opzij schuift, zodat de tekening meer hoogte krijgt */
+  #tab-eendraad .grootbalk { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 6px 10px; gap: 6px; }
+  #tab-eendraad .grootbalk::-webkit-scrollbar { display: none; }
+  #tab-eendraad .grootbalk > * { flex: none; }
+  #tab-eendraad .grootbalk .tb-ruimte { flex: 1 0 6px; }
+  #tab-eendraad .tb { width: 78px; height: 54px; }
+  #tab-eendraad .tb-dubbel { grid-auto-flow: column; }
+  #tab-eendraad .tb-dubbel button { width: 70px; height: 54px; }
+  #tab-eendraad .grootbalk > button:not(.tb) { min-width: 46px; min-height: 46px; }
+  #eendraad-zoom { width: 120px; }
+  /* "Naam kring op schema" als knopje over de tekening in plaats van een eigen balk eronder */
+  #tab-eendraad .vlak-wrap { position: relative; }
+  #tab-eendraad .vlak-onder { position: absolute; right: 12px; bottom: 12px; z-index: 5; border: 1px solid var(--rand); border-radius: 23px;
+    padding: 2px 14px; background: rgba(255, 255, 255, .95); box-shadow: 0 2px 8px rgba(0, 0, 0, .15); }
+
+  /* Situatieschema */
+  #tab-situatie input[type=number]#plan-lengte { width: 84px; }
+  #tab-situatie .werkbalk button:has(> img:only-child) { min-width: 44px; min-height: 44px; }
+  #tab-situatie .werkbalk-opties > summary { font-size: 14px; padding: 4px 12px; }
+  #tab-situatie .zoekvak { min-height: 44px; }
+  #tab-situatie .ss-grid { font-size: 14px; }
+  #tab-situatie .ss-grid .pg-rij { min-height: 40px; }
+  #tab-situatie .ss-grid .pg-rij input, #tab-situatie .ss-grid .pg-rij select { height: 40px; }
+  #tab-situatie .ss-grid .pg-rij input[type=checkbox] { width: 22px; height: 22px; margin: 9px 8px; }
+
+  /* Afdrukken en document */
+  .tb .tb-i { font-size: 22px; }
+  .doc-knop { height: 62px; }
+
+  /* Melding (toast) boven de zwevende knoppen en de onderrand van het scherm */
+  #melding { bottom: calc(76px + env(safe-area-inset-bottom)); font-size: 15px; padding: 11px 18px; }
+}
+@media (max-width: 1100px), (pointer: coarse), (any-pointer: coarse) {
+  /* De lade-knoppen onderaan, en naast de geopende lade in plaats van erover */
+  .tab.drie .lade-knoppen { bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .tab.drie.rechts-open .lade-knoppen { right: calc(min(380px, 88vw) + 12px); }
 }
