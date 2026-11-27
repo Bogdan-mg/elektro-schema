@@ -16,7 +16,32 @@ export function startExtra({ acties }) {
       <button class="extra-knop" data-x="voorbeeld"><span>✦</span> Voorbeeldproject</button>
     </div></div>`;
   $('#tab-extra').addEventListener('click', (e) => {
+    if (e.target.closest('#versie-zoek')) { zoekNieuweVersie(); return; }
     const k = e.target.closest('[data-x]');
     if (k) acties()[k.dataset.x]?.();
   });
+  toonVersie();
+}
+
+/** De datum van de versie die je gebruikt (enkel bij de webapp, die bestanden.json heeft). */
+async function toonVersie() {
+  try {
+    const r = await fetch('bestanden.json', { cache: 'no-store' }).catch(() => null) || await fetch('bestanden.json');
+    if (!r?.ok) return;
+    const { datum, versie } = await r.json();
+    const tekst = datum ? new Date(datum).toLocaleString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : versie;
+    const el = document.createElement('p');
+    el.className = 'hint versie';
+    el.innerHTML = `Versie van <b></b> <button type="button" id="versie-zoek">Zoek naar nieuwe versie</button>`;
+    el.querySelector('b').textContent = tekst;
+    $('#tab-extra .extra-inhoud').append(el);
+  } catch { /* computerversie: geen versiebestand */ }
+}
+
+/** De webapp nakijken op een nieuwe versie en dan opnieuw laden. */
+async function zoekNieuweVersie() {
+  const reg = await navigator.serviceWorker?.getRegistration();
+  if (reg) await reg.update().catch(() => {});
+  for (const k of await caches.keys().catch(() => [])) await caches.delete(k);
+  location.reload();
 }

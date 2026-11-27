@@ -21,5 +21,5 @@ const bestanden = (await loop(APP)).sort();
 const hash = createHash('sha1');
 for (const b of bestanden) hash.update(b).update(await readFile(path.join(APP, b)));
 const versie = hash.digest('hex').slice(0, 12);
-await writeFile(path.join(APP, 'bestanden.json'), JSON.stringify({ versie, bestanden: ['./', ...bestanden] }));
+await writeFile(path.join(APP, 'bestanden.json'), JSON.stringify({ versie, datum: new Date().toISOString(), bestanden: ['./', ...bestanden] }));
 console.log(`${bestanden.length} bestanden, versie ${versie}`);
