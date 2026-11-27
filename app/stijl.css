@@ -616,7 +616,7 @@ body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-ins
   /* Invoervelden: 16px, anders zoomt iOS bij het tikken in */
   input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]), select, textarea { font-size: 16px !important; }
   input[type=text], input[type=number], input[type=date], input[type=search], input:not([type]), select { min-height: 40px; }
-  input[type=checkbox], input[type=radio] { width: 22px; height: 22px; min-height: 0; margin: 0; flex: none; }
+  input[type=checkbox], input[type=radio], .schuif input[type=checkbox] { width: 22px; height: 22px; min-height: 0; margin: 0; flex: none; }
   input[type=range] { min-height: 40px; }
   .vink, .dvink, .schuif, .inline, .vink-rij { min-height: 40px; font-size: 14px; }
   .dveld, .veld { font-size: 14px; }
@@ -628,9 +628,9 @@ body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-ins
   .rij { min-height: 40px; }
   .rij.item { min-height: 40px; }
   .rij button.mini { min-width: 40px; min-height: 40px; padding: 0 8px; font-size: 16px; }
-  .zoomknoppen button { width: 46px; height: 46px; font-size: 20px; }
+  .zoomknoppen button, .woning .w-zoom button { width: 46px; height: 46px; font-size: 20px; }
   table.materiaal td input { width: 100px; padding: 4px 8px; }
-  details > summary { min-height: 40px; display: flex; align-items: center; }
+  details > summary { min-height: 40px; display: flex; align-items: center; gap: 4px; }
 
   /* Ééndraadschema: werkbalk in één rij die opzij schuift, zodat de tekening meer hoogte krijgt */
   #tab-eendraad .grootbalk { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 6px 10px; gap: 6px; }
@@ -641,7 +641,7 @@ body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-ins
   #tab-eendraad .tb-dubbel { grid-auto-flow: column; }
   #tab-eendraad .tb-dubbel button { width: 70px; height: 54px; }
   #tab-eendraad .grootbalk > button:not(.tb) { min-width: 46px; min-height: 46px; }
-  #eendraad-zoom { width: 120px; }
+  #eendraad-zoom { display: none; } /* zoomen doe je met twee vingers, of met − en + */
   /* "Naam kring op schema" als knopje over de tekening in plaats van een eigen balk eronder */
   #tab-eendraad .vlak-wrap { position: relative; }
   #tab-eendraad .vlak-onder { position: absolute; right: 12px; bottom: 12px; z-index: 5; border: 1px solid var(--rand); border-radius: 23px;
@@ -649,15 +649,18 @@ body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-ins
 
   /* Situatieschema */
   #tab-situatie input[type=number]#plan-lengte { width: 84px; }
-  #tab-situatie .werkbalk button:has(> img:only-child) { min-width: 44px; min-height: 44px; }
+  #tab-situatie .werkbalk .groep button:has(> img:only-child) { min-width: 44px; min-height: 44px; }
   #tab-situatie .werkbalk-opties > summary { font-size: 14px; padding: 4px 12px; }
   #tab-situatie .zoekvak { min-height: 44px; }
+  #tab-situatie .tb-item.knoop { min-width: 40px; min-height: 40px; }
   #tab-situatie .ss-grid { font-size: 14px; }
   #tab-situatie .ss-grid .pg-rij { min-height: 40px; }
   #tab-situatie .ss-grid .pg-rij input, #tab-situatie .ss-grid .pg-rij select { height: 40px; }
   #tab-situatie .ss-grid .pg-rij input[type=checkbox] { width: 22px; height: 22px; margin: 9px 8px; }
 
   /* Afdrukken en document */
+  .afd-twee .dblok { align-content: start; }
+  .afd-rij { margin: 0; row-gap: 4px; }
   .tb .tb-i { font-size: 22px; }
   .doc-knop { height: 62px; }
 
@@ -668,4 +671,7 @@ body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-ins
   /* De lade-knoppen onderaan, en naast de geopende lade in plaats van erover */
   .tab.drie .lade-knoppen { bottom: calc(12px + env(safe-area-inset-bottom)); }
   .tab.drie.rechts-open .lade-knoppen { right: calc(min(380px, 88vw) + 12px); }
+  /* Geen grijze 'hover' die na het tikken blijft hangen */
+  .tab.drie .lade-knoppen button:hover:not(:disabled) { background: #1c2533; color: #fff; }
+  .tab.drie.links-open .lade-knoppen [data-lade=links]:hover, .tab.drie.rechts-open .lade-knoppen [data-lade=rechts]:hover { background: #2563eb; }
 }
