@@ -245,6 +245,7 @@ function tekenVlak() {
   lengte.disabled = !(lengteBaar && plan.schaal);
   if (document.activeElement !== lengte) lengte.value = lengteBaar && plan.schaal ? (afstand(el) / plan.schaal).toFixed(2) : '';
   $('#plan-maten').checked = plan.alleMaten === true;
+  $('#plan-maten-knop').classList.toggle('aan', plan.alleMaten === true);
   $('#plan-kleef').checked = plan.kleefMuur !== false;
   $('#plan-kleefgrid').checked = plan.kleefGrid === true;
   $('#plan-hoek').value = String(plan.hoekStap ?? 90);
@@ -1726,6 +1727,7 @@ export function startSituatie() {
   });
   const vink = (id, sleutel) => $(id).addEventListener('change', (e) => wijzig((p) => { huidigPlan(p)[sleutel] = e.target.checked; }, { paneel: false }));
   vink('#plan-maten', 'alleMaten');
+  $('#plan-maten-knop').addEventListener('click', () => $('#plan-maten').click());
   vink('#plan-kleef', 'kleefMuur');
   vink('#plan-kleefgrid', 'kleefGrid');
   vink('#plan-grid', 'toonGrid');
