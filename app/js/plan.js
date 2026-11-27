@@ -624,6 +624,30 @@ export const deelVan = (delen, id, pl) => (pl.los ? { item: pl.item, kring: null
  * @param {object} opties selectie: lijst van { soort: 'el' | 'item' | 'tekst', id }, raster: rasterlijnen tonen (enkel op het scherm)
  * @returns {string} SVG zonder het <svg>-element
  */
+/**
+ * Een vloeiende lijn door de punten [[x, y], …] (het midden tussen twee punten als ankerpunt, de punten zelf als
+ * stuurpunt), zodat een handgeschreven lijn er niet hoekig uitziet.
+ */
+export function penPad(punten) {
+  if (!punten?.length) return '';
+  const r = (n) => Math.round(n * 10) / 10;
+  if (punten.length < 3) return `M${r(punten[0][0])} ${r(punten[0][1])}${punten.slice(1).map(([x, y]) => ` L${r(x)} ${r(y)}`).join('') || ` L${r(punten[0][0] + 0.1)} ${r(punten[0][1])}`}`;
+  let d = `M${r(punten[0][0])} ${r(punten[0][1])}`;
+  for (let i = 1; i < punten.length - 1; i++) {
+    const [x, y] = punten[i];
+    const [nx, ny] = punten[i + 1];
+    d += ` Q${r(x)} ${r(y)} ${r((x + nx) / 2)} ${r((y + ny) / 2)}`;
+  }
+  const [lx, ly] = punten[punten.length - 1];
+  return `${d} L${r(lx)} ${r(ly)}`;
+}
+
+/** Eén handgeschreven lijn als SVG. */
+export function penSvg(lijn) {
+  const marker = lijn.soort === 'marker';
+  return `<path class="pen${marker ? ' marker' : ''}" data-pen="${esc(lijn.id)}" d="${penPad(lijn.punten)}" fill="none" stroke="${esc(lijn.kleur || '#111')}" stroke-width="${lijn.dikte || 2}" stroke-linecap="${marker ? 'butt' : 'round'}" stroke-linejoin="round"${marker ? ' stroke-opacity="0.35"' : ''}/>`;
+}
+
 export function tekenPlan(project, plan, { selectie = [], raster = false, delen = onderdelen(project), stijl = '' } = {}) {
   const s = plan.symbool || 1;
   const gekozen = (soort, id) => (Array.isArray(selectie) ? selectie : selectie ? [selectie] : []).some((k) => k.soort === soort && k.id === id);
@@ -652,6 +676,10 @@ export function tekenPlan(project, plan, { selectie = [], raster = false, delen 
     uit.push(svg);
     if (maat && (g || plan.alleMaten === true || altijd)) maten.push(maat);
   });
+
+  // Handgeschreven lijnen (Apple Pencil): eerst de markeerstift, dan de pen erover.
+  const pennen = plan.pennen || [];
+  for (const soort of ['marker', 'pen']) for (const lijn of pennen.filter((l) => (l.soort || 'pen') === soort)) uit.push(penSvg(lijn));
 
   for (const t of plan.teksten) {
     const g = gekozen('tekst', t.id);

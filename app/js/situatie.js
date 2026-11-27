@@ -11,6 +11,7 @@ import { staat, wijzig, herteken, opWijziging, zetGewijzigd, ongedaan } from './
 import { Vlak } from './vlak.js';
 import { vraag, vraagTekst, bevestig, melding } from './dialoog.js';
 import { importeer, leesBeeldBestand } from './import.js';
+import { startPen } from './pen.js';
 import { bouwTabs, paneelHtml, tabHtml, sleutelVan, eersteKiesbare } from './trikker/toolbox.js';
 
 const $ = (s) => document.querySelector(s);
@@ -1304,6 +1305,7 @@ export function startSituatie() {
 .marquee{fill:rgba(37,99,235,.08);stroke:#2563eb;stroke-width:1;stroke-dasharray:5 3}`;
   svg.prepend(stijl);
   vlak = new Vlak(svg, { leegSlepen: () => false });
+  startPen({ svg, vlak, huidigPlan, wrap: svg.parentElement });
 
   /** Het ding onder de muis: een symbool, tekst of element. */
   const doelVan = (e) => {
