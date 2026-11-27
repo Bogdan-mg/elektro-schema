@@ -145,14 +145,16 @@ async function opslaan(als = false) {
     // iPad/iPhone: via het deelmenu kies je meteen "Bewaar in Bestanden" (of iCloud Drive, AirDrop, mail …).
     const bestand = new File([inhoud], `${naam}.${EXTENSIE}`, { type: 'application/octet-stream' });
     if (/iPad|iPhone|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document && navigator.canShare?.({ files: [bestand] })) {
+      melding('Kies in het deelmenu "Bewaar in Bestanden" en dan "Op mijn iPad" (of iCloud Drive) en tik op Bewaar.');
       try {
         await navigator.share({ files: [bestand], title: naam });
+        await wisHerstel();
+        zetGewijzigd(false);
+        return true;
       } catch (e) {
         if (e.name === 'AbortError') return false;
+        // Delen lukt niet: dan gewoon downloaden (komt in Bestanden > Downloads).
       }
-      await wisHerstel();
-      zetGewijzigd(false);
-      return true;
     }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([inhoud], { type: 'application/json' }));
