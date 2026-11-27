@@ -131,7 +131,7 @@ export function controleer(project) {
       }
       if (t.eigenKring && andere.length > 1) {
         const n = andere.length - 1;
-        k('waarschuwing', item.id, `${code.get(item.id)} ${t.naam} staat best op een eigen kring; nu staan er nog ${n} andere onderdel${n === 1 ? '' : 'en'} op.`);
+        k('waarschuwing', item.id, `${code.get(item.id)} ${t.naam} staat best op een eigen kring; nu staan er nog ${n} ${n === 1 ? 'ander onderdeel' : 'andere onderdelen'} op.`);
       }
       if (item.variant === 'laadpaal' && item.soort === 'toestel' && !dertig) {
         k('info', item.id, `${code.get(item.id)} ${t.naam}: een laadpaal moet achter een differentieel van 30 mA (type A met 6 mA DC-detectie, of type B). Zit die niet in de laadpaal zelf, dan hoort hij in het bord. Kijk na.`);
