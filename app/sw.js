@@ -1,5 +1,6 @@
 // Service worker: de app werkt na het eerste bezoek ook zonder internet. De bestanden worden in de cache gezet;
 // bij een nieuwe versie (nieuwe CACHE-naam in bestanden.json) wordt de oude cache weggegooid.
+// Versie van de service worker: 2 (verhogen als dit bestand moet vernieuwen).
 const BASIS = new URL('./', self.location).href;
 
 async function lijst() {
@@ -28,15 +29,22 @@ self.addEventListener('activate', (e) => {
   })());
 });
 
+// Eerst het internet (zo heb je altijd de nieuwste versie), en enkel zonder internet de bewaarde kopie.
+// Wat van het internet komt, wordt meteen in de cache bijgewerkt voor de volgende keer zonder internet.
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET' || new URL(e.request.url).origin !== self.location.origin) return;
   e.respondWith((async () => {
-    const gevonden = await caches.match(e.request, { ignoreSearch: true });
-    if (gevonden) return gevonden;
     try {
-      return await fetch(e.request);
+      const antwoord = await fetch(e.request, { cache: 'no-cache' });
+      if (antwoord.ok && !e.request.url.endsWith('bestanden.json')) {
+        const kopie = antwoord.clone();
+        caches.keys().then((ks) => ks.find((k) => k.startsWith('elektro-schema-')))
+          .then((k) => k && caches.open(k)).then((c) => c?.put(e.request, kopie)).catch(() => {});
+      }
+      return antwoord;
     } catch {
-      return (await caches.match(new URL('index.html', BASIS).href)) || Response.error();
+      return (await caches.match(e.request, { ignoreSearch: true }))
+        || (await caches.match(new URL('index.html', BASIS).href)) || Response.error();
     }
   })());
 });
