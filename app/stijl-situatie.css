@@ -207,3 +207,9 @@
   #tab-situatie .werkbalk > *, #tab-situatie .werkbalk .groep > * { flex: none; }
   #tab-situatie .werkbalk button { min-height: 44px; }
 }
+@media (pointer: coarse), (any-pointer: coarse) {
+  #plan-status { display: none; }
+  /* De tweede werkbalk (plan laden, kopiëren, …) mag kleiner: enkel de pictogrammen */
+  #tab-situatie .werkbalk button:has(> img) { min-width: 44px; }
+  #tab-situatie .werkbalk button:has(> img) > span { display: none; }
+}

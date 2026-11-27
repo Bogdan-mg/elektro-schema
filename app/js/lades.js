@@ -1,6 +1,6 @@
 // Op een smal scherm (iPad rechtop) schuiven de lijst links en de eigenschappen rechts als lades over de tekening,
 // zodat de tekening de hele breedte krijgt. Twee knoppen onderaan openen ze.
-const SMAL = window.matchMedia('(max-width: 1100px)');
+const SMAL = window.matchMedia('(max-width: 1100px), (pointer: coarse), (any-pointer: coarse)');
 
 export function startLades() {
   for (const tab of document.querySelectorAll('.tab.drie')) {
