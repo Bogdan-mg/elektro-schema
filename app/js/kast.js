@@ -2,7 +2,7 @@
 // Alles wat je hier doet, staat meteen in het ééndraadschema: een differentieel is een groep, een automaat een kring.
 import { staat, wijzig, opWijziging } from './staat.js';
 import { nieuwDifferentieel, nieuweKring, nieuwItem, codes, zoek } from './model.js';
-import { controleer } from './regels.js';
+import { controleer, meldingenVoor } from './regels.js';
 import { itemNaam } from './catalogus.js';
 
 const $ = (s) => document.querySelector(s);
@@ -67,7 +67,7 @@ function teken() {
   const code = codes(p);
   const kleur = kleuren(p);
   const meldingen = controleer(p);
-  const fouten = (id) => meldingen.filter((m) => m.id === id && m.niveau !== 'info');
+  const fouten = (id) => meldingenVoor(meldingen, id).filter((m) => m.niveau !== 'info');
   if (gekozen && !zoek(p, gekozen)?.ding?.kinderen && !zoek(p, gekozen)?.ding?.automaat) gekozen = null;
   const h = p.hoofd;
   const rijen = [];

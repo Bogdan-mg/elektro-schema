@@ -393,8 +393,11 @@ function berekenWaarschuwingen() {
   waarschuwingen = new Map();
   for (const m of controleer(staat.project)) {
     if (m.niveau === 'info') continue;
-    const oud = waarschuwingen.get(m.id);
-    if (!oud || (oud.niveau !== 'fout' && m.niveau === 'fout')) waarschuwingen.set(m.id, { niveau: m.niveau, tekst: m.tekst });
+    // Een melding over een onderdeel telt ook voor zijn kring.
+    for (const id of new Set([m.id, m.kring].filter(Boolean))) {
+      const oud = waarschuwingen.get(id);
+      if (!oud || (oud.niveau !== 'fout' && m.niveau === 'fout')) waarschuwingen.set(id, { niveau: m.niveau, tekst: m.tekst });
+    }
   }
 }
 const niveauKlasse = (id) => (waarschuwingen.get(id)?.niveau === 'fout' ? 'rood' : waarschuwingen.get(id) ? 'oranje' : 'groen');
