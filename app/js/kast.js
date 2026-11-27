@@ -102,7 +102,7 @@ function teken() {
     <aside class="km-paneel">${paneel(p, code, kleur, fouten)}</aside></div>`;
 }
 
-function samenvatting(kr) {
+export function samenvatting(kr) {
   const tel = new Map();
   for (const it of kr.items) {
     // Per naam tellen: een dubbel en een enkel stopcontact zijn niet "2× dubbel stopcontact".
