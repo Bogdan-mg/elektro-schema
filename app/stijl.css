@@ -675,3 +675,8 @@ body { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-ins
   .tab.drie .lade-knoppen button:hover:not(:disabled) { background: #1c2533; color: #fff; }
   .tab.drie.links-open .lade-knoppen [data-lade=links]:hover, .tab.drie.rechts-open .lade-knoppen [data-lade=rechts]:hover { background: #2563eb; }
 }
+
+/* iPad: geen lichte gloed bovenaan (onder de statusbalk en bij het overtrekken): de pagina zelf is donker, de inhoud licht */
+html { background: var(--balk); overscroll-behavior: none; }
+body { background: var(--achtergrond); overscroll-behavior: none; }
+.balk { padding-top: max(6px, env(safe-area-inset-top)); }
