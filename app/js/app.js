@@ -30,6 +30,8 @@ function naarTab(tab) {
   if (tab === 'afdrukken') setTimeout(() => window.dispatchEvent(new Event('afdruktab-open')), 0);
   if (tab === 'woning') setTimeout(() => window.dispatchEvent(new Event('woning-open')), 0);
   for (const b of document.querySelectorAll('[data-tab]')) b.classList.toggle('aan', b.dataset.tab === tab);
+  // Op een smal scherm schuiven de tabbladen: het gekozen tabblad altijd in beeld.
+  document.querySelector(`.balk [data-tab="${tab}"]`)?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
   for (const s of document.querySelectorAll('.tab')) s.hidden = s.id !== `tab-${tab}`;
   herteken();
 }
