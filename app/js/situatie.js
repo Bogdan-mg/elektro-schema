@@ -134,7 +134,7 @@ function tekenZoekResultaat(lijst, scroll) {
   lijst.innerHTML = [
     projectRijen.length ? '<div class="rij kop"><b>In dit project</b></div>' + projectRijen.join('') : '',
     losRijen.length ? '<div class="rij kop"><b>Los symbool plaatsen</b></div>' + losRijen.join('') : '',
-    !projectRijen.length && !losRijen.length ? '<p class="hint">Niets gevonden. Probeer een ander woord, bijvoorbeeld "stopcontact", "lamp" of "schakelaar".</p>' : '',
+    !projectRijen.length && !losRijen.length ? '<p class="hint">Niets gevonden. Probeer een ander woord, bijvoorbeeld "stopcontact", "licht" of "schakelaar".</p>' : '',
   ].join('');
   lijst.scrollTop = scroll;
 }
@@ -1647,6 +1647,9 @@ export function startSituatie() {
       tekenLijst();
       return;
     }
+    // Een onderdeel van het project uit de zoekresultaten: plaatsen (of kiezen als het al op dit plan staat).
+    const rij = e.target.closest('[data-item]');
+    if (rij) { klikToolbox(`knoop:${rij.dataset.item}`, { type: 'knoop', id: rij.dataset.item }); return; }
     toolboxKlik(e);
   });
   $('#symbool-zoek').addEventListener('input', (e) => {
@@ -1741,7 +1744,7 @@ export function startSituatie() {
     const plan = huidigPlan();
     const xs = [];
     const ys = [];
-    for (const m of plan.muren) { xs.push(m.x1, m.x2); ys.push(m.y1, m.y2); }
+    for (const m of plan.muren) { const b = omhulsel(m); xs.push(b.x0, b.x1); ys.push(b.y0, b.y1); }
     for (const pl of Object.values(plan.plaatsingen)) { xs.push(pl.x); ys.push(pl.y); }
     for (const t of plan.teksten) { xs.push(t.x); ys.push(t.y); }
     if (xs.length > 1 && !plan.achtergrond) {

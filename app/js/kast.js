@@ -1,7 +1,7 @@
 // Het tabblad Verdeelkast: de kast met zijn rijen, per rij de differentiëlen met de automaten die ze beschermen.
 // Alles wat je hier doet, staat meteen in het ééndraadschema: een differentieel is een groep, een automaat een kring.
 import { staat, wijzig, opWijziging } from './staat.js';
-import { nieuwDifferentieel, nieuweKring, nieuwItem, codes, zoek } from './model.js';
+import { nieuwDifferentieel, nieuweKring, nieuwItem, codes, zoek, verwijder } from './model.js';
 import { controleer } from './regels.js';
 import { itemNaam } from './catalogus.js';
 
@@ -105,9 +105,10 @@ function teken() {
 function samenvatting(kr) {
   const tel = new Map();
   for (const it of kr.items) {
-    const s = sleutelVan(it);
+    // Per naam tellen: een dubbel en een enkel stopcontact zijn niet "2× dubbel stopcontact".
+    const s = itemNaam(it);
     const t = tel.get(s) || { item: it, n: 0 };
-    t.n += Number(it.aantal) > 1 && it.soort === 'stopcontact' ? 1 : 1;
+    t.n += 1;
     tel.set(s, t);
   }
   return [...tel.values()].map(({ item, n }) => `${icoonVan(item)} ${n}× ${esc(itemNaam(item).toLowerCase())}`).join(', ');
@@ -144,7 +145,7 @@ function paneel(p, code, kleur, fouten) {
     ${veld('Polen', keuze('automaat.polen', [1, 2, 3, 4], a.polen, 'P'))}
     ${veld('Kabel', keuze('kabel.sectie', [1.5, 2.5, 4, 6, 10, 16], knoop.kabel.sectie, ' mm²'))}
     <h4>Wat staat op deze zekering</h4>
-    <ul class="km-items">${[...tel.entries()].map(([s, its]) => `<li><span>${icoonVan(its[0])}</span>${its.length}× ${esc(itemNaam(its[0]))}
+    <ul class="km-items">${[...tel.entries()].map(([s, its]) => `<li><span>${icoonVan(its[0])}</span>${its.length}× ${esc(new Set(its.map(itemNaam)).size > 1 ? SNEL.find((x) => x.sleutel === s)?.naam || itemNaam(its[0]) : itemNaam(its[0]))}
       <button data-min="${esc(s)}" title="Eén minder">−</button><button data-meer="${esc(s)}" title="Eén meer">+</button></li>`).join('') || '<li class="km-leeg">Nog niets: tik hieronder wat erop komt.</li>'}</ul>
     <div class="km-snel">${SNEL.map((s) => `<button data-voeg="${esc(s.sleutel)}">${s.ic} ${esc(s.naam)}</button>`).join('')}</div>
     ${w.length ? w.map((m) => `<div class="km-waarsch">⚠️ ${esc(m.tekst)}</div>`).join('') : '<div class="km-ok">✓ Geen problemen gevonden</div>'}
@@ -192,12 +193,14 @@ function klik(e) {
     return;
   }
   if (d.min) {
-    wijzig((p) => { const k = knoopMet(p, gekozen); const i = k.items.map(sleutelVan).lastIndexOf(d.min); if (i >= 0) k.items.splice(i, 1); });
+    // Via verwijder, zodat het onderdeel ook van de plannen verdwijnt.
+    wijzig((p) => { const k = knoopMet(p, gekozen); const i = k.items.map(sleutelVan).lastIndexOf(d.min); if (i >= 0) verwijder(p, k.items[i].id); });
     return;
   }
   if (d.schema) { staat.selectie = d.schema; naarTab('eendraad'); return; }
   if (d.wis) {
-    wijzig((p) => { const o = ouderVan(p, d.wis); o.kinderen = o.kinderen.filter((n) => n.id !== d.wis); });
+    // Via verwijder: ook de geplaatste symbolen van de kringen gaan van de plannen.
+    wijzig((p) => { verwijder(p, d.wis); });
     gekozen = null; teken();
   }
 }
